@@ -93,9 +93,24 @@ public class Scanner(string source)
                 break;
             case '/':
                 if (Match('/'))
-                    SkipLine();
+                {
+                    while (Peek() != '\n' && !IsAtEnd()) Advance();
+                }
+                else if (Match('*'))
+                {
+                    while (Peek() != '*' && PeekNext() != '/' && !IsAtEnd())
+                    {
+                        if (Peek() == '\n') line++;
+                        Advance();
+                    }
+
+                    Advance();
+                    Advance();
+                }
                 else
+                {
                     AddToken(TokenType.SLASH);
+                }
                 break;
             case ' ' or '\r' or '\t':
                 break;
@@ -198,11 +213,6 @@ public class Scanner(string source)
         var identifier = source.Sub(start, current);
         var tokenType = keywords.GetValueOrDefault(identifier, TokenType.IDENTIFIER);
         AddToken(tokenType);
-    }
-
-    private void SkipLine()
-    {
-        while (Peek() != '\n' && !IsAtEnd()) Advance();
     }
 
     private static bool IsDigit(char c)
