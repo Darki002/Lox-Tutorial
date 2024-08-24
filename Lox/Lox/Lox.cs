@@ -1,6 +1,6 @@
 ﻿namespace Lox;
 
-internal static class Program
+internal static class Lox
 {
     private static bool hadError;
     
@@ -51,7 +51,7 @@ internal static class Program
         }
     }
 
-    private static void Error(int line, string message)
+    public static void Error(int line, string message)
     {
         Report(line, string.Empty, message);
     }
