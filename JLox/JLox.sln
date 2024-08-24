@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lox", "Lox\Lox.csproj", "{4AA32442-DD87-4120-88A6-C076200AE2BB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tool", "Tool\Tool.csproj", "{5E70F0DD-B509-41CA-A733-E39E5035C1E2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{4AA32442-DD87-4120-88A6-C076200AE2BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4AA32442-DD87-4120-88A6-C076200AE2BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4AA32442-DD87-4120-88A6-C076200AE2BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E70F0DD-B509-41CA-A733-E39E5035C1E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E70F0DD-B509-41CA-A733-E39E5035C1E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E70F0DD-B509-41CA-A733-E39E5035C1E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E70F0DD-B509-41CA-A733-E39E5035C1E2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
