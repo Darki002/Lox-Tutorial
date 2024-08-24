@@ -2,12 +2,31 @@ namespace Lox;
 
 public class Scanner(string source)
 {
-    private readonly string source = source;
-    private readonly List<Token> tokens;
+    private readonly Dictionary<string, TokenType> keywords = new Dictionary<string, TokenType>
+    {
+        { "and", TokenType.AND },
+        { "class", TokenType.CLASS },
+        { "else", TokenType.ELSE },
+        { "false", TokenType.FALSE },
+        { "for", TokenType.FOR },
+        { "fun", TokenType.FUN },
+        { "if", TokenType.IF },
+        { "nil", TokenType.NIL },
+        { "or", TokenType.OR },
+        { "print", TokenType.PRINT },
+        { "return", TokenType.RETURN },
+        { "super", TokenType.SUPER },
+        { "this", TokenType.THIS },
+        { "true", TokenType.TRUE },
+        { "var", TokenType.VAR },
+        { "while", TokenType.WHILE }
+    };
 
-    private int start = 0;
-    private int current = 0;
+    private readonly List<Token> tokens = [];
+    private int current;
     private int line = 1;
+
+    private int start;
 
     public List<Token> ScanTokens()
     {
@@ -16,7 +35,7 @@ public class Scanner(string source)
             start = current;
             ScanToken();
         }
-        
+
         tokens.Add(new Token(TokenType.EOF, "", null, line));
         return tokens;
     }
@@ -75,7 +94,7 @@ public class Scanner(string source)
             case '/':
                 if (Match('/'))
                     SkipLine();
-                else 
+                else
                     AddToken(TokenType.SLASH);
                 break;
             case ' ' or '\r' or '\t':
@@ -89,7 +108,9 @@ public class Scanner(string source)
                     ConsumeNumber();
                     break;
                 }
-                
+
+                if (IsAlpha(c)) ConsumeIdentifier();
+
                 Lox.Error(line, "Unexpected character.");
                 break;
         }
@@ -97,19 +118,20 @@ public class Scanner(string source)
 
     private void AddToken(TokenType tokenType, object? literal = null)
     {
-        var text = source.Substring(start, current - start);
+        var text = source.Sub(start, current);
         tokens.Add(new Token(tokenType, text, literal, line));
     }
-    
+
     private char Advance()
     {
         return source[current++];
     }
-    
+
     private char Peek()
     {
         return IsAtEnd() ? '\0' : source[current];
     }
+
     private char PeekNext()
     {
         return current + 1 >= source.Length ? '\0' : source[current + 1];
@@ -144,8 +166,8 @@ public class Scanner(string source)
         var start = this.start + 1;
         var current = this.current - 1;
         // ReSharper restore LocalVariableHidesMember
-        
-        var value = source.Substring(start, current - start);
+
+        var value = source.Sub(start, current);
         AddToken(TokenType.STRING, value);
     }
 
@@ -164,18 +186,38 @@ public class Scanner(string source)
             Lox.Error(line, "Missing Semicolon.");
             return;
         }
-        
-        var value = source.Substring(start, current - start);
+
+        var value = source.Sub(start, current);
         AddToken(TokenType.NUMBER, double.Parse(value));
     }
-    
+
+    private void ConsumeIdentifier()
+    {
+        while (IsAlphaNumeric(Peek())) Advance();
+
+        var identifier = source.Sub(start, current);
+        var tokenType = keywords.GetValueOrDefault(identifier, TokenType.IDENTIFIER);
+        AddToken(tokenType);
+    }
+
     private void SkipLine()
     {
         while (Peek() != '\n' && !IsAtEnd()) Advance();
     }
-    
-    private bool IsDigit(char c) {
+
+    private static bool IsDigit(char c)
+    {
         return c >= '0' && c <= '9';
+    }
+
+    private static bool IsAlpha(char c)
+    {
+        return c is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or '_';
+    }
+
+    private static bool IsAlphaNumeric(char c)
+    {
+        return IsAlpha(c) || IsDigit(c);
     }
 
     private bool IsAtEnd()
