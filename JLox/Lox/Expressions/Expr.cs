@@ -18,7 +18,7 @@ public abstract record Expr
 		}
 	}
 
-	public record Literal(object Value) : Expr
+	public record Literal(object? Value) : Expr
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
 		{

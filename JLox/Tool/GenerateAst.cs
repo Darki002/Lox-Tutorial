@@ -1,8 +1,8 @@
 ﻿namespace Tool;
 
-public static class GenerateAst
+public class GenerateAst : ITool
 {
-    public static void Main(string[] args)
+    public void Start(string[] args)
     {
         if (args.Length != 1)
         {
@@ -15,7 +15,7 @@ public static class GenerateAst
         DefineAst(outputDir, "Expr", [
             "Binary   : Expr Left, Token Operator, Expr Right",
             "Grouping : Expr Expression",
-            "Literal  : object Value",
+            "Literal  : object? Value",
             "Unary    : Token Operator, Expr Right"
         ]);
     }
@@ -23,8 +23,6 @@ public static class GenerateAst
     private static void DefineAst(string outputDir, string baseName, List<string> types)
     {
         var path = $"{outputDir}/{baseName}.cs";
-
-        File.Delete(path);
         using var writer = new StreamWriter(path, false, System.Text.Encoding.UTF8);
         
         writer.WriteLine("namespace Lox;");
