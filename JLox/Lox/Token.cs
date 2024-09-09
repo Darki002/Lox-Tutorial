@@ -2,9 +2,9 @@ namespace Lox;
 
 /// <param name="lexeme">The string representing this token, ex. "var"</param>
 /// <param name="literal">Parsed value so we can use the value in the correct type later on</param>
-public class Token(TokenType tokenType, string lexeme, object? literal, int line)
+public class Token(TokenType type, string lexeme, object? literal, int line)
 {
-    public readonly TokenType TokenType = tokenType;
+    public readonly TokenType Type = type;
     
     /// <summary>
     /// The string representing this token, ex. "var"
@@ -21,6 +21,6 @@ public class Token(TokenType tokenType, string lexeme, object? literal, int line
 
     public override string ToString()
     {
-        return $"{TokenType} {Lexeme} {Literal}";
+        return $"{Type} {Lexeme} {Literal}";
     }
 }

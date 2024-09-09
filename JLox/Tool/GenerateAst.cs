@@ -25,6 +25,7 @@ public class GenerateAst : ITool
         var path = $"{outputDir}/{baseName}.cs";
         using var writer = new StreamWriter(path, false, System.Text.Encoding.UTF8);
         
+        writer.WriteLine("// ReSharper disable once CheckNamespace");
         writer.WriteLine("namespace Lox;");
         writer.WriteLine();
         writer.WriteLine($"public abstract record {baseName}");

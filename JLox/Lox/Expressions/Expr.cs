@@ -1,4 +1,5 @@
-﻿namespace Lox;
+﻿// ReSharper disable once CheckNamespace
+namespace Lox;
 
 public abstract record Expr
 {
