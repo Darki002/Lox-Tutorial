@@ -1,6 +1,4 @@
-﻿using Lox.Expressions;
-
-namespace Lox;
+﻿namespace Lox;
 
 public class Parser(List<Token> tokens)
 {
