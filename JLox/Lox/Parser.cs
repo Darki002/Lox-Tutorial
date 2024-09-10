@@ -1,15 +1,29 @@
-﻿namespace Lox;
+﻿using Lox.Expressions;
+
+namespace Lox;
 
 public class Parser(List<Token> tokens)
 {
     private int current = 0;
 
-    public Expr Expression()
+    public Expr? Parse()
+    {
+        try
+        {
+            return Expression();
+        }
+        catch (ParseError e)
+        {
+            return null;
+        }
+    }
+    
+    private Expr Expression()
     {
         return Equality();
     }
 
-    public Expr Equality()
+    private Expr Equality()
     {
         var expr = Comparison();
 
@@ -23,7 +37,7 @@ public class Parser(List<Token> tokens)
         return expr;
     }
 
-    public Expr Comparison()
+    private Expr Comparison()
     {
         var expr = Term();
 
@@ -37,7 +51,7 @@ public class Parser(List<Token> tokens)
         return expr;
     }
 
-    public Expr Term()
+    private Expr Term()
     {
         var expr = Factor();
 
@@ -51,7 +65,7 @@ public class Parser(List<Token> tokens)
         return expr;
     }
 
-    public Expr Factor()
+    private Expr Factor()
     {
         var expr = Unary();
 
@@ -65,7 +79,7 @@ public class Parser(List<Token> tokens)
         return expr;
     }
 
-    public Expr Unary()
+    private Expr Unary()
     {
         if (Match(TokenType.BANG, TokenType.MINUS))
         {
@@ -76,7 +90,7 @@ public class Parser(List<Token> tokens)
         return Primary();
     }
 
-    public Expr Primary()
+    private Expr Primary()
     {
         if (Match(TokenType.FALSE)) return new Expr.Literal(false);
         if (Match(TokenType.TRUE)) return new Expr.Literal(true);
@@ -91,11 +105,13 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.LEFT_PAREN))
         {
             var expr = Expression();
+            Console.WriteLine(new AstPrinter().Print(expr));
+            Console.WriteLine(Peek().Type);
             Consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
             return new Expr.Grouping(expr);
         }
 
-        throw new NotImplementedException();
+        throw Error(Peek(), "Expect expression.");
     }
     
     private bool Match(params TokenType[] tokenTypes)
@@ -131,9 +147,9 @@ public class Parser(List<Token> tokens)
 
     private Token Peek() => tokens[current];
 
-    private void Consume(TokenType type, string message)
+    private Token Consume(TokenType type, string message)
     {
-        if(Check(type)) Advance();
+        if(Check(type)) return Advance();
 
         throw Error(Peek(), message);
     }

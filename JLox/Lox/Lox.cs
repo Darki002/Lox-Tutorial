@@ -1,4 +1,6 @@
-﻿namespace Lox;
+﻿using Lox.Expressions;
+
+namespace Lox;
 
 internal static class Lox
 {
@@ -43,12 +45,14 @@ internal static class Lox
     private static void Run(string source)
     {
         var scanner = new Scanner(source);
-        List<Token> tokens = scanner.ScanTokens();
+        var tokens = scanner.ScanTokens();
 
-        foreach (var token in tokens)
-        {
-            Console.WriteLine(token);
-        }
+        var parser = new Parser(tokens);
+        var tree = parser.Parse();
+        
+        if (hadError) return;
+
+        Console.WriteLine(new AstPrinter().Print(tree!));
     }
 
     public static void Error(int line, string message)
