@@ -1,4 +1,6 @@
-﻿namespace Lox;
+﻿using Lox.Errors;
+
+namespace Lox;
 
 public class Parser(List<Token> tokens)
 {
