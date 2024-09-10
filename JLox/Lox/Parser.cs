@@ -105,8 +105,6 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.LEFT_PAREN))
         {
             var expr = Expression();
-            Console.WriteLine(new AstPrinter().Print(expr));
-            Console.WriteLine(Peek().Type);
             Consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
             return new Expr.Grouping(expr);
         }
