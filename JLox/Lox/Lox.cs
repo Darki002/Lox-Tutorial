@@ -5,6 +5,7 @@ namespace Lox;
 internal static class Lox
 {
     private static readonly Interpreter Interpreter = new Interpreter();
+    private static readonly Environment Environment = new Environment();
     
     private static bool hadError;
     private static bool hadRuntimeError;
@@ -14,7 +15,7 @@ internal static class Lox
         if (args.Length > 1)
         {
             Console.WriteLine("Usage: jlox [script]");
-            Environment.Exit(64);
+            System.Environment.Exit(64);
         }
         else if (args.Length == 1)
         {
@@ -42,8 +43,8 @@ internal static class Lox
         var content = File.ReadAllText(fileName);
         Run(content);
 
-        if (hadError) Environment.Exit(64);
-        if (hadRuntimeError) Environment.Exit(70);
+        if (hadError) System.Environment.Exit(64);
+        if (hadRuntimeError) System.Environment.Exit(70);
     }
 
     private static void Run(string source)
@@ -56,7 +57,7 @@ internal static class Lox
 
         if (hadError) return;
 
-        Interpreter.Interpret(statements);
+        Interpreter.Interpret(statements!);
     }
 
     public static void Error(int line, string message)

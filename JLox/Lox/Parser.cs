@@ -6,16 +6,30 @@ public class Parser(List<Token> tokens)
 {
     private int current = 0;
 
-    public List<Stmt> Parse()
+    public List<Stmt?> Parse()
     {
-        var statements = new List<Stmt>();
+        var statements = new List<Stmt?>();
         
         while (!IsAtEnd())
         {
-            statements.Add(Statement());
+            statements.Add(Declaration());
         }
 
         return statements;
+    }
+
+    private Stmt? Declaration()
+    {
+        try
+        {
+            if (Match(TokenType.VAR)) return VarDeclaration();
+            return Statement();
+        }
+        catch
+        {
+            Synchronize();
+            return null;
+        }
     }
 
     private Stmt Statement()
@@ -36,6 +50,21 @@ public class Parser(List<Token> tokens)
         var expr = Expression();
         Consume(TokenType.SEMICOLON, "Expect ';' after value.");
         return new Stmt.Print(expr);
+    }
+    
+    private Stmt VarDeclaration()
+    {
+        var name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
+        Consume(TokenType.EQUAL, "Missing initialization.");
+
+        Expr? initializer = null;
+        if (Match(TokenType.EQUAL))
+        {
+            initializer = Expression();
+        }
+
+        Consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
     }
 
     private Expr Expression()
@@ -121,6 +150,8 @@ public class Parser(List<Token> tokens)
         {
             return new Expr.Literal(Previous().Literal);
         }
+
+        if (Match(TokenType.IDENTIFIER)) return new Expr.Variable(Previous());
 
         if (Match(TokenType.LEFT_PAREN))
         {

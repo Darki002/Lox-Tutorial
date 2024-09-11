@@ -25,7 +25,7 @@ public class GenerateAst : ITool
         DefineAst(outputDir, "Stmt", [
             "Expression : Expr Body",
             "Print      : Expr Right",
-            "Var        : Token Name, Expr Initializer"
+            "Var        : Token Name, Expr? Initializer"
         ]);
     }
 
