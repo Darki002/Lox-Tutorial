@@ -127,7 +127,7 @@ public class Interpreter : Expr.IVisitor<object?>
         if (obj is double num)
         {
             var text = num.ToString(CultureInfo.InvariantCulture);
-            if (text.EndsWith(".0")) text = text.Substring(0, text.Length - 2);
+            if (text.EndsWith(".0")) text = text.Sub(0, text.Length - 2);
             return text;
         }
 
