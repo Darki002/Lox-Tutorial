@@ -89,6 +89,11 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         }
     }
 
+    public object? VisitVariableExpr(Expr.Variable expr)
+    {
+        throw new NotImplementedException();
+    }
+
     public Void? VisitExpressionStmt(Stmt.Expression stmt)
     {
         Evaluate(stmt.Body);
@@ -100,6 +105,11 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         var value = Evaluate(stmt.Right);
         Console.WriteLine(Stringify(value));
         return null;
+    }
+
+    public Void? VisitVarStmt(Stmt.Var stmt)
+    {
+        throw new NotImplementedException();
     }
 
     private void Execute(Stmt stmt)

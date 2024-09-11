@@ -35,6 +35,14 @@ public abstract record Expr
 		}
 	}
 
+	public record Variable(Token Name) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitVariableExpr(this);
+		}
+	}
+
 	public abstract T Accept<T>(IVisitor<T> visitor);
 
 	public interface IVisitor<out T>
@@ -43,5 +51,6 @@ public abstract record Expr
 		T VisitGroupingExpr (Grouping expr);
 		T VisitLiteralExpr (Literal expr);
 		T VisitUnaryExpr (Unary expr);
+		T VisitVariableExpr (Variable expr);
 	}
 }

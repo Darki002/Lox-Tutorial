@@ -18,12 +18,14 @@ public class GenerateAst : ITool
             "Binary   : Expr Left, Token Operator, Expr Right",
             "Grouping : Expr Expression",
             "Literal  : object? Value",
-            "Unary    : Token Operator, Expr Right"
+            "Unary    : Token Operator, Expr Right",
+            "Variable : Token Name"
         ]);
 
         DefineAst(outputDir, "Stmt", [
             "Expression : Expr Body",
-            "Print      : Expr Right"
+            "Print      : Expr Right",
+            "Var        : Token Name, Expr Initializer"
         ]);
     }
 
