@@ -124,7 +124,11 @@ public class Scanner(string source)
                     break;
                 }
 
-                if (IsAlpha(c)) ConsumeIdentifier();
+                if (IsAlpha(c))
+                {
+                    ConsumeIdentifier();
+                    break;
+                }
 
                 Lox.Error(line, "Unexpected character.");
                 break;

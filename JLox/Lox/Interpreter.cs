@@ -3,8 +3,23 @@ using Lox.Errors;
 
 namespace Lox;
 
-public class Interpreter : Expr.IVisitor<object?>
+public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 {
+    public void Interpret(List<Stmt> statements)
+    {
+        try
+        {
+            foreach (var stmt in statements)
+            {
+                Execute(stmt);
+            }
+        }
+        catch (RuntimeError e)
+        {
+            Lox.RuntimeError(e);
+        }
+    }
+
     public object? VisitBinaryExpr(Expr.Binary expr)
     {
         var right = Evaluate(expr.Right);
@@ -17,7 +32,7 @@ public class Interpreter : Expr.IVisitor<object?>
                 return (double)left! * (double)right!;
             case TokenType.SLASH:
                 CheckNumberOperand(expr.Operator, left, right);
-                if ((double)right! != 0)  return (double)left! / (double)right;
+                if ((double)right! != 0) return (double)left! / (double)right;
                 throw new RuntimeError(expr.Operator, "Division by Zero.");
             case TokenType.MINUS:
                 CheckNumberOperand(expr.Operator, left, right);
@@ -25,7 +40,7 @@ public class Interpreter : Expr.IVisitor<object?>
             case TokenType.PLUS:
                 if (left is double leftNum && right is double rightNum) return leftNum + rightNum;
                 if (left is string leftStr && right is double rightNumStr) return leftStr + rightNumStr;
-                if (left is double leftNumStr && right is string rightStr) return leftNumStr+ rightStr;
+                if (left is double leftNumStr && right is string rightStr) return leftNumStr + rightStr;
                 throw new RuntimeError(expr.Operator, "Operands must be two numbers or at least one strings.");
             case TokenType.GREATER:
                 CheckNumberOperand(expr.Operator, left, right);
@@ -74,19 +89,24 @@ public class Interpreter : Expr.IVisitor<object?>
         }
     }
 
-    public void Interpret(Expr expr)
+    public Void? VisitExpressionStmt(Stmt.Expression stmt)
     {
-        try
-        {
-            var value = Evaluate(expr);
-            Console.WriteLine(Stringify(value));
-        }
-        catch (RuntimeError e)
-        {
-            Lox.RuntimeError(e);
-        }
+        Evaluate(stmt.Body);
+        return null;
     }
 
+    public Void? VisitPrintStmt(Stmt.Print stmt)
+    {
+        var value = Evaluate(stmt.Right);
+        Console.WriteLine(Stringify(value));
+        return null;
+    }
+
+    private void Execute(Stmt stmt)
+    {
+        stmt.Accept(this);
+    }
+    
     private object? Evaluate(Expr expr)
     {
         return expr.Accept(this);

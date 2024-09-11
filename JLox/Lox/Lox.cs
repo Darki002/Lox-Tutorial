@@ -1,11 +1,10 @@
 ﻿using Lox.Errors;
-using Lox.Expressions;
 
 namespace Lox;
 
 internal static class Lox
 {
-    private static readonly Interpreter interpreter = new Interpreter();
+    private static readonly Interpreter Interpreter = new Interpreter();
     
     private static bool hadError;
     private static bool hadRuntimeError;
@@ -53,11 +52,11 @@ internal static class Lox
         var tokens = scanner.ScanTokens();
 
         var parser = new Parser(tokens);
-        var expression = parser.Parse();
+        var statements = parser.Parse();
 
         if (hadError) return;
 
-        interpreter.Interpret(expression!);
+        Interpreter.Interpret(statements);
     }
 
     public static void Error(int line, string message)

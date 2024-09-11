@@ -6,18 +6,38 @@ public class Parser(List<Token> tokens)
 {
     private int current = 0;
 
-    public Expr? Parse()
+    public List<Stmt> Parse()
     {
-        try
+        var statements = new List<Stmt>();
+        
+        while (!IsAtEnd())
         {
-            return Expression();
+            statements.Add(Statement());
         }
-        catch (ParseError e)
-        {
-            return null;
-        }
+
+        return statements;
     }
-    
+
+    private Stmt Statement()
+    {
+        if (Match(TokenType.PRINT)) return PrintStatement();
+        return ExpressionStatement();
+    }
+
+    private Stmt ExpressionStatement()
+    {
+        var expr = Expression();
+        Consume(TokenType.SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Expression(expr);
+    }
+
+    private Stmt PrintStatement()
+    {
+        var expr = Expression();
+        Consume(TokenType.SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(expr);
+    }
+
     private Expr Expression()
     {
         return Equality();
@@ -154,7 +174,7 @@ public class Parser(List<Token> tokens)
 
     private bool IsAtEnd() => Peek().Type == TokenType.EOF;
 
-    private ParseError Error(Token token, string message)
+    private static ParseError Error(Token token, string message)
     {
         Lox.Error(token, message);
         return new ParseError();
