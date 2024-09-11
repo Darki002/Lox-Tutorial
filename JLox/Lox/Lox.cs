@@ -5,7 +5,6 @@ namespace Lox;
 internal static class Lox
 {
     private static readonly Interpreter Interpreter = new Interpreter();
-    private static readonly Environment Environment = new Environment();
     
     private static bool hadError;
     private static bool hadRuntimeError;

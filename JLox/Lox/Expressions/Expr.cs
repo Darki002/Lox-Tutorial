@@ -3,6 +3,14 @@ namespace Lox;
 
 public abstract record Expr
 {
+	public record Assign(Token Name, Expr Value) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitAssignExpr(this);
+		}
+	}
+
 	public record Binary(Expr Left, Token Operator, Expr Right) : Expr
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
@@ -47,6 +55,7 @@ public abstract record Expr
 
 	public interface IVisitor<out T>
 	{
+		T VisitAssignExpr (Assign expr);
 		T VisitBinaryExpr (Binary expr);
 		T VisitGroupingExpr (Grouping expr);
 		T VisitLiteralExpr (Literal expr);

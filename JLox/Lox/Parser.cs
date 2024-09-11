@@ -55,7 +55,6 @@ public class Parser(List<Token> tokens)
     private Stmt VarDeclaration()
     {
         var name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
-        Consume(TokenType.EQUAL, "Missing initialization.");
 
         Expr? initializer = null;
         if (Match(TokenType.EQUAL))
@@ -69,7 +68,28 @@ public class Parser(List<Token> tokens)
 
     private Expr Expression()
     {
-        return Equality();
+        return Assignment();
+    }
+
+    private Expr Assignment()
+    {
+        var expr = Equality();
+
+        if (Match(TokenType.EQUAL))
+        {
+            var equals = Previous();
+            var value = Assignment();
+
+            if (expr is Expr.Variable variable)
+            {
+                var name = variable.Name;
+                return new Expr.Assign(name, value);
+            }
+
+            Error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     private Expr Equality()

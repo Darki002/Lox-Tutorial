@@ -15,6 +15,7 @@ public class GenerateAst : ITool
         var outputDir = args[0];
 
         DefineAst(outputDir, "Expr", [
+            "Assign   : Token Name, Expr Value",
             "Binary   : Expr Left, Token Operator, Expr Right",
             "Grouping : Expr Expression",
             "Literal  : object? Value",

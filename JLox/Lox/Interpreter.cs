@@ -5,6 +5,8 @@ namespace Lox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 {
+    private readonly Environment environment = new Environment();
+    
     public void Interpret(List<Stmt> statements)
     {
         try
@@ -18,6 +20,13 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         {
             Lox.RuntimeError(e);
         }
+    }
+
+    public object? VisitAssignExpr(Expr.Assign expr)
+    {
+        var value = Evaluate(expr.Value);
+        environment.Assign(expr.Name, value);
+        return value;
     }
 
     public object? VisitBinaryExpr(Expr.Binary expr)
@@ -91,7 +100,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
     public object? VisitVariableExpr(Expr.Variable expr)
     {
-        throw new NotImplementedException();
+        return environment.Get(expr.Name);
     }
 
     public Void? VisitExpressionStmt(Stmt.Expression stmt)
@@ -109,7 +118,14 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
     public Void? VisitVarStmt(Stmt.Var stmt)
     {
-        throw new NotImplementedException();
+        object? initializer = null;
+        if (stmt.Initializer is not null)
+        {
+            initializer = Evaluate(stmt.Initializer);
+        }
+        
+        environment.Define(stmt.Name.Lexeme, initializer);
+        return null;
     }
 
     private void Execute(Stmt stmt)
