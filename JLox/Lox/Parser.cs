@@ -34,8 +34,20 @@ public class Parser(List<Token> tokens)
 
     private Stmt Statement()
     {
+        if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(BlockStatement());
         if (Match(TokenType.PRINT)) return PrintStatement();
         return ExpressionStatement();
+    }
+
+    private List<Stmt> BlockStatement()
+    {
+        var statements = new List<Stmt>();
+        
+        while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
+            statements.Add(Statement());
+
+        Consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
     }
 
     private Stmt ExpressionStatement()

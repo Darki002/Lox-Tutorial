@@ -5,7 +5,7 @@ namespace Lox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 {
-    private readonly Environment environment = new Environment();
+    private Environment environment = new Environment();
     
     public void Interpret(List<Stmt> statements)
     {
@@ -74,7 +74,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
     public object? VisitGroupingExpr(Expr.Grouping expr)
     {
-        return Evaluate(expr.Expression);
+        return Evaluate(expr);
     }
 
     public object? VisitLiteralExpr(Expr.Literal expr)
@@ -103,6 +103,12 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return environment.Get(expr.Name);
     }
 
+    public Void? VisitBlockStmt(Stmt.Block stmt)
+    {
+        ExecuteBlock(stmt.Statements, new Environment(environment));
+        return null;
+    }
+
     public Void? VisitExpressionStmt(Stmt.Expression stmt)
     {
         Evaluate(stmt.Body);
@@ -127,15 +133,32 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         environment.Define(stmt.Name.Lexeme, initializer);
         return null;
     }
+    
+    private object? Evaluate(Expr expr)
+    {
+        return expr.Accept(this);
+    }
 
     private void Execute(Stmt stmt)
     {
         stmt.Accept(this);
     }
     
-    private object? Evaluate(Expr expr)
+    private void ExecuteBlock(List<Stmt> stmts, Environment env)
     {
-        return expr.Accept(this);
+        var previous = environment;
+        try
+        {
+            environment = env;
+            foreach (var stmt in stmts)
+            {
+                Execute(stmt);
+            }
+        }
+        finally
+        {
+            environment = previous;
+        }
     }
 
     private static bool IsTruthy(object? right)
