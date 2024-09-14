@@ -115,6 +115,11 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return null;
     }
 
+    public Void? VisitIfStmt(Stmt.If stmt)
+    {
+        throw new NotImplementedException();
+    }
+
     public Void? VisitPrintStmt(Stmt.Print stmt)
     {
         var value = Evaluate(stmt.Right);

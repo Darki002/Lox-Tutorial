@@ -19,6 +19,14 @@ public abstract record Stmt
 		}
 	}
 
+	public record If(Expr Condition, Stmt ThenBranch, Stmt? ElseBranch) : Stmt
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitIfStmt(this);
+		}
+	}
+
 	public record Print(Expr Right) : Stmt
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
@@ -41,6 +49,7 @@ public abstract record Stmt
 	{
 		T VisitBlockStmt (Block stmt);
 		T VisitExpressionStmt (Expression stmt);
+		T VisitIfStmt (If stmt);
 		T VisitPrintStmt (Print stmt);
 		T VisitVarStmt (Var stmt);
 	}

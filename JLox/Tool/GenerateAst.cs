@@ -26,6 +26,7 @@ public class GenerateAst : ITool
         DefineAst(outputDir, "Stmt", [
             "Block      : List<Stmt> Statements",
             "Expression : Expr Body",
+            "If         : Expr Condition, Stmt ThenBranch, Stmt? ElseBranch",
             "Print      : Expr Right",
             "Var        : Token Name, Expr? Initializer"
         ]);
