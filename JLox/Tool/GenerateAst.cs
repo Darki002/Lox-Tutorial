@@ -19,6 +19,7 @@ public class GenerateAst : ITool
             "Binary   : Expr Left, Token Operator, Expr Right",
             "Grouping : Expr Expression",
             "Literal  : object? Value",
+            "Logical  : Expr Left, Token Operator, Expr Right",
             "Unary    : Token Operator, Expr Right",
             "Variable : Token Name"
         ]);
@@ -28,7 +29,9 @@ public class GenerateAst : ITool
             "Expression : Expr Body",
             "If         : Expr Condition, Stmt ThenBranch, Stmt? ElseBranch",
             "Print      : Expr Right",
-            "Var        : Token Name, Expr? Initializer"
+            "Var        : Token Name, Expr? Initializer",
+            "While      : Expr Condition, Stmt Body",
+            "Break      : Token Body"
         ]);
     }
 

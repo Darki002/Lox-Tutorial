@@ -43,6 +43,22 @@ public abstract record Stmt
 		}
 	}
 
+	public record While(Expr Condition, Stmt Body) : Stmt
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitWhileStmt(this);
+		}
+	}
+
+	public record Break(Token Body) : Stmt
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitBreakStmt(this);
+		}
+	}
+
 	public abstract T Accept<T>(IVisitor<T> visitor);
 
 	public interface IVisitor<out T>
@@ -52,5 +68,7 @@ public abstract record Stmt
 		T VisitIfStmt (If stmt);
 		T VisitPrintStmt (Print stmt);
 		T VisitVarStmt (Var stmt);
+		T VisitWhileStmt (While stmt);
+		T VisitBreakStmt (Break stmt);
 	}
 }

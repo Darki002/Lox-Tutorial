@@ -82,6 +82,22 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return expr.Value;
     }
 
+    public object? VisitLogicalExpr(Expr.Logical expr)
+    {
+        var left = Evaluate(expr.Left);
+
+        if (expr.Operator.Type == TokenType.OR)
+        {
+            if (IsTruthy(left)) return left;
+        }
+        else
+        {
+            if (!IsTruthy(left)) return left;
+        }
+
+        return Evaluate(expr.Right);
+    }
+
     public object? VisitUnaryExpr(Expr.Unary expr)
     {
         var right = Evaluate(expr.Right);
@@ -117,7 +133,16 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
     public Void? VisitIfStmt(Stmt.If stmt)
     {
-        throw new NotImplementedException();
+        if (IsTruthy(Evaluate(stmt.Condition)))
+        {
+            Execute(stmt.ThenBranch);
+        }
+        else if (stmt.ElseBranch is not null)
+        {
+            Execute(stmt.ElseBranch);
+        }
+
+        return null;
     }
 
     public Void? VisitPrintStmt(Stmt.Print stmt)
@@ -138,7 +163,29 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         environment.Define(stmt.Name.Lexeme, initializer);
         return null;
     }
-    
+
+    public Void? VisitWhileStmt(Stmt.While stmt)
+    {
+        while (IsTruthy(Evaluate(stmt.Condition)))
+        {
+            try
+            {
+                Execute(stmt.Body);
+            }
+            catch (BreakException)
+            {
+                break;
+            }
+        }
+
+        return null;
+    }
+
+    public Void? VisitBreakStmt(Stmt.Break stmt)
+    {
+        throw new BreakException();
+    }
+
     private object? Evaluate(Expr expr)
     {
         return expr.Accept(this);
@@ -170,8 +217,6 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
     {
         if (right is null) return false;
         if (right is bool boolean) return boolean;
-
-
         return true;
     }
 

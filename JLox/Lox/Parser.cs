@@ -34,15 +34,69 @@ public class Parser(List<Token> tokens)
 
     private Stmt Statement()
     {
+        if (Match(TokenType.FOR)) return ForStatement();
         if (Match(TokenType.IF)) return IfStatement();
         if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(BlockStatement());
         if (Match(TokenType.PRINT)) return PrintStatement();
+        if (Match(TokenType.WHILE)) return WhileStatement();
+        if (Match(TokenType.BREAK)) return BreakStatement();
         return ExpressionStatement();
+    }
+
+    private Stmt ForStatement()
+    {
+        Consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.");
+
+        Stmt? initializer;
+        if (Match(TokenType.SEMICOLON))
+        {
+            initializer = null;
+        }
+        else if (Match(TokenType.VAR))
+        {
+            initializer = Declaration();
+        }
+        else
+        {
+            initializer = ExpressionStatement();
+        }
+
+        Expr? condition = null;
+        if (!Check(TokenType.SEMICOLON))
+        {
+            condition = Expression();
+        }
+
+        Consume(TokenType.SEMICOLON, "Expect ';' after loop condition.");
+
+        Expr? increment = null;
+        if (!Check(TokenType.SEMICOLON))
+        {
+            increment = Expression();
+        }
+        Consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        var body = Statement();
+
+        if (increment != null)
+        {
+            body = new Stmt.Block([body, new Stmt.Expression(increment)]);
+        }
+
+        condition ??= new Expr.Literal(true);
+        body = new Stmt.While(condition, body);
+
+        if (initializer != null)
+        {
+            body = new Stmt.Block([initializer, body]);
+        }
+        
+        return body;
     }
 
     private Stmt IfStatement()
     {
-        Consume(TokenType.LEFT_PAREN, "Expect '(' after if.");
+        Consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.");
         var expr = Expression();
         Consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.");
 
@@ -81,6 +135,24 @@ public class Parser(List<Token> tokens)
         return new Stmt.Print(expr);
     }
     
+    private Stmt WhileStatement()
+    {
+        Consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
+        var condition = Expression();
+        Consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.");
+
+        var body = Statement();
+
+        return new Stmt.While(condition, body);
+    }
+    
+    private Stmt BreakStatement()
+    {
+        var token = Previous();
+        Consume(TokenType.SEMICOLON, "Expect ';' after 'break'.");
+        return new Stmt.Break(token);
+    }
+    
     private Stmt VarDeclaration()
     {
         var name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
@@ -102,7 +174,7 @@ public class Parser(List<Token> tokens)
 
     private Expr Assignment()
     {
-        var expr = Equality();
+        var expr = LogicalOr();
 
         if (Match(TokenType.EQUAL))
         {
@@ -119,6 +191,34 @@ public class Parser(List<Token> tokens)
         }
 
         return expr;
+    }
+
+    private Expr LogicalOr()
+    {
+        var left = LogicalAnd();
+
+        while (Match(TokenType.OR))
+        {
+            var opr = Previous();
+            var right = LogicalAnd();
+            left = new Expr.Logical(left, opr, right);
+        }
+
+        return left;
+    }
+
+    private Expr LogicalAnd()
+    {
+        var left = Equality();
+        
+        while (Match(TokenType.AND))
+        {
+            var opr = Previous();
+            var right = Equality();
+            left = new Expr.Logical(left, opr, right);
+        }
+
+        return left;
     }
 
     private Expr Equality()
