@@ -51,6 +51,14 @@ public abstract record Expr
 		}
 	}
 
+	public record Call(Expr Callee, Token Paren, List<Expr> Arguments) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitCallExpr(this);
+		}
+	}
+
 	public record Variable(Token Name) : Expr
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
@@ -69,6 +77,7 @@ public abstract record Expr
 		T VisitLiteralExpr (Literal expr);
 		T VisitLogicalExpr (Logical expr);
 		T VisitUnaryExpr (Unary expr);
+		T VisitCallExpr (Call expr);
 		T VisitVariableExpr (Variable expr);
 	}
 }

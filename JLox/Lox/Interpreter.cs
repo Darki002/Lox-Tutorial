@@ -1,11 +1,21 @@
 ﻿using System.Globalization;
+using Lox.Callables;
 using Lox.Errors;
 
 namespace Lox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 {
-    private Environment environment = new Environment();
+    private readonly Environment globals;
+    private Environment environment;
+
+    public Interpreter()
+    {
+        globals = new Environment();
+        environment = globals;
+        
+        globals.Define("clock", new Clock());
+    }
     
     public void Interpret(List<Stmt> statements)
     {
@@ -112,6 +122,29 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             default:
                 return null; // Unreachable (Unary always have BANG or MINUS as the Operator)
         }
+    }
+
+    public object? VisitCallExpr(Expr.Call expr)
+    {
+        var callee = Evaluate(expr.Callee);
+        List<object?> arguments = [];
+        
+        foreach (var argument in expr.Arguments)
+        {
+            arguments.Add(Evaluate(argument));
+        }
+
+        if (callee is not ILoxCallable function)
+        {
+            throw new RuntimeError(expr.Paren, "Can only call functions and classes.");
+        }
+
+        if (function.Arity != arguments.Count)
+        {
+            throw new RuntimeError(expr.Paren, $"Expected {function.Arity} arguments but got {arguments.Count}.");
+        }
+
+        return function!.Call(this, arguments);
     }
 
     public object? VisitVariableExpr(Expr.Variable expr)
