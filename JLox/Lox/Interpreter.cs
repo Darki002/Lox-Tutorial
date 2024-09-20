@@ -6,15 +6,15 @@ namespace Lox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 {
-    private readonly Environment globals;
+    public readonly Environment Globals;
     private Environment environment;
 
     public Interpreter()
     {
-        globals = new Environment();
-        environment = globals;
+        Globals = new Environment();
+        environment = Globals;
         
-        globals.Define("clock", new Clock());
+        Globals.Define("clock", new Clock());
     }
     
     public void Interpret(List<Stmt> statements)
@@ -164,6 +164,13 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return null;
     }
 
+    public Void? VisitFunctionStmt(Stmt.Function stmt)
+    {
+        var function = new LoxFunction(stmt);
+        environment.Define(stmt.Name.Lexeme, function);
+        return null;
+    }
+
     public Void? VisitIfStmt(Stmt.If stmt)
     {
         if (IsTruthy(Evaluate(stmt.Condition)))
@@ -229,7 +236,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         stmt.Accept(this);
     }
     
-    private void ExecuteBlock(List<Stmt> stmts, Environment env)
+    public void ExecuteBlock(List<Stmt> stmts, Environment env)
     {
         var previous = environment;
         try

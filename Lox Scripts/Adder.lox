@@ -1,0 +1,8 @@
+var num = 10;
+
+fun add(a, b)
+{
+    print num + a + b;
+}
+
+add(20, 5);
