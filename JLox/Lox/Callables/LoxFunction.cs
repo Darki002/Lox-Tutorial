@@ -1,4 +1,6 @@
-﻿namespace Lox.Callables;
+﻿using Lox.Errors;
+
+namespace Lox.Callables;
 
 public class LoxFunction(Stmt.Function declaration) : ILoxCallable
 {
@@ -12,8 +14,17 @@ public class LoxFunction(Stmt.Function declaration) : ILoxCallable
             .Zip(arguments)
             .ToList()
             .ForEach(zip => env.Define(zip.First.Lexeme, zip.Second));
+
+
+        try
+        {
+            interpreter.ExecuteBlock(declaration.Body, env);
+        }
+        catch (Return e)
+        {
+            return e.Value;
+        }
         
-        interpreter.ExecuteBlock(declaration.Body, env);
         return null;
     }
 

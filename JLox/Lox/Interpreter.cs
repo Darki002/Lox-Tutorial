@@ -192,6 +192,12 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return null;
     }
 
+    public Void? VisitReturnStmt(Stmt.Return stmt)
+    {
+        var value = stmt.Value != null ? Evaluate(stmt.Value) : null;
+        throw new Return(value);
+    }
+
     public Void? VisitVarStmt(Stmt.Var stmt)
     {
         object? initializer = null;
@@ -212,7 +218,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             {
                 Execute(stmt.Body);
             }
-            catch (BreakException)
+            catch (Break)
             {
                 break;
             }
@@ -223,7 +229,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
     public Void? VisitBreakStmt(Stmt.Break stmt)
     {
-        throw new BreakException();
+        throw new Break();
     }
 
     private object? Evaluate(Expr expr)

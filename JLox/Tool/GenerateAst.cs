@@ -31,6 +31,7 @@ public class GenerateAst : ITool
             "Function   : Token Name, List<Token> Params, List<Stmt> Body",
             "If         : Expr Condition, Stmt ThenBranch, Stmt? ElseBranch",
             "Print      : Expr Right",
+            "Return     : Token Keyword, Expr? Value",
             "Var        : Token Name, Expr? Initializer",
             "While      : Expr Condition, Stmt Body",
             "Break      : Token Body"

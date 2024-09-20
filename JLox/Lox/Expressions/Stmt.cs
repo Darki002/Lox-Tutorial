@@ -43,6 +43,14 @@ public abstract record Stmt
 		}
 	}
 
+	public record Return(Token Keyword, Expr? Value) : Stmt
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitReturnStmt(this);
+		}
+	}
+
 	public record Var(Token Name, Expr? Initializer) : Stmt
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
@@ -59,7 +67,7 @@ public abstract record Stmt
 		}
 	}
 
-	public record Break(Token Body) : Stmt
+	public record Break : Stmt
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
@@ -76,6 +84,7 @@ public abstract record Stmt
 		T VisitFunctionStmt (Function stmt);
 		T VisitIfStmt (If stmt);
 		T VisitPrintStmt (Print stmt);
+		T VisitReturnStmt (Return stmt);
 		T VisitVarStmt (Var stmt);
 		T VisitWhileStmt (While stmt);
 		T VisitBreakStmt (Break stmt);

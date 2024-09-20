@@ -6,6 +6,8 @@ public class Parser(List<Token> tokens)
 {
     private int current = 0;
 
+    private bool inLoop = false;
+
     public List<Stmt?> Parse()
     {
         var statements = new List<Stmt?>();
@@ -39,6 +41,7 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.IF)) return IfStatement();
         if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(BlockStatement());
         if (Match(TokenType.PRINT)) return PrintStatement();
+        if (Match(TokenType.RETURN)) return ReturnStatement();
         if (Match(TokenType.WHILE)) return WhileStatement();
         if (Match(TokenType.BREAK)) return BreakStatement();
         return ExpressionStatement();
@@ -46,6 +49,7 @@ public class Parser(List<Token> tokens)
 
     private Stmt ForStatement()
     {
+        inLoop = true;
         Consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.");
 
         Stmt? initializer;
@@ -55,7 +59,7 @@ public class Parser(List<Token> tokens)
         }
         else if (Match(TokenType.VAR))
         {
-            initializer = Declaration();
+            initializer = VarDeclaration();
         }
         else
         {
@@ -92,6 +96,7 @@ public class Parser(List<Token> tokens)
             body = new Stmt.Block([initializer, body]);
         }
         
+        inLoop = false;
         return body;
     }
 
@@ -136,25 +141,42 @@ public class Parser(List<Token> tokens)
         return new Stmt.Print(expr);
     }
     
+    private Stmt ReturnStatement()
+    {
+        var keyword = Previous();
+        var expr = Peek().Type == TokenType.SEMICOLON ? null : Expression();
+        
+        Consume(TokenType.SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, expr);
+    }
+    
     private Stmt WhileStatement()
     {
+        inLoop = true;
         Consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
         var condition = Expression();
         Consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.");
 
         var body = Statement();
 
+        inLoop = false;
         return new Stmt.While(condition, body);
     }
     
     private Stmt BreakStatement()
     {
         var token = Previous();
+        
+        if (!inLoop)
+        {
+            Error(token, "A break statement is not allowed outside of a loop.");
+        }
+        
         Consume(TokenType.SEMICOLON, "Expect ';' after 'break'.");
-        return new Stmt.Break(token);
+        return new Stmt.Break();
     }
     
-    private Stmt? FunctionDeclaration(string kind)
+    private Stmt FunctionDeclaration(string kind)
     {
         var name = Consume(TokenType.IDENTIFIER, $"Expect {kind} name.");
         Consume(TokenType.LEFT_PAREN, $"Expect '(' after {kind} name.");
