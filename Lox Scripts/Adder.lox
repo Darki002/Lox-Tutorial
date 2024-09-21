@@ -1,8 +1,9 @@
 var num = 10;
 
-fun add(a, b)
-{
-    print num + a + b;
+fun add(a, b) {
+    for (var i = 0; i < a; i = i + 1){
+        print num + b + i;
+    }
 }
 
 add(20, 5);
