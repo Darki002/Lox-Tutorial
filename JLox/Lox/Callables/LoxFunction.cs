@@ -2,13 +2,13 @@
 
 namespace Lox.Callables;
 
-public class LoxFunction(Stmt.Function declaration) : ILoxCallable
+public class LoxFunction(Stmt.Function declaration, Environment closure) : ILoxCallable
 {
     public int Arity => declaration.Params.Count;
     
     public object? Call(Interpreter interpreter, List<object?> arguments)
     {
-        var env = new Environment(interpreter.Globals);
+        var env = new Environment(closure);
 
         declaration.Params
             .Zip(arguments)

@@ -144,7 +144,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             throw new RuntimeError(expr.Paren, $"Expected {function.Arity} arguments but got {arguments.Count}.");
         }
 
-        return function!.Call(this, arguments);
+        return function.Call(this, arguments);
     }
 
     public object? VisitVariableExpr(Expr.Variable expr)
@@ -166,7 +166,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
     public Void? VisitFunctionStmt(Stmt.Function stmt)
     {
-        var function = new LoxFunction(stmt);
+        var function = new LoxFunction(stmt, environment);
         environment.Define(stmt.Name.Lexeme, function);
         return null;
     }
