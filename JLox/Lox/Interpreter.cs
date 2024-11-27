@@ -58,9 +58,8 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
                 return (double)left! - (double)right!;
             case TokenType.PLUS:
                 if (left is double leftNum && right is double rightNum) return leftNum + rightNum;
-                if (left is string leftStr && right is double rightNumStr) return leftStr + rightNumStr;
-                if (left is double leftNumStr && right is string rightStr) return leftNumStr + rightStr;
-                throw new RuntimeError(expr.Operator, "Operands must be two numbers or at least one strings.");
+                if (left is string leftStr && right is string rightStr) return leftStr + rightStr;
+                throw new RuntimeError(expr.Operator, "Operands must be two numbers or two strings.");
             case TokenType.GREATER:
                 CheckNumberOperand(expr.Operator, left, right);
                 return (double)left! > (double)right!;

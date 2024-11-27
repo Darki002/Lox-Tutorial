@@ -2,7 +2,7 @@ namespace Lox;
 
 public class Scanner(string source)
 {
-    private readonly Dictionary<string, TokenType> keywords = new Dictionary<string, TokenType>
+    private readonly Dictionary<string, TokenType> keywords = new()
     {
         { "and", TokenType.AND },
         { "class", TokenType.CLASS },
@@ -43,7 +43,7 @@ public class Scanner(string source)
     private void ScanToken()
     {
         var c = Advance();
-
+        
         switch (c)
         {
             case '(':
