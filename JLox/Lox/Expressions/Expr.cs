@@ -67,6 +67,14 @@ public abstract record Expr
 		}
 	}
 
+	public record Function(List<Token> Params, List<Stmt> Body) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitFunctionExpr(this);
+		}
+	}
+
 	public abstract T Accept<T>(IVisitor<T> visitor);
 
 	public interface IVisitor<out T>
@@ -79,5 +87,6 @@ public abstract record Expr
 		T VisitUnaryExpr (Unary expr);
 		T VisitCallExpr (Call expr);
 		T VisitVariableExpr (Variable expr);
+		T VisitFunctionExpr (Function expr);
 	}
 }

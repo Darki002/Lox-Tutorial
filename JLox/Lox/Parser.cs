@@ -100,7 +100,7 @@ public class Parser(List<Token> tokens)
         return body;
     }
 
-    private Stmt IfStatement()
+    private Stmt.If IfStatement()
     {
         Consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.");
         var expr = Expression();
@@ -127,21 +127,21 @@ public class Parser(List<Token> tokens)
         return statements;
     }
 
-    private Stmt ExpressionStatement()
+    private Stmt.Expression ExpressionStatement()
     {
         var expr = Expression();
         Consume(TokenType.SEMICOLON, "Expect ';' after value.");
         return new Stmt.Expression(expr);
     }
 
-    private Stmt PrintStatement()
+    private Stmt.Print PrintStatement()
     {
         var expr = Expression();
         Consume(TokenType.SEMICOLON, "Expect ';' after value.");
         return new Stmt.Print(expr);
     }
     
-    private Stmt ReturnStatement()
+    private Stmt.Return ReturnStatement()
     {
         var keyword = Previous();
         var expr = Peek().Type == TokenType.SEMICOLON ? null : Expression();
@@ -150,7 +150,7 @@ public class Parser(List<Token> tokens)
         return new Stmt.Return(keyword, expr);
     }
     
-    private Stmt WhileStatement()
+    private Stmt.While WhileStatement()
     {
         inLoop = true;
         Consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
@@ -163,7 +163,7 @@ public class Parser(List<Token> tokens)
         return new Stmt.While(condition, body);
     }
     
-    private Stmt BreakStatement()
+    private Stmt.Break BreakStatement()
     {
         var token = Previous();
         
@@ -176,11 +176,21 @@ public class Parser(List<Token> tokens)
         return new Stmt.Break();
     }
     
-    private Stmt FunctionDeclaration(string kind)
+    private Stmt.Function FunctionDeclaration(string kind)
     {
-        var name = Consume(TokenType.IDENTIFIER, $"Expect {kind} name.");
-        Consume(TokenType.LEFT_PAREN, $"Expect '(' after {kind} name.");
+        Token name;
 
+        if (kind == "function")
+        {
+            name = Consume(TokenType.IDENTIFIER, $"Expect {kind} name.");
+            Consume(TokenType.LEFT_PAREN, $"Expect '(' after {kind} name."); 
+        }
+        else
+        {
+            Consume(TokenType.LEFT_PAREN, $"Expect '(' after 'fun' for {kind}."); 
+            name = new Token(TokenType.IDENTIFIER, "", null, 0);
+        }
+        
         List<Token> parameters = [];
         if (!Check(TokenType.RIGHT_PAREN))
         {
@@ -200,7 +210,7 @@ public class Parser(List<Token> tokens)
         return new Stmt.Function(name, parameters, body);
     }
     
-    private Stmt VarDeclaration()
+    private Stmt.Var VarDeclaration()
     {
         var name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
 
@@ -350,7 +360,7 @@ public class Parser(List<Token> tokens)
         return expr;
     }
 
-    private Expr FinishCall(Expr expr)
+    private Expr.Call FinishCall(Expr expr)
     {
         var arguments = new List<Expr>();
 
@@ -389,6 +399,12 @@ public class Parser(List<Token> tokens)
             var expr = Expression();
             Consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
             return new Expr.Grouping(expr);
+        }
+
+        if (Match(TokenType.FUN))
+        {
+            var function = FunctionDeclaration("anonymous functions");
+            return new Expr.Function(function.Params, function.Body);
         }
 
         throw Error(Peek(), "Expect expression.");

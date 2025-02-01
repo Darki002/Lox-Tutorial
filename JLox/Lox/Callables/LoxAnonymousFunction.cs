@@ -2,7 +2,7 @@
 
 namespace Lox.Callables;
 
-public class LoxFunction(Stmt.Function declaration, Environment closure) : ILoxCallable
+public class LoxAnonymousFunction(Expr.Function declaration, Environment closure) : ILoxCallable
 {
     public int Arity => declaration.Params.Count;
     
@@ -29,6 +29,6 @@ public class LoxFunction(Stmt.Function declaration, Environment closure) : ILoxC
 
     public override string ToString()
     {
-        return $"<fn {declaration.Name.Lexeme}>";
+        return "<anonymous fn>";
     }
 }

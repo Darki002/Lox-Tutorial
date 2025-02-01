@@ -22,7 +22,8 @@ public class GenerateAst : ITool
             "Logical  : Expr Left, Token Operator, Expr Right",
             "Unary    : Token Operator, Expr Right",
             "Call     : Expr Callee, Token Paren, List<Expr> Arguments",
-            "Variable : Token Name"
+            "Variable : Token Name",
+            "Function : List<Token> Params, List<Stmt> Body"
         ]);
 
         DefineAst(outputDir, "Stmt", [
@@ -34,7 +35,7 @@ public class GenerateAst : ITool
             "Return     : Token Keyword, Expr? Value",
             "Var        : Token Name, Expr? Initializer",
             "While      : Expr Condition, Stmt Body",
-            "Break      : Token Body"
+            "Break      : "
         ]);
     }
 

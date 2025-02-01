@@ -151,6 +151,11 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return environment.Get(expr.Name);
     }
 
+    public object VisitFunctionExpr(Expr.Function expr)
+    {
+        return new LoxAnonymousFunction(expr, environment);
+    }
+
     public Void? VisitBlockStmt(Stmt.Block stmt)
     {
         ExecuteBlock(stmt.Statements, new Environment(environment));
