@@ -39,7 +39,7 @@ public class Parser(List<Token> tokens)
     {
         if (Match(TokenType.FOR)) return ForStatement();
         if (Match(TokenType.IF)) return IfStatement();
-        if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(BlockStatement());
+        if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(Block());
         if (Match(TokenType.PRINT)) return PrintStatement();
         if (Match(TokenType.RETURN)) return ReturnStatement();
         if (Match(TokenType.WHILE)) return WhileStatement();
@@ -116,7 +116,7 @@ public class Parser(List<Token> tokens)
         return new Stmt.If(expr, thenBranch, elseStatement);
     }
 
-    private List<Stmt> BlockStatement()
+    private List<Stmt> Block()
     {
         var statements = new List<Stmt>();
         
@@ -206,7 +206,7 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
 
         Consume(TokenType.LEFT_BRACE, $"Expect '{{' before {kind} body.");
-        var body = BlockStatement();
+        var body = Block();
         return new Stmt.Function(name, parameters, body);
     }
     
