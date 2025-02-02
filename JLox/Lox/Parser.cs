@@ -24,7 +24,7 @@ public class Parser(List<Token> tokens)
     {
         try
         {
-            if (Match(TokenType.FUN)) return FunctionDeclaration("function");
+            if (Match(TokenType.FUN)) return Function("function");
             if (Match(TokenType.VAR)) return VarDeclaration();
             return Statement();
         }
@@ -121,7 +121,7 @@ public class Parser(List<Token> tokens)
         var statements = new List<Stmt>();
         
         while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
-            statements.Add(Statement());
+            statements.Add(Declaration()!); // Null suppression could lead to edge cases after Synchronize returns null in interpreter could hit null pointer
 
         Consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
         return statements;
@@ -176,7 +176,7 @@ public class Parser(List<Token> tokens)
         return new Stmt.Break();
     }
     
-    private Stmt.Function FunctionDeclaration(string kind)
+    private Stmt.Function Function(string kind)
     {
         Token name;
 
@@ -403,7 +403,7 @@ public class Parser(List<Token> tokens)
 
         if (Match(TokenType.FUN))
         {
-            var function = FunctionDeclaration("anonymous functions");
+            var function = Function("anonymous functions");
             return new Expr.Function(function.Params, function.Body);
         }
 
