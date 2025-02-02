@@ -62,7 +62,9 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitAssignExpr(Expr.Assign expr)
     {
-        throw new NotImplementedException();
+        Resolve(expr.Value);
+        ResolveLocal(expr, expr.Name);
+        return null;
     }
 
     public Void? VisitBinaryExpr(Expr.Binary expr)
@@ -97,7 +99,13 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitVariableExpr(Expr.Variable expr)
     {
-        throw new NotImplementedException();
+        if (scopes.Count > 0 && scopes.Peek()[expr.Name.Lexeme] == false)
+        {
+            Lox.Error(expr.Name, "Can't read local variable in its own initializer.");
+        }
+
+        ResolveLocal(expr, expr.Name);
+        return null;
     }
 
     public Void? VisitFunctionExpr(Expr.Function expr)
@@ -105,16 +113,26 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         throw new NotImplementedException();
     }
 
-    private void BeginScope()
+    private void Declare(Token name)
     {
-        scopes.Push(new Dictionary<string, bool>());
+        if (scopes.Count < 1) return;
+
+        var scope = scopes.Peek();
+        scope.Add(name.Lexeme, false);
     }
-    
-    private void EndScope() {
-        scopes.Pop();
+
+    private void Define(Token name)
+    {
+        if (scopes.Count < 1) return;
+        scopes.Peek()[name.Lexeme] = true;
     }
-    
-    private void Resolve(List<Stmt> statements) {
+
+    private void BeginScope() => scopes.Push(new Dictionary<string, bool>());
+
+    private void EndScope() => scopes.Pop();
+
+    private void Resolve(List<Stmt> statements)
+    {
         foreach (var statement in statements)
         {
             Resolve(statement);
@@ -122,6 +140,18 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     }
 
     private void Resolve(Stmt stmt) => stmt.Accept(this);
-    
+
     private void Resolve(Expr expr) => expr.Accept(this);
+
+    private void ResolveLocal(Expr expr, Token name)
+    {
+        for (var i = scopes.Count - 1; i > 0; i--)
+        {
+            if (scopes.ElementAt(i).ContainsKey(name.Lexeme))
+            {
+                interpreter.Resolve(expr, scopes.Count - 1 - i);
+                return;
+            }
+        }
+    }
 }
