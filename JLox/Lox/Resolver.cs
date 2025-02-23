@@ -2,7 +2,7 @@
 
 public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {
-    private readonly Stack<Dictionary<string, bool>> scopes = new Stack<Dictionary<string, bool>>();
+    private readonly Stack<Dictionary<string, Variable>> scopes = new();
     private FunctionType currentFunction = FunctionType.NONE;
 
     public void Start(List<Stmt?> statements)
@@ -138,7 +138,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitVariableExpr(Expr.Variable expr)
     {
-        if (scopes.Count > 0 && scopes.Peek()[expr.Name.Lexeme] == false)
+        if (scopes.Count > 0 && scopes.Peek()[expr.Name.Lexeme].IsDefine)
         {
             Lox.Error(expr.Name, "Can't read local variable in its own initializer.");
         }
@@ -172,18 +172,28 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
             Lox.Error(name, "Already a variable with this name in this scope.");
         }
         
-        scope.Add(name.Lexeme, false);
+        scope.Add(name.Lexeme, new Variable(name));
     }
 
     private void Define(Token name)
     {
         if (scopes.Count < 1) return;
-        scopes.Peek()[name.Lexeme] = true;
+        scopes.Peek()[name.Lexeme].IsDefine = true;
     }
 
-    private void BeginScope() => scopes.Push(new Dictionary<string, bool>());
+    private void BeginScope() => scopes.Push(new());
 
-    private void EndScope() => scopes.Pop();
+    private void EndScope()
+    {
+        var scope = scopes.Pop();
+        foreach (var variable in scope)
+        {
+            if (variable.Value.IsUsed)
+            {
+                Lox.Warn(variable.Value.Token, "Variable is not being used inside of it's scope.");
+            }
+        }
+    }
 
 
     private void Resolve(Stmt stmt) => stmt.Accept(this);
@@ -196,8 +206,9 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     {
         for (var i = scopes.Count - 1; i > 0; i--)
         {
-            if (scopes.ElementAt(i).ContainsKey(name.Lexeme))
+            if (scopes.ElementAt(i).TryGetValue(name.Lexeme, out var value))
             {
+                value.IsUsed = true;
                 interpreter.Resolve(expr, scopes.Count - 1 - i);
                 return;
             }
@@ -226,5 +237,14 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         NONE,
         FUNCTION,
         WHILE
+    }
+    
+    private class Variable(Token token)
+    {
+        public bool IsDefine { get; set; } = false;
+
+        public bool IsUsed { get; set; } = false;
+
+        public Token Token { get; } = token;
     }
 }

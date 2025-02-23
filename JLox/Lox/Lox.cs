@@ -63,18 +63,26 @@ internal static class Lox
         
         Interpreter.Interpret(statements!);
     }
+    
+    public static void Warn(Token token, string message)
+    {
+        if (token.Type == TokenType.EOF)
+            ReportWarning(token.Line, " at end", message);
+        else
+            ReportWarning(token.Line, $" at '{token.Lexeme}'", message);
+    }
 
     public static void Error(int line, string message)
     {
-        Report(line, string.Empty, message);
+        ReportError(line, string.Empty, message);
     }
 
     public static void Error(Token token, string message)
     {
         if (token.Type == TokenType.EOF)
-            Report(token.Line, " at end", message);
+            ReportError(token.Line, " at end", message);
         else
-            Report(token.Line, $" at '{token.Lexeme}'", message);
+            ReportError(token.Line, $" at '{token.Lexeme}'", message);
     }
 
     public static void RuntimeError(RuntimeError runtimeError)
@@ -83,9 +91,15 @@ internal static class Lox
         hadRuntimeError = true;
     }
 
-    private static void Report(int line, string where, string message)
+    private static void ReportError(int line, string where, string message)
     {
         Console.WriteLine($"[Line {line}] Error {where}: {message}");
+        hadError = true;
+    }
+    
+    private static void ReportWarning(int line, string where, string message)
+    {
+        Console.WriteLine($"[Line {line}] Warning {where}: {message}");
         hadError = true;
     }
 }
