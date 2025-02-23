@@ -56,6 +56,11 @@ internal static class Lox
 
         if (hadError) return;
 
+        var resolver = new Resolver(Interpreter);
+        resolver.Start(statements);
+        
+        if (hadError) return;
+        
         Interpreter.Interpret(statements!);
     }
 

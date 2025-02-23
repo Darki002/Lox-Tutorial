@@ -4,6 +4,8 @@ namespace Lox;
 
 public class Environment(Environment? enclosing = null)
 {
+    private readonly Environment? enclosing = enclosing;
+    
     private readonly Dictionary<string, object?> values = new();
 
     public void Define(string name, object? value)
@@ -25,6 +27,11 @@ public class Environment(Environment? enclosing = null)
 
         throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
     }
+    
+    public object? GetAt(int distance, string name)
+    {
+        return Ancestor(distance)?.values[name];
+    }
 
     public void Assign(Token name, object? value)
     {
@@ -41,5 +48,22 @@ public class Environment(Environment? enclosing = null)
         }
         
         throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
+    }
+
+    public void AssignAt(int distance, Token name, object? value)
+    {
+        var ancestor = Ancestor(distance);
+        ancestor!.values[name.Lexeme] = value;
+    }
+    
+    private Environment? Ancestor(int distance)
+    {
+        var env = this;
+        for (var i = 0; i < distance; i++)
+        {
+            env = env?.enclosing;
+        }
+
+        return env;
     }
 }

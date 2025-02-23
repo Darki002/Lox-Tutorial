@@ -173,7 +173,7 @@ public class Parser(List<Token> tokens)
         }
         
         Consume(TokenType.SEMICOLON, "Expect ';' after 'break'.");
-        return new Stmt.Break();
+        return new Stmt.Break(token);
     }
     
     private Stmt.Function Function(string kind)

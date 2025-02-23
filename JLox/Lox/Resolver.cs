@@ -2,9 +2,17 @@
 
 public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {
-    private readonly Interpreter interpreter = interpreter;
     private readonly Stack<Dictionary<string, bool>> scopes = new Stack<Dictionary<string, bool>>();
+    private FunctionType currentFunction = FunctionType.NONE;
 
+    public void Start(List<Stmt?> statements)
+    {
+        foreach (var stmt in statements)
+        {
+            if(stmt is not null) Resolve(stmt);
+        }
+    }
+    
     public Void? VisitBlockStmt(Stmt.Block stmt)
     {
         BeginScope();
@@ -15,27 +23,42 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitExpressionStmt(Stmt.Expression stmt)
     {
-        throw new NotImplementedException();
+        Resolve(stmt.Body);
+        return null;
     }
 
     public Void? VisitFunctionStmt(Stmt.Function stmt)
     {
-        throw new NotImplementedException();
+        Declare(stmt.Name);
+        Define(stmt.Name);
+
+        ResolveFunction(stmt, FunctionType.FUNCTION);
+        return null;
     }
 
     public Void? VisitIfStmt(Stmt.If stmt)
     {
-        throw new NotImplementedException();
+        Resolve(stmt.Condition);
+        Resolve(stmt.ThenBranch);
+        if(stmt.ElseBranch is not null) Resolve(stmt.ElseBranch);
+        return null;
     }
 
     public Void? VisitPrintStmt(Stmt.Print stmt)
     {
-        throw new NotImplementedException();
+        Resolve(stmt.Right);
+        return null;
     }
 
     public Void? VisitReturnStmt(Stmt.Return stmt)
     {
-        throw new NotImplementedException();
+        if (currentFunction == FunctionType.NONE)
+        {
+            Lox.Error(stmt.Keyword, "Can't return from top-level code.");
+        }
+        
+        if(stmt.Value is not null) Resolve(stmt.Value);
+        return null;
     }
 
     public Void? VisitVarStmt(Stmt.Var stmt)
@@ -52,12 +75,23 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitWhileStmt(Stmt.While stmt)
     {
-        throw new NotImplementedException();
+        var enclosing = currentFunction;
+        currentFunction = FunctionType.WHILE;
+        
+        Resolve(stmt.Condition);
+        Resolve(stmt.Body);
+        
+        currentFunction = enclosing;
+        return null;
     }
 
     public Void? VisitBreakStmt(Stmt.Break stmt)
     {
-        throw new NotImplementedException();
+        if (currentFunction != FunctionType.WHILE)
+        {
+            Lox.Error(stmt.keyword, "Can't break when not inside of a loop.");
+        }
+        return null;
     }
 
     public Void? VisitAssignExpr(Expr.Assign expr)
@@ -69,32 +103,37 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitBinaryExpr(Expr.Binary expr)
     {
-        throw new NotImplementedException();
+        Resolve(expr.Right);
+        Resolve(expr.Left);
+        return null;
     }
 
     public Void? VisitGroupingExpr(Expr.Grouping expr)
     {
-        throw new NotImplementedException();
+        Resolve(expr.Expression);
+        return null;
     }
 
-    public Void? VisitLiteralExpr(Expr.Literal expr)
-    {
-        throw new NotImplementedException();
-    }
+    public Void? VisitLiteralExpr(Expr.Literal expr) => null;
 
     public Void? VisitLogicalExpr(Expr.Logical expr)
     {
-        throw new NotImplementedException();
+        Resolve(expr.Left);
+        Resolve(expr.Right);
+        return null;
     }
 
     public Void? VisitUnaryExpr(Expr.Unary expr)
     {
-        throw new NotImplementedException();
+        Resolve(expr.Right);
+        return null;
     }
 
     public Void? VisitCallExpr(Expr.Call expr)
     {
-        throw new NotImplementedException();
+        Resolve(expr.Callee);
+        Resolve(expr.Arguments);
+        return null;
     }
 
     public Void? VisitVariableExpr(Expr.Variable expr)
@@ -110,7 +149,16 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitFunctionExpr(Expr.Function expr)
     {
-        throw new NotImplementedException();
+        BeginScope();
+        foreach (var param in expr.Params)
+        {
+            Define(param);
+            Declare(param);
+        }
+        
+        Resolve(expr.Body);
+        EndScope();
+        return null;
     }
 
     private void Declare(Token name)
@@ -118,6 +166,12 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         if (scopes.Count < 1) return;
 
         var scope = scopes.Peek();
+
+        if (scope.ContainsKey(name.Lexeme))
+        {
+            Lox.Error(name, "Already a variable with this name in this scope.");
+        }
+        
         scope.Add(name.Lexeme, false);
     }
 
@@ -131,17 +185,12 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     private void EndScope() => scopes.Pop();
 
-    private void Resolve(List<Stmt> statements)
-    {
-        foreach (var statement in statements)
-        {
-            Resolve(statement);
-        }
-    }
 
     private void Resolve(Stmt stmt) => stmt.Accept(this);
+    private void Resolve(List<Stmt> statements) => statements.ForEach(Resolve);
 
     private void Resolve(Expr expr) => expr.Accept(this);
+    private void Resolve(List<Expr> expr) => expr.ForEach(Resolve);
 
     private void ResolveLocal(Expr expr, Token name)
     {
@@ -153,5 +202,29 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
                 return;
             }
         }
+    }
+
+    private void ResolveFunction(Stmt.Function function, FunctionType type)
+    {
+        var enclosingFunction = currentFunction;
+        currentFunction = type;
+        
+        BeginScope();
+        foreach (var param in function.Params)
+        {
+            Define(param);
+            Declare(param);
+        }
+        
+        Resolve(function.Body);
+        EndScope();
+        currentFunction = enclosingFunction;
+    }
+    
+    private enum FunctionType
+    {
+        NONE,
+        FUNCTION,
+        WHILE
     }
 }
