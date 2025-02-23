@@ -138,7 +138,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitVariableExpr(Expr.Variable expr)
     {
-        if (scopes.Count > 0 && scopes.Peek()[expr.Name.Lexeme].IsDefine)
+        if (scopes.Count > 0 && scopes.Peek().GetValueOrDefault(expr.Name.Lexeme)?.IsDefine == false)
         {
             Lox.Error(expr.Name, "Can't read local variable in its own initializer.");
         }
@@ -188,7 +188,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         var scope = scopes.Pop();
         foreach (var variable in scope)
         {
-            if (variable.Value.IsUsed)
+            if (variable.Value.IsUsed == false)
             {
                 Lox.Warn(variable.Value.Token, "Variable is not being used inside of it's scope.");
             }
@@ -203,7 +203,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     private void ResolveLocal(Expr expr, Token name)
     {
-        for (var i = scopes.Count - 1; i > 0; i--)
+        for (var i = scopes.Count - 1; i >= 0; i--)
         {
             if (scopes.ElementAt(i).TryGetValue(name.Lexeme, out var value))
             {
@@ -222,8 +222,8 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         BeginScope();
         foreach (var param in function.Params)
         {
-            Define(param);
             Declare(param);
+            Define(param);
         }
         
         Resolve(function.Body);
