@@ -194,8 +194,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
             }
         }
     }
-
-
+    
     private void Resolve(Stmt stmt) => stmt.Accept(this);
     private void Resolve(List<Stmt> statements) => statements.ForEach(Resolve);
 
