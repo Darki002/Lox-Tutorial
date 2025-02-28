@@ -1,4 +1,6 @@
-﻿namespace Lox;
+﻿using Lox.Tree;
+
+namespace Lox;
 
 public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {

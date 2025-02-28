@@ -1,5 +1,4 @@
-﻿// ReSharper disable once CheckNamespace
-namespace Lox;
+﻿namespace Lox.Tree;
 
 public abstract record Stmt
 {

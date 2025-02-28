@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using Lox.Callables;
 using Lox.Errors;
+using Lox.Tree;
 
 namespace Lox;
 
