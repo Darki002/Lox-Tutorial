@@ -195,6 +195,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         {
             if (variable.Value.IsUsed == false)
             {
+                // Move this to Analyzer???
                 Lox.Warn(variable.Value.Token, "Variable is not being used inside of it's scope.");
             }
         }

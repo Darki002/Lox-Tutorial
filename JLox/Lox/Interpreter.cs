@@ -7,16 +7,17 @@ namespace Lox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 {
-    public readonly Environment Globals;
+    private readonly Environment globals;
     private Environment environment;
     private readonly Dictionary<Expr, (int depth, int index)> locals = [];
 
     public Interpreter()
     {
-        Globals = new Environment();
-        environment = Globals;
+        globals = new Environment();
+        environment = globals;
         
-        Globals.Define("clock", new Clock());
+        // Analyzer to check if any identifier shadows native fn, as warning only
+        globals.Define("clock", new Clock());
     }
     
     public void Interpret(List<Stmt> statements)
@@ -44,7 +45,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         }
         else
         {
-            Globals.Assign(expr.Name, value);
+            globals.Assign(expr.Name, value);
         }
         
         return value;
@@ -323,6 +324,6 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             return environment.GetAt(distance.depth, distance.index);
         }
 
-        return Globals.Get(name);
+        return globals.Get(name);
     }
 }
