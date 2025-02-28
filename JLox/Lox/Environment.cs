@@ -28,9 +28,9 @@ public class Environment(Environment? enclosing = null)
         throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
     }
     
-    public object? GetAt(int distance, string name)
+    public object? GetAt(int distance, int index)
     {
-        return Ancestor(distance)?.values[name];
+        return Ancestor(distance)?.values.ElementAt(index);
     }
 
     public void Assign(Token name, object? value)

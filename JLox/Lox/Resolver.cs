@@ -178,7 +178,10 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     private void Define(Token name)
     {
         if (scopes.Count < 1) return;
-        scopes.Peek()[name.Lexeme].IsDefine = true;
+        
+        var variable = scopes.Peek()[name.Lexeme];
+        variable.IsDefine = true;
+        variable.Index = scopes.Peek().Count;
     }
 
     private void BeginScope() => scopes.Push(new());
@@ -208,7 +211,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
             if (scopes.ElementAt(i).TryGetValue(name.Lexeme, out var value))
             {
                 value.IsUsed = true;
-                interpreter.Resolve(expr, scopes.Count - 1 - i);
+                interpreter.Resolve(expr, scopes.Count - 1 - i, value.Index);
                 return;
             }
         }
@@ -245,5 +248,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         public bool IsUsed { get; set; } = false;
 
         public Token Token { get; } = token;
+
+        public int Index { get; set; } = -1;
     }
 }
