@@ -41,7 +41,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
         if (locals.TryGetValue(expr, out var dist))
         {
-            environment.AssignAt(dist.depth, expr.Name, value);
+            environment.AssignAt(dist.depth, dist.index, value);
         }
         else
         {

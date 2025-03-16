@@ -183,7 +183,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         
         var variable = scopes.Peek()[name.Lexeme];
         variable.IsDefine = true;
-        variable.Index = scopes.Peek().Count;
+        variable.Index = scopes.Peek().Count - 1;
     }
 
     private void BeginScope() => scopes.Push(new());
@@ -195,7 +195,6 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         {
             if (variable.Value.IsUsed == false)
             {
-                // Move this to Analyzer???
                 Lox.Warn(variable.Value.Token, "Variable is not being used inside of it's scope.");
             }
         }

@@ -1,4 +1,5 @@
-﻿using Lox.Errors;
+﻿using System.Collections.Specialized;
+using Lox.Errors;
 
 namespace Lox;
 
@@ -6,22 +7,16 @@ public class Environment(Environment? enclosing = null)
 {
     private readonly Environment? enclosing = enclosing;
     
-    private readonly Dictionary<string, object?> values = new();
+    private readonly OrderedDictionary variables = new();
 
     public void Define(string name, object? value)
     {
-        if (!values.TryAdd(name, value))
-        {
-            values[name] = value;
-        }
+        variables[name] = value;
     }
 
     public object? Get(Token name)
     {
-        if (values.TryGetValue(name.Lexeme, out var value))
-        {
-            return value;
-        }
+        if (variables.Contains(name.Lexeme)) return variables[name.Lexeme];
 
         if (enclosing is not null) return enclosing.Get(name);
 
@@ -30,14 +25,14 @@ public class Environment(Environment? enclosing = null)
     
     public object? GetAt(int distance, int index)
     {
-        return Ancestor(distance)?.values.ElementAt(index);
+        return Ancestor(distance)?.variables[index];
     }
 
     public void Assign(Token name, object? value)
     {
-        if (values.ContainsKey(name.Lexeme))
+        if (variables.Contains(name.Lexeme))
         {
-            values[name.Lexeme] = value;
+            variables[name.Lexeme] = value;
             return;
         }
         
@@ -50,10 +45,10 @@ public class Environment(Environment? enclosing = null)
         throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
     }
 
-    public void AssignAt(int distance, Token name, object? value)
+    public void AssignAt(int distance, int index, object? value)
     {
         var ancestor = Ancestor(distance);
-        ancestor!.values[name.Lexeme] = value;
+        ancestor!.variables[index] = value;
     }
     
     private Environment? Ancestor(int distance)
