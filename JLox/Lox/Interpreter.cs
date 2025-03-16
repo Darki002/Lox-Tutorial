@@ -9,7 +9,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 {
     private readonly Environment globals;
     private Environment environment;
-    private readonly Dictionary<Expr, (int depth, int index)> locals = [];
+    private readonly Dictionary<Expr, int> locals = [];
 
     public Interpreter()
     {
@@ -41,7 +41,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
         if (locals.TryGetValue(expr, out var dist))
         {
-            environment.AssignAt(dist.depth, expr.Name, value);
+            environment.AssignAt(dist, expr.Name, value);
         }
         else
         {
@@ -315,13 +315,13 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return obj.ToString();
     }
 
-    public void Resolve(Expr expr, int depth, int index) => locals.Add(expr, (depth, index));
+    public void Resolve(Expr expr, int depth) => locals.Add(expr, depth);
 
     private object? LookUpVariable(Token name, Expr expr)
     {
         if (locals.TryGetValue(expr, out var distance))
         {
-            return environment.GetAt(distance.depth, distance.index);
+            return environment.GetAt(distance, name.Lexeme);
         }
 
         return globals.Get(name);
