@@ -241,6 +241,9 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         WHILE
     }
     
+    // Draw and think about it with a code example, how are variables declared in the environments and at
+    // which index they are added to a normal array. Hmm, Array vs List, wouldn't an array be much faster then a list
+    // less blot code behind it.
     private class Variable(Token token)
     {
         public bool IsDefine { get; set; } = false;
