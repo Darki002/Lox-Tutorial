@@ -9,10 +9,12 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     
     public void Start(List<Stmt?> statements)
     {
+        BeginScope();
         foreach (var stmt in statements)
         {
             if(stmt is not null) Resolve(stmt);
         }
+        EndScope();
     }
     
     public Void? VisitBlockStmt(Stmt.Block stmt)
@@ -135,7 +137,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 
     public Void? VisitVariableExpr(Expr.Variable expr)
     {
-        if (scopes.Count > 0 && scopes.Peek().GetValueOrDefault(expr.Name.Lexeme)?.IsDefine == false)
+        if (scopes.Peek().GetValueOrDefault(expr.Name.Lexeme)?.IsDefine == false)
         {
             Lox.Error(expr.Name, "Can't read local variable in its own initializer.");
         }
@@ -160,8 +162,6 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     
     private void Declare(Token name)
     {
-        if (scopes.Count < 1) return;
-
         var scope = scopes.Peek();
 
         if (scope.ContainsKey(name.Lexeme))
@@ -174,12 +174,11 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 
     private void Define(Token name)
     {
-        if (scopes.Count < 1) return;
         scopes.Peek()[name.Lexeme].IsDefine = true;
     }
     
     private void BeginScope() => scopes.Push(new());
-
+    
     private void EndScope()
     {
         var scope = scopes.Pop();
@@ -187,7 +186,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         {
             if (variable.Value.IsUsed == false)
             {
-                Lox.Warn(variable.Value.Token, "Variable is not being used inside of it's scope.");
+                Lox.Warn(variable.Value.Token, $"Variable '{variable.Key}' is never used.");
             }
         }
     }
@@ -208,6 +207,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
                 return;
             }
         }
+        Lox.Error(name, $"Can not resolve symbol '{name.Lexeme}'.");
     }
     
     private void ResolveFunction(Stmt.Function function, ScopeType type)
