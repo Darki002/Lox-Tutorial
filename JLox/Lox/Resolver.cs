@@ -5,7 +5,11 @@ namespace Lox;
 public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {
     private readonly Stack<Dictionary<string, bool>> scopes = new();
-
+    
+    // Build up a list with the Lexemes and assign each an Index. When string comes up again, just reuse this index. Set the Index on the Token.
+    // So the Runtime can use int instead of string.
+    // TODO: how to handle build in shit?
+    
     public void Start(List<Stmt?> statements)
     {
         foreach (var stmt in statements)
