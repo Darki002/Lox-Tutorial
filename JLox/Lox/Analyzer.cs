@@ -2,10 +2,11 @@
 
 namespace Lox;
 
-public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
+public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {
-    private readonly Stack<Dictionary<string, bool>> scopes = new();
-
+    private readonly Stack<Dictionary<string, Variable>> scopes = new();
+    private ScopeType currentScope = ScopeType.NONE;
+    
     public void Start(List<Stmt?> statements)
     {
         foreach (var stmt in statements)
@@ -32,7 +33,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     {
         Declare(stmt.Name);
         Define(stmt.Name);
-        ResolveFunction(stmt);
+        ResolveFunction(stmt, ScopeType.FUNCTION);
         return null;
     }
 
@@ -45,13 +46,18 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     }
 
     public Void? VisitPrintStmt(Stmt.Print stmt)
-    {
+    {        
         Resolve(stmt.Right);
         return null;
     }
 
     public Void? VisitReturnStmt(Stmt.Return stmt)
     {
+        if (currentScope == ScopeType.NONE)
+        {
+            Lox.Error(stmt.Keyword, "Can't return from top-level code.");
+        }
+        
         if(stmt.Value is not null) Resolve(stmt.Value);
         return null;
     }
@@ -59,28 +65,36 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     public Void? VisitVarStmt(Stmt.Var stmt)
     {
         Declare(stmt.Name);
-        if (stmt.Initializer != null)
-        {
-            Resolve(stmt.Initializer);
-        }
-
+        if(stmt.Initializer is not null) Resolve(stmt.Initializer);
         Define(stmt.Name);
         return null;
     }
 
     public Void? VisitWhileStmt(Stmt.While stmt)
     {
+        var enclosing = currentScope;
+        currentScope = ScopeType.LOOP;
+        
         Resolve(stmt.Condition);
         Resolve(stmt.Body);
+        
+        currentScope = enclosing;
         return null;
     }
 
-    public Void? VisitBreakStmt(Stmt.Break stmt) => null;
+    public Void? VisitBreakStmt(Stmt.Break stmt)
+    {
+        if (currentScope != ScopeType.LOOP)
+        {
+            Lox.Error(stmt.keyword, "Can't break when not inside of a loop.");
+        }
+        return null;
+    }
 
     public Void? VisitAssignExpr(Expr.Assign expr)
     {
         Resolve(expr.Value);
-        ResolveLocal(expr, expr.Name);
+        ResolveLocal(expr.Name);
         return null;
     }
 
@@ -121,7 +135,12 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitVariableExpr(Expr.Variable expr)
     {
-        ResolveLocal(expr, expr.Name);
+        if (scopes.Count > 0 && scopes.Peek().GetValueOrDefault(expr.Name.Lexeme)?.IsDefine == false)
+        {
+            Lox.Error(expr.Name, "Can't read local variable in its own initializer.");
+        }
+
+        ResolveLocal(expr.Name);
         return null;
     }
 
@@ -138,45 +157,64 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         EndScope();
         return null;
     }
-
+    
     private void Declare(Token name)
     {
         if (scopes.Count < 1) return;
 
         var scope = scopes.Peek();
-        scope.Add(name.Lexeme, false);
+
+        if (scope.ContainsKey(name.Lexeme))
+        {
+            Lox.Error(name, "Already a variable with this name in this scope.");
+        }
+        
+        scope.Add(name.Lexeme, new Variable(name));
     }
 
     private void Define(Token name)
     {
         if (scopes.Count < 1) return;
-        scopes.Peek()[name.Lexeme] = true;
+        scopes.Peek()[name.Lexeme].IsDefine = true;
     }
-
+    
     private void BeginScope() => scopes.Push(new());
-    private void EndScope() => scopes.Pop();
+
+    private void EndScope()
+    {
+        var scope = scopes.Pop();
+        foreach (var variable in scope)
+        {
+            if (variable.Value.IsUsed == false)
+            {
+                Lox.Warn(variable.Value.Token, "Variable is not being used inside of it's scope.");
+            }
+        }
+    }
     
     private void Resolve(Stmt stmt) => stmt.Accept(this);
     private void Resolve(List<Stmt> statements) => statements.ForEach(Resolve);
 
     private void Resolve(Expr expr) => expr.Accept(this);
     private void Resolve(List<Expr> expr) => expr.ForEach(Resolve);
-
-    private void ResolveLocal(Expr expr, Token name)
+    
+    private void ResolveLocal(Token name)
     {
         for (var i = 0; i < scopes.Count; i++)
         {
-            if (scopes.ElementAt(i).ContainsKey(name.Lexeme))
+            if (scopes.ElementAt(i).TryGetValue(name.Lexeme, out var value))
             {
-                scopes.ElementAt(i)[name.Lexeme] = true;
-                interpreter.Resolve(expr, i);
+                value.IsUsed = true;
                 return;
             }
         }
     }
-
-    private void ResolveFunction(Stmt.Function function)
+    
+    private void ResolveFunction(Stmt.Function function, ScopeType type)
     {
+        var enclosingFunction = currentScope;
+        currentScope = type;
+        
         BeginScope();
         foreach (var param in function.Params)
         {
@@ -186,5 +224,22 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         
         Resolve(function.Body);
         EndScope();
+        currentScope = enclosingFunction;
+    }
+    
+    private class Variable(Token token)
+    {
+        public bool IsDefine { get; set; }
+
+        public bool IsUsed { get; set; }
+
+        public Token Token { get; } = token;
+    }
+    
+    private enum ScopeType
+    {
+        NONE,
+        FUNCTION,
+        LOOP
     }
 }

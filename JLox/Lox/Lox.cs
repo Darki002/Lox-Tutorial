@@ -48,19 +48,26 @@ internal static class Lox
 
     private static void Run(string source)
     {
+        // Scanner
         var scanner = new Scanner(source);
         var tokens = scanner.ScanTokens();
 
+        // Parser
         var parser = new Parser(tokens);
         var statements = parser.Parse();
-
         if (hadError) return;
 
+        // Analyzer
+        var analyzer = new Analyzer();
+        analyzer.Start(statements);
+        if (hadError) return;
+
+        // Resolver
         var resolver = new Resolver(Interpreter);
         resolver.Start(statements);
-        
         if (hadError) return;
         
+        // Run
         Interpreter.Interpret(statements!);
     }
     
