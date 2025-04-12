@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using Lox.Callables;
+using Lox.Callables.StandardLibrary;
 using Lox.Errors;
 using Lox.Tree;
 
@@ -16,8 +17,10 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         globals = new Environment();
         environment = globals;
         
-        // Analyzer to check if any identifier shadows native fn, as warning only
-        globals.Define("clock", new Clock());
+        foreach (var (key, value) in StandardLibraryList.StandardLibFunctions)
+        {
+            globals.Define(key, value);
+        }
     }
     
     public void Interpret(List<Stmt> statements)

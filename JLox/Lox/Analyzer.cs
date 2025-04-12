@@ -10,13 +10,6 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     
     public void Start(List<Stmt?> statements)
     {
-        var stdLib = new Dictionary<string, Identifier>();
-        scopes.Push(stdLib);
-        foreach (var (key, _) in StandardLibraryList.StandardLibFunctions)
-        {
-            stdLib[key] = new Identifier(new Token(TokenType.IDENTIFIER, key, null, -1));
-        }
-        
         BeginScope();
         foreach (var stmt in statements)
         {
@@ -176,6 +169,11 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         {
             Lox.Error(name, "Already a variable with this name in this scope.");
         }
+
+        if (StandardLibraryList.StandardLibFunctions.ContainsKey(name.Lexeme))
+        {
+            Lox.Warn(name, $"Shadows build-in variable ${name.Lexeme}.");
+        }
         
         scope.Add(name.Lexeme, new Identifier(name));
     }
@@ -215,6 +213,8 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
                 return;
             }
         }
+        
+        if(StandardLibraryList.StandardLibFunctions.ContainsKey(name.Lexeme)) return;
         Lox.Error(name, $"Can not resolve symbol '{name.Lexeme}'.");
     }
     
