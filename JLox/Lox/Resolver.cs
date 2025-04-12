@@ -206,12 +206,12 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     private void ResolveLocal(Expr expr, Token name)
     {
-        for (var i = scopes.Count - 1; i >= 0; i--)
+        for (var i = 0; i < scopes.Count; i++)
         {
             if (scopes.ElementAt(i).TryGetValue(name.Lexeme, out var value))
             {
                 value.IsUsed = true;
-                interpreter.Resolve(expr, scopes.Count - 1 - i);
+                interpreter.Resolve(expr, i);
                 return;
             }
         }

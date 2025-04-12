@@ -1,0 +1,16 @@
+var a = "test";
+
+fun showA() {
+    print a;
+}
+
+{
+    var b = 10;
+    
+    fun showB() {
+        print b;
+    }
+    
+    showA();
+    showB();
+}
