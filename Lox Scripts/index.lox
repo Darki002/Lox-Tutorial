@@ -12,7 +12,9 @@ fun showA() {
         print b;
     }
     
-    print x;
+    print a;
+    
+    var ka = clock();
     
     showA();
     showB();
