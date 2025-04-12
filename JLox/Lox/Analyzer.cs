@@ -4,7 +4,7 @@ namespace Lox;
 
 public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {
-    private readonly Stack<Dictionary<string, Variable>> scopes = new();
+    private readonly Stack<Dictionary<string, Identifier>> scopes = new();
     private ScopeType currentScope = ScopeType.NONE;
     
     public void Start(List<Stmt?> statements)
@@ -169,7 +169,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
             Lox.Error(name, "Already a variable with this name in this scope.");
         }
         
-        scope.Add(name.Lexeme, new Variable(name));
+        scope.Add(name.Lexeme, new Identifier(name));
     }
 
     private void Define(Token name)
@@ -186,7 +186,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         {
             if (variable.Value.IsUsed == false)
             {
-                Lox.Warn(variable.Value.Token, $"Variable '{variable.Key}' is never used.");
+                Lox.Warn(variable.Value.Token, $"Identifier '{variable.Value.Token.Lexeme}' is never used.");
             }
         }
     }
@@ -227,7 +227,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         currentScope = enclosingFunction;
     }
     
-    private class Variable(Token token)
+    private class Identifier(Token token)
     {
         public bool IsDefine { get; set; }
 
