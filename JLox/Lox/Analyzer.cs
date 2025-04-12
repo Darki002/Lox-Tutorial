@@ -1,4 +1,5 @@
-﻿using Lox.Tree;
+﻿using Lox.Callables.StandardLibrary;
+using Lox.Tree;
 
 namespace Lox;
 
@@ -9,6 +10,13 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     
     public void Start(List<Stmt?> statements)
     {
+        var stdLib = new Dictionary<string, Identifier>();
+        scopes.Push(stdLib);
+        foreach (var (key, _) in StandardLibraryList.StandardLibFunctions)
+        {
+            stdLib[key] = new Identifier(new Token(TokenType.IDENTIFIER, key, null, -1));
+        }
+        
         BeginScope();
         foreach (var stmt in statements)
         {

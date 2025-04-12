@@ -1,4 +1,4 @@
-﻿namespace Lox.Callables;
+﻿namespace Lox.Callables.StandardLibrary;
 
 public class Clock : ILoxCallable
 {
