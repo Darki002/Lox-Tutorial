@@ -73,10 +73,8 @@ internal static class Lox
     
     public static void Warn(Token token, string message)
     {
-        if (token.Type == TokenType.EOF)
-            ReportWarning(token.Line, "at end", message);
-        else
-            ReportWarning(token.Line, $"at '{token.Lexeme}'", message);
+        var where = token.Type == TokenType.EOF ? "at end" : $"at '{token.Lexeme}'";
+        ReportWarning(token.Line, where, message);
     }
 
     public static void Error(int line, string message)
@@ -86,10 +84,8 @@ internal static class Lox
 
     public static void Error(Token token, string message)
     {
-        if (token.Type == TokenType.EOF)
-            ReportError(token.Line, "at end", message);
-        else
-            ReportError(token.Line, $"at '{token.Lexeme}'", message);
+        var where = token.Type == TokenType.EOF ? "at end" : $"at '{token.Lexeme}'";
+        ReportError(token.Line, where, message);
     }
 
     public static void RuntimeError(RuntimeError runtimeError)
@@ -100,12 +96,20 @@ internal static class Lox
 
     private static void ReportError(int line, string where, string message)
     {
-        Console.WriteLine($"[Line {line}] Error {where}: {message}");
+        Console.Write($"[Line {line}] ");
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write("Error");
+        Console.ResetColor();
+        Console.WriteLine($" {where}: {message}");
         hadError = true;
     }
     
     private static void ReportWarning(int line, string where, string message)
     {
-        Console.WriteLine($"[Line {line}] Warning {where}: {message}");
+        Console.Write($"[Line {line}] ");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
+        Console.Write("Warning");
+        Console.ResetColor();
+        Console.WriteLine($" {where}: {message}");
     }
 }
