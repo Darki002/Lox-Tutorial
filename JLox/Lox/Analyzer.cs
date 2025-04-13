@@ -25,6 +25,13 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         return null;
     }
 
+    public Void? VisitClassStmt(Stmt.Class stmt)
+    {
+        Declare(stmt.Name);
+        Define(stmt.Name);
+        return null;
+    }
+
     public Void? VisitExpressionStmt(Stmt.Expression stmt)
     {
         Resolve(stmt.Body);
@@ -88,7 +95,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     {
         if (currentScope != ScopeType.LOOP)
         {
-            Lox.Error(stmt.keyword, "Can't break when not inside of a loop.");
+            Lox.Error(stmt.Keyword, "Can't break when not inside of a loop.");
         }
         return null;
     }

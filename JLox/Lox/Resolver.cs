@@ -20,6 +20,12 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         return null;
     }
 
+    public Void? VisitClassStmt(Stmt.Class stmt)
+    {
+        Declare(stmt.Name);
+        return null;
+    }
+
     public Void? VisitExpressionStmt(Stmt.Expression stmt)
     {
         Resolve(stmt.Body);

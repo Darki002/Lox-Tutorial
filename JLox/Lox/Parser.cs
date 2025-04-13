@@ -54,18 +54,8 @@ public class Parser(List<Token> tokens)
     
     private Stmt.Function Function(string kind)
     {
-        Token name;
-
-        if (kind == "function")
-        {
-            name = Consume(TokenType.IDENTIFIER, $"Expect {kind} name.");
-            Consume(TokenType.LEFT_PAREN, $"Expect '(' after {kind} name."); 
-        }
-        else
-        {
-            Consume(TokenType.LEFT_PAREN, $"Expect '(' after 'fun' for {kind}."); 
-            name = new Token(TokenType.IDENTIFIER, "", null, 0);
-        }
+        var name = Consume(TokenType.IDENTIFIER, $"Expect {kind} name.");
+        Consume(TokenType.LEFT_PAREN, $"Expect '(' after {kind} name."); 
         
         List<Token> parameters = [];
         if (!Check(TokenType.RIGHT_PAREN))
