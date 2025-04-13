@@ -28,6 +28,7 @@ public class GenerateAst : ITool
 
         DefineAst(outputDir, "Stmt", [
             "Block      : List<Stmt> Statements",
+            "Class      : Token Name, List<Stmt.Function> Methods",
             "Expression : Expr Body",
             "Function   : Token Name, List<Token> Params, List<Stmt> Body",
             "If         : Expr Condition, Stmt ThenBranch, Stmt? ElseBranch",

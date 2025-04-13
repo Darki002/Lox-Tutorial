@@ -6,54 +6,19 @@ public class Environment(Environment? enclosing = null)
 {
     private readonly Environment? enclosing = enclosing;
     
-    private readonly Dictionary<string, object?> values = new();
+    private readonly List<object?> values = [];
 
-    public void Define(string name, object? value)
-    {
-        if (!values.TryAdd(name, value))
-        {
-            values[name] = value;
-        }
-    }
-
-    public object? Get(Token name)
-    {
-        if (values.TryGetValue(name.Lexeme, out var value))
-        {
-            return value;
-        }
-
-        if (enclosing is not null) return enclosing.Get(name);
-
-        throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
-    }
+    public void Define(object? value) => values.Add(value);
     
-    public object? GetAt(int distance, string name)
+    public object? GetAt(int distance, int index)
     {
-        return Ancestor(distance)?.values[name];
+        return Ancestor(distance)?.values[index];
     }
 
-    public void Assign(Token name, object? value)
-    {
-        if (values.ContainsKey(name.Lexeme))
-        {
-            values[name.Lexeme] = value;
-            return;
-        }
-        
-        if (enclosing is not null)
-        {
-            enclosing.Assign(name, value);
-            return;
-        }
-        
-        throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
-    }
-
-    public void AssignAt(int distance, Token name, object? value)
+    public void AssignAt(int distance, int index, object? value)
     {
         var ancestor = Ancestor(distance);
-        ancestor!.values[name.Lexeme] = value;
+        ancestor!.values[index] = value;
     }
     
     private Environment? Ancestor(int distance)

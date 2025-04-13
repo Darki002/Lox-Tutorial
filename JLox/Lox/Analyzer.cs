@@ -5,7 +5,7 @@ namespace Lox;
 
 public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {
-    private readonly Stack<Dictionary<string, Identifier>> scopes = new();
+    private readonly Stack<Dictionary<string, Variable>> scopes = new();
     private ScopeType currentScope = ScopeType.NONE;
     
     public void Start(List<Stmt?> statements)
@@ -138,7 +138,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 
     public Void? VisitVariableExpr(Expr.Variable expr)
     {
-        if (scopes.Peek().GetValueOrDefault(expr.Name.Lexeme)?.IsDefine == false)
+        if (scopes.Peek().GetValueOrDefault(expr.Name.Lexeme)?.VarState == VarState.DECLARED)
         {
             Lox.Error(expr.Name, "Can't read local variable in its own initializer.");
         }
@@ -152,8 +152,8 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         BeginScope();
         foreach (var param in expr.Params)
         {
-            Define(param);
             Declare(param);
+            Define(param);
         }
         
         Resolve(expr.Body);
@@ -175,12 +175,12 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
             Lox.Warn(name, $"Shadows build-in variable ${name.Lexeme}.");
         }
         
-        scope.Add(name.Lexeme, new Identifier(name));
+        scope.Add(name.Lexeme, new Variable(name));
     }
 
     private void Define(Token name)
     {
-        scopes.Peek()[name.Lexeme].IsDefine = true;
+        scopes.Peek()[name.Lexeme].VarState = VarState.DEFINED;
     }
     
     private void BeginScope() => scopes.Push(new());
@@ -190,7 +190,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         var scope = scopes.Pop();
         foreach (var variable in scope)
         {
-            if (variable.Value.IsUsed == false)
+            if (variable.Value.VarState != VarState.READ)
             {
                 Lox.Warn(variable.Value.Token, $"Identifier '{variable.Value.Token.Lexeme}' is never used.");
             }
@@ -209,7 +209,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         {
             if (scopes.ElementAt(i).TryGetValue(name.Lexeme, out var value))
             {
-                value.IsUsed = true;
+                value.VarState = VarState.READ;
                 return;
             }
         }
@@ -235,11 +235,9 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         currentScope = enclosingFunction;
     }
     
-    private class Identifier(Token token)
+    private class Variable(Token token)
     {
-        public bool IsDefine { get; set; }
-
-        public bool IsUsed { get; set; }
+        public VarState VarState { get; set; } = VarState.DECLARED;
 
         public Token Token { get; } = token;
     }
@@ -249,5 +247,12 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         NONE,
         FUNCTION,
         LOOP
+    }
+    
+    private enum VarState
+    {
+        DECLARED,
+        DEFINED,
+        READ
     }
 }

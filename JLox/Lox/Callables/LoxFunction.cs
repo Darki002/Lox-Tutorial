@@ -3,7 +3,7 @@ using Lox.Tree;
 
 namespace Lox.Callables;
 
-public class LoxFunction(Stmt.Function declaration, Environment closure) : ILoxCallable
+public class LoxFunction(Stmt.Function declaration, Environment? closure) : ILoxCallable
 {
     public int Arity => declaration.Params.Count;
     
@@ -14,7 +14,7 @@ public class LoxFunction(Stmt.Function declaration, Environment closure) : ILoxC
         declaration.Params
             .Zip(arguments)
             .ToList()
-            .ForEach(zip => env.Define(zip.First.Lexeme, zip.Second));
+            .ForEach(zip => env.Define(zip.Second));
 
         try
         {

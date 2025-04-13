@@ -4,11 +4,7 @@ namespace Lox;
 
 public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {
-    private readonly Stack<Dictionary<string, bool>> scopes = new();
-    
-    // Build up a list with the Lexemes and assign each an Index. When string comes up again, just reuse this index. Set the Index on the Token.
-    // So the Runtime can use int instead of string.
-    // TODO: how to handle build in shit?
+    private readonly Stack<Dictionary<string, int>> scopes = new();
     
     public void Start(List<Stmt?> statements)
     {
@@ -35,7 +31,6 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     public Void? VisitFunctionStmt(Stmt.Function stmt)
     {
         Declare(stmt.Name);
-        Define(stmt.Name);
         ResolveFunction(stmt);
         return null;
     }
@@ -68,7 +63,6 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
             Resolve(stmt.Initializer);
         }
 
-        Define(stmt.Name);
         return null;
     }
 
@@ -134,7 +128,6 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         BeginScope();
         foreach (var param in expr.Params)
         {
-            Define(param);
             Declare(param);
         }
         
@@ -148,13 +141,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         if (scopes.Count < 1) return;
 
         var scope = scopes.Peek();
-        scope.Add(name.Lexeme, false);
-    }
-
-    private void Define(Token name)
-    {
-        if (scopes.Count < 1) return;
-        scopes.Peek()[name.Lexeme] = true;
+        scope.Add(name.Lexeme, scope.Count);
     }
 
     private void BeginScope() => scopes.Push(new());
@@ -170,10 +157,10 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     {
         for (var i = 0; i < scopes.Count; i++)
         {
-            if (scopes.ElementAt(i).ContainsKey(name.Lexeme))
+            var scope = scopes.ElementAt(i);
+            if (scope.TryGetValue(name.Lexeme, out var index))
             {
-                scopes.ElementAt(i)[name.Lexeme] = true;
-                interpreter.Resolve(expr, i);
+                interpreter.Resolve(expr, i, index);
                 return;
             }
         }
@@ -185,7 +172,6 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         foreach (var param in function.Params)
         {
             Declare(param);
-            Define(param);
         }
         
         Resolve(function.Body);

@@ -8,18 +8,17 @@ namespace Lox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 {
-    private readonly Environment globals;
-    private Environment environment;
+    private Environment? environment;
+    
+    private readonly Dictionary<string, object?> globals = new ();
     private readonly Dictionary<Expr, int> locals = [];
+    private readonly Dictionary<Expr, int> indexes = [];
 
     public Interpreter()
     {
-        globals = new Environment();
-        environment = globals;
-        
         foreach (var (key, value) in StandardLibraryList.StandardLibFunctions)
         {
-            globals.Define(key, value);
+            globals.Add(key, value);
         }
     }
     
@@ -44,11 +43,15 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
         if (locals.TryGetValue(expr, out var dist))
         {
-            environment.AssignAt(dist, expr.Name, value);
+            environment!.AssignAt(dist, indexes[expr], value);
+        }
+        else if(globals.ContainsKey(expr.Name.Lexeme))
+        {
+            globals[expr.Name.Lexeme] = value;
         }
         else
         {
-            globals.Assign(expr.Name, value);
+            throw new RuntimeError(expr.Name, $"Undefined variable '{expr.Name.Lexeme}'.");
         }
         
         return value;
@@ -186,7 +189,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
     public Void? VisitFunctionStmt(Stmt.Function stmt)
     {
         var function = new LoxFunction(stmt, environment);
-        environment.Define(stmt.Name.Lexeme, function);
+        Define(stmt.Name, function);
         return null;
     }
 
@@ -225,7 +228,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             initializer = Evaluate(stmt.Initializer);
         }
         
-        environment.Define(stmt.Name.Lexeme, initializer);
+        Define(stmt.Name, initializer);
         return null;
     }
 
@@ -318,15 +321,36 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return obj.ToString();
     }
 
-    public void Resolve(Expr expr, int depth) => locals.Add(expr, depth);
+    public void Resolve(Expr expr, int depth, int index)
+    {
+        locals.Add(expr, depth);
+        indexes.Add(expr, index);
+    }
 
     private object? LookUpVariable(Token name, Expr expr)
     {
         if (locals.TryGetValue(expr, out var distance))
         {
-            return environment.GetAt(distance, name.Lexeme);
+            return environment!.GetAt(distance, indexes[expr]);
         }
 
-        return globals.Get(name);
+        if (globals.TryGetValue(name.Lexeme, out var value))
+        {
+            return value;
+        }
+        
+        throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
+    }
+
+    private void Define(Token name, object? value)
+    {
+        if (environment is not null)
+        {
+            environment.Define(value);
+        }
+        else
+        {
+            globals.Add(name.Lexeme, value);
+        }
     }
 }
