@@ -1,5 +1,4 @@
 ﻿using Lox.Callables.StandardLibrary;
-using Lox.Tree;
 
 namespace Lox;
 

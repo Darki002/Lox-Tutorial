@@ -1,4 +1,5 @@
-﻿namespace Lox.Tree;
+﻿// ReSharper disable once CheckNamespace
+namespace Lox;
 
 public abstract record Stmt
 {
@@ -7,6 +8,14 @@ public abstract record Stmt
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
 			return visitor.VisitBlockStmt(this);
+		}
+	}
+
+	public record Class(Token Name, List<Stmt.Function> Methods) : Stmt
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitClassStmt(this);
 		}
 	}
 
@@ -66,7 +75,7 @@ public abstract record Stmt
 		}
 	}
 
-	public record Break(Token keyword) : Stmt
+	public record Break(Token Keyword) : Stmt
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
@@ -79,6 +88,7 @@ public abstract record Stmt
 	public interface IVisitor<out T>
 	{
 		T VisitBlockStmt (Block stmt);
+		T VisitClassStmt (Class stmt);
 		T VisitExpressionStmt (Expression stmt);
 		T VisitFunctionStmt (Function stmt);
 		T VisitIfStmt (If stmt);

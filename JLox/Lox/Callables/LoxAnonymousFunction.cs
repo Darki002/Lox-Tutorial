@@ -1,5 +1,4 @@
 ﻿using Lox.Errors;
-using Lox.Tree;
 
 namespace Lox.Callables;
 

@@ -36,7 +36,7 @@ public class GenerateAst : ITool
             "Return     : Token Keyword, Expr? Value",
             "Var        : Token Name, Expr? Initializer",
             "While      : Expr Condition, Stmt Body",
-            "Break      : "
+            "Break      : Token Keyword"
         ]);
     }
 
