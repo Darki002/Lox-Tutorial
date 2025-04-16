@@ -251,6 +251,11 @@ public class Parser(List<Token> tokens)
                 return new Expr.Assign(name, value);
             }
 
+            if (expr is Expr.Get get)
+            {
+                return new Expr.Set(get.Obj, get.Name, value);
+            }
+
             Error(equals, "Invalid assignment target.");
         }
 
@@ -359,9 +364,18 @@ public class Parser(List<Token> tokens)
         while (true)
         {
             if (Match(TokenType.LEFT_PAREN))
+            {
                 expr = FinishCall(expr);
+            }
+            else if (Match(TokenType.DOT))
+            {
+                var name = Consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
+                expr = new Expr.Get(expr, name);
+            }
             else
+            {
                 break;
+            }
         }
 
         return expr;

@@ -129,6 +129,13 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         return null;
     }
 
+    public Void? VisitSetExpr(Expr.Set expr)
+    {
+        Resolve(expr.Value);
+        Resolve(expr.Obj);
+        return null;
+    }
+
     public Void? VisitUnaryExpr(Expr.Unary expr)
     {
         Resolve(expr.Right);
@@ -139,6 +146,12 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     {
         Resolve(expr.Callee);
         Resolve(expr.Arguments);
+        return null;
+    }
+
+    public Void? VisitGetExpr(Expr.Get expr)
+    {
+        Resolve(expr.Obj);
         return null;
     }
 

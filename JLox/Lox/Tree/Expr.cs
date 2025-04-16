@@ -43,6 +43,14 @@ public abstract record Expr
 		}
 	}
 
+	public record Set(Expr Obj, Token Name, Expr Value) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitSetExpr(this);
+		}
+	}
+
 	public record Unary(Token Operator, Expr Right) : Expr
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
@@ -56,6 +64,14 @@ public abstract record Expr
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
 			return visitor.VisitCallExpr(this);
+		}
+	}
+
+	public record Get(Expr Obj, Token Name) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitGetExpr(this);
 		}
 	}
 
@@ -84,8 +100,10 @@ public abstract record Expr
 		T VisitGroupingExpr (Grouping expr);
 		T VisitLiteralExpr (Literal expr);
 		T VisitLogicalExpr (Logical expr);
+		T VisitSetExpr (Set expr);
 		T VisitUnaryExpr (Unary expr);
 		T VisitCallExpr (Call expr);
+		T VisitGetExpr (Get expr);
 		T VisitVariableExpr (Variable expr);
 		T VisitFunctionExpr (Function expr);
 	}

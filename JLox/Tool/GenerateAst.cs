@@ -20,8 +20,10 @@ public class GenerateAst : ITool
             "Grouping : Expr Expression",
             "Literal  : object? Value",
             "Logical  : Expr Left, Token Operator, Expr Right",
+            "Set      : Expr Obj, Token Name, Expr Value",
             "Unary    : Token Operator, Expr Right",
             "Call     : Expr Callee, Token Paren, List<Expr> Arguments",
+            "Get      : Expr Obj, Token Name",
             "Variable : Token Name",
             "Function : List<Token> Params, List<Stmt> Body"
         ]);

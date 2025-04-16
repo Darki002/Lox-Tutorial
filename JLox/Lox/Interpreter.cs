@@ -124,6 +124,20 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return Evaluate(expr.Right);
     }
 
+    public object? VisitSetExpr(Expr.Set expr)
+    {
+        var obj = Evaluate(expr.Obj);
+
+        if (obj is not LoxInstance instance)
+        {
+            throw new RuntimeError(expr.Name, "Only instances have fields.");
+        }
+
+        var value = Evaluate(expr.Value);
+        instance.Set(expr.Name, value);
+        return value;
+    }
+
     public object? VisitUnaryExpr(Expr.Unary expr)
     {
         var right = Evaluate(expr.Right);
@@ -163,6 +177,17 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return function.Call(this, arguments);
     }
 
+    public object? VisitGetExpr(Expr.Get expr)
+    {
+        var obj = Evaluate(expr.Obj);
+        if (obj is LoxInstance instance)
+        {
+            return instance.Get(expr.Name);
+        }
+        
+        throw new RuntimeError(expr.Name, "Only instances have properties.");
+    }
+
     public object? VisitVariableExpr(Expr.Variable expr)
     {
         return LookUpVariable(expr.Name, expr);
@@ -176,6 +201,14 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
     public Void? VisitBlockStmt(Stmt.Block stmt)
     {
         ExecuteBlock(stmt.Statements, new Environment(environment));
+        return null;
+    }
+
+    public Void? VisitClassStmt(Stmt.Class stmt)
+    {
+        globals.Add(stmt.Name.Lexeme, null);
+        var klass = new LoxClass(stmt.Name.Lexeme);
+        globals[stmt.Name.Lexeme] = klass;
         return null;
     }
 
