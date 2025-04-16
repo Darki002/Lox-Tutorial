@@ -207,7 +207,15 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
     public Void? VisitClassStmt(Stmt.Class stmt)
     {
         globals.Add(stmt.Name.Lexeme, null);
-        var klass = new LoxClass(stmt.Name.Lexeme);
+
+        var methods = new Dictionary<string, object?>();
+        foreach (var method in stmt.Methods)
+        {
+            var function = new LoxFunction(method, environment);
+            methods[method.Name.Lexeme] = function;
+        }
+        
+        var klass = new LoxClass(stmt.Name.Lexeme, methods);
         globals[stmt.Name.Lexeme] = klass;
         return null;
     }

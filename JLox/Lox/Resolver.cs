@@ -3,6 +3,7 @@
 public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {
     private readonly Stack<Dictionary<string, int>> scopes = new();
+    private FunctionType currentFunction = FunctionType.NONE;
     
     public void Start(List<Stmt?> statements)
     {
@@ -23,6 +24,13 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     public Void? VisitClassStmt(Stmt.Class stmt)
     {
         Declare(stmt.Name);
+
+        foreach (var method in stmt.Methods)
+        {
+            var declaration = FunctionType.METHOD;
+            ResolveFunction(method, declaration);
+        }
+        
         return null;
     }
 
@@ -35,7 +43,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     public Void? VisitFunctionStmt(Stmt.Function stmt)
     {
         Declare(stmt.Name);
-        ResolveFunction(stmt);
+        ResolveFunction(stmt, FunctionType.FUNCTION);
         return null;
     }
 
@@ -55,6 +63,11 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
 
     public Void? VisitReturnStmt(Stmt.Return stmt)
     {
+        if (currentFunction == FunctionType.NONE)
+        {
+            Lox.Error(stmt.Keyword, "Can't return from top-level code.");
+        }
+        
         if(stmt.Value is not null) Resolve(stmt.Value);
         return null;
     }
@@ -183,8 +196,11 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         }
     }
 
-    private void ResolveFunction(Stmt.Function function)
+    private void ResolveFunction(Stmt.Function function, FunctionType functionType)
     {
+        var enclosingFunction = currentFunction;
+        currentFunction = functionType;
+        
         BeginScope();
         foreach (var param in function.Params)
         {
@@ -193,5 +209,14 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         
         Resolve(function.Body);
         EndScope();
+        
+        currentFunction = enclosingFunction;
+    }
+    
+    private enum FunctionType
+    {
+        NONE,
+        FUNCTION,
+        METHOD
     }
 }

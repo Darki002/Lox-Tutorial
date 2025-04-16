@@ -12,4 +12,12 @@ print bagel; // Prints "Bagel instance".
 
 bagel.ka = 10;
 
-print bagel.ka;
+print bagel.ka; // Prints "10".
+
+class Bacon {
+  eat() {
+    print "Crunch crunch crunch!";
+  }
+}
+
+Bacon().eat(); // Prints "Crunch crunch crunch!".
