@@ -24,6 +24,9 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     public Void? VisitClassStmt(Stmt.Class stmt)
     {
         Declare(stmt.Name);
+        
+        BeginScope();
+        scopes.Peek()["this"] = 0;
 
         foreach (var method in stmt.Methods)
         {
@@ -31,6 +34,7 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
             ResolveFunction(method, declaration);
         }
         
+        EndScope();
         return null;
     }
 
@@ -125,6 +129,12 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     {
         Resolve(expr.Value);
         Resolve(expr.Obj);
+        return null;
+    }
+
+    public Void? VisitThisExpr(Expr.This expr)
+    {
+        ResolveLocal(expr, expr.Keyword);
         return null;
     }
 

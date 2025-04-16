@@ -138,6 +138,11 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return value;
     }
 
+    public object? VisitThisExpr(Expr.This expr)
+    {
+        return LookUpVariable(expr.Keyword, expr);
+    }
+
     public object? VisitUnaryExpr(Expr.Unary expr)
     {
         var right = Evaluate(expr.Right);
@@ -208,7 +213,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
     {
         globals.Add(stmt.Name.Lexeme, null);
 
-        var methods = new Dictionary<string, object?>();
+        var methods = new Dictionary<string, LoxFunction>();
         foreach (var method in stmt.Methods)
         {
             var function = new LoxFunction(method, environment);

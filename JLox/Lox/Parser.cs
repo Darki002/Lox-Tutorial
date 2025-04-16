@@ -413,6 +413,8 @@ public class Parser(List<Token> tokens)
             return new Expr.Literal(Previous().Literal);
         }
 
+        if (Match(TokenType.THIS)) return new Expr.This(Previous());
+
         if (Match(TokenType.IDENTIFIER)) return new Expr.Variable(Previous());
 
         if (Match(TokenType.LEFT_PAREN))

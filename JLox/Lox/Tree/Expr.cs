@@ -51,6 +51,14 @@ public abstract record Expr
 		}
 	}
 
+	public record This(Token Keyword) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitThisExpr(this);
+		}
+	}
+
 	public record Unary(Token Operator, Expr Right) : Expr
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
@@ -101,6 +109,7 @@ public abstract record Expr
 		T VisitLiteralExpr (Literal expr);
 		T VisitLogicalExpr (Logical expr);
 		T VisitSetExpr (Set expr);
+		T VisitThisExpr (This expr);
 		T VisitUnaryExpr (Unary expr);
 		T VisitCallExpr (Call expr);
 		T VisitGetExpr (Get expr);

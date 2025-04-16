@@ -27,6 +27,13 @@ public class LoxFunction(Stmt.Function declaration, Environment? closure) : ILox
         return null;
     }
 
+    public object? Bind(LoxInstance loxInstance)
+    {
+        var env = new Environment(closure);
+        env.Define(loxInstance);
+        return new LoxFunction(declaration, env);
+    }
+    
     public override string ToString()
     {
         return $"<fn {declaration.Name.Lexeme}>";

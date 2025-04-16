@@ -136,6 +136,8 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         return null;
     }
 
+    public Void? VisitThisExpr(Expr.This expr) => null;
+
     public Void? VisitUnaryExpr(Expr.Unary expr)
     {
         Resolve(expr.Right);

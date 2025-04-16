@@ -1,6 +1,6 @@
 namespace Lox.Callables;
 
-public class LoxClass(string name, Dictionary<string, object?> methods) : ILoxCallable
+public class LoxClass(string name, Dictionary<string, LoxFunction> methods) : ILoxCallable
 {
     public string Name => name;
     
@@ -12,7 +12,7 @@ public class LoxClass(string name, Dictionary<string, object?> methods) : ILoxCa
         return instance;
     }
     
-    public object? FindMethod(Token token)
+    public LoxFunction? FindMethod(Token token)
     {
         return methods.GetValueOrDefault(token.Lexeme);
     }
