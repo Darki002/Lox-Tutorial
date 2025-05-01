@@ -11,7 +11,7 @@ public abstract record Stmt
 		}
 	}
 
-	public record Class(Token Name, List<Stmt.Function> Methods) : Stmt
+	public record Class(Token Name, List<Function> Methods) : Stmt
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
 		{

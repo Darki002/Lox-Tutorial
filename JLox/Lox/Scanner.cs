@@ -19,7 +19,8 @@ public class Scanner(string source)
         { "this", TokenType.THIS },
         { "true", TokenType.TRUE },
         { "var", TokenType.VAR },
-        { "while", TokenType.WHILE }
+        { "while", TokenType.WHILE },
+        { "break", TokenType.BREAK }
     };
 
     private readonly List<Token> tokens = [];

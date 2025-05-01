@@ -5,7 +5,9 @@ namespace Lox;
 public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 {
     private readonly Stack<Dictionary<string, Variable>> scopes = new();
-    private ScopeType currentScope = ScopeType.NONE;
+    
+    private FunctionType currentFunction = FunctionType.NONE;
+    private bool isLoop = false;
     
     public void Start(List<Stmt?> statements)
     {
@@ -42,7 +44,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     {
         Declare(stmt.Name);
         Define(stmt.Name);
-        ResolveFunction(stmt, ScopeType.FUNCTION);
+        ResolveFunction(stmt, FunctionType.FUNCTION);
         return null;
     }
 
@@ -62,7 +64,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 
     public Void? VisitReturnStmt(Stmt.Return stmt)
     {
-        if (currentScope == ScopeType.NONE)
+        if (currentFunction == FunctionType.NONE)
         {
             Lox.Error(stmt.Keyword, "Can't return from top-level code.");
         }
@@ -81,19 +83,19 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 
     public Void? VisitWhileStmt(Stmt.While stmt)
     {
-        var enclosing = currentScope;
-        currentScope = ScopeType.LOOP;
+        var enclosing = isLoop;
+        isLoop = true;
         
         Resolve(stmt.Condition);
         Resolve(stmt.Body);
-        
-        currentScope = enclosing;
+
+        isLoop = enclosing;
         return null;
     }
 
     public Void? VisitBreakStmt(Stmt.Break stmt)
     {
-        if (currentScope != ScopeType.LOOP)
+        if (!isLoop)
         {
             Lox.Error(stmt.Keyword, "Can't break when not inside of a loop.");
         }
@@ -239,10 +241,10 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         Lox.Error(name, $"Can not resolve symbol '{name.Lexeme}'.");
     }
     
-    private void ResolveFunction(Stmt.Function function, ScopeType type)
+    private void ResolveFunction(Stmt.Function function, FunctionType type)
     {
-        var enclosingFunction = currentScope;
-        currentScope = type;
+        var enclosingFunction = currentFunction;
+        currentFunction = type;
         
         BeginScope();
         foreach (var param in function.Params)
@@ -253,7 +255,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         
         Resolve(function.Body);
         EndScope();
-        currentScope = enclosingFunction;
+        currentFunction = enclosingFunction;
     }
     
     private class Variable(Token token)
@@ -263,11 +265,11 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         public Token Token { get; } = token;
     }
     
-    private enum ScopeType
+    private enum FunctionType
     {
         NONE,
         FUNCTION,
-        LOOP
+        METHOD
     }
     
     private enum VarState
