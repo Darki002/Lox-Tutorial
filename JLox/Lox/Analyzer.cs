@@ -7,6 +7,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     private readonly Stack<Dictionary<string, Variable>> scopes = new();
     
     private FunctionType currentFunction = FunctionType.NONE;
+    private ClassType currentClass = ClassType.NONE;
     private bool isLoop = false;
     
     public void Start(List<Stmt?> statements)
@@ -29,6 +30,9 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 
     public Void? VisitClassStmt(Stmt.Class stmt)
     {
+        var enclosing = currentClass;
+        currentClass = ClassType.CLASS;
+        
         Declare(stmt.Name);
 
         foreach (var method in stmt.Methods)
@@ -37,6 +41,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         }
         
         Define(stmt.Name);
+        currentClass = enclosing;
         return null;
     }
 
@@ -144,7 +149,15 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         return null;
     }
 
-    public Void? VisitThisExpr(Expr.This expr) => null;
+    public Void? VisitThisExpr(Expr.This expr)
+    {
+        if (currentClass == ClassType.NONE)
+        {
+            Lox.Error(expr.Keyword, "Can't use 'this' outside of a class.");
+        }
+        
+        return null;
+    }
 
     public Void? VisitUnaryExpr(Expr.Unary expr)
     {
@@ -283,5 +296,11 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         DECLARED,
         DEFINED,
         READ
+    }
+
+    private enum ClassType
+    {
+        NONE,
+        CLASS
     }
 }
