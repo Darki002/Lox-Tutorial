@@ -30,6 +30,12 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     public Void? VisitClassStmt(Stmt.Class stmt)
     {
         Declare(stmt.Name);
+
+        foreach (var method in stmt.Methods)
+        {
+            ResolveFunction(method, FunctionType.METHOD);
+        }
+        
         Define(stmt.Name);
         return null;
     }
