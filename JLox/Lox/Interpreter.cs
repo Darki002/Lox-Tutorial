@@ -216,7 +216,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         var methods = new Dictionary<string, LoxFunction>();
         foreach (var method in stmt.Methods)
         {
-            var function = new LoxFunction(method, environment);
+            var function = new LoxFunction(method, environment, method.Name.Lexeme == "init");
             methods[method.Name.Lexeme] = function;
         }
         
@@ -233,7 +233,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
     public Void? VisitFunctionStmt(Stmt.Function stmt)
     {
-        var function = new LoxFunction(stmt, environment);
+        var function = new LoxFunction(stmt, environment, false);
         Define(stmt.Name, function);
         return null;
     }

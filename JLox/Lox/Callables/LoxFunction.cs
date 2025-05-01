@@ -2,7 +2,7 @@
 
 namespace Lox.Callables;
 
-public class LoxFunction(Stmt.Function declaration, Environment? closure) : ILoxCallable
+public class LoxFunction(Stmt.Function declaration, Environment? closure, bool isInitializer) : ILoxCallable
 {
     public int Arity => declaration.Params.Count;
     
@@ -21,17 +21,19 @@ public class LoxFunction(Stmt.Function declaration, Environment? closure) : ILox
         }
         catch (Return e)
         {
-            return e.Value;
+            return isInitializer 
+                ? closure!.GetAt(0, 0) 
+                : e.Value;
         }
-        
-        return null;
+
+        return isInitializer ? closure!.GetAt(0, 0) : null;
     }
 
-    public object? Bind(LoxInstance loxInstance)
+    public LoxFunction Bind(LoxInstance loxInstance)
     {
         var env = new Environment(closure);
         env.Define(loxInstance);
-        return new LoxFunction(declaration, env);
+        return new LoxFunction(declaration, env, isInitializer);
     }
     
     public override string ToString()

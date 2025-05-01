@@ -1,6 +1,4 @@
-﻿using Lox.Errors;
-
-namespace Lox;
+﻿namespace Lox;
 
 public class Environment(Environment? enclosing = null)
 {

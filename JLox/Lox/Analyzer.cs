@@ -37,7 +37,8 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
 
         foreach (var method in stmt.Methods)
         {
-            ResolveFunction(method, FunctionType.METHOD);
+            var declaration = method.Name.Lexeme == "init" ? FunctionType.INITIALIZER : FunctionType.METHOD;
+            ResolveFunction(method, declaration);
         }
         
         Define(stmt.Name);
@@ -79,8 +80,15 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         {
             Lox.Error(stmt.Keyword, "Can't return from top-level code.");
         }
+
+        if (stmt.Value is null) return null;
         
-        if(stmt.Value is not null) Resolve(stmt.Value);
+        if (currentFunction == FunctionType.INITIALIZER)
+        {
+            Lox.Error(stmt.Keyword, "Can't return a value from an initializer.");
+        }
+            
+        Resolve(stmt.Value);
         return null;
     }
 
@@ -288,6 +296,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     {
         NONE,
         FUNCTION,
+        INITIALIZER,
         METHOD
     }
     
