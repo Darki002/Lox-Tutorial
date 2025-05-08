@@ -34,6 +34,9 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         currentClass = ClassType.CLASS;
         
         Declare(stmt.Name);
+        Define(stmt.Name);
+        
+        BeginScope();
 
         foreach (var method in stmt.Methods)
         {
@@ -41,7 +44,13 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
             ResolveFunction(method, declaration);
         }
         
-        Define(stmt.Name);
+        EndScope();
+        
+        foreach (var method in stmt.StaticMethods)
+        {
+            ResolveFunction(method, FunctionType.STATIC_METHOD);
+        }
+        
         currentClass = enclosing;
         return null;
     }
@@ -162,6 +171,11 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         if (currentClass == ClassType.NONE)
         {
             Lox.Error(expr.Keyword, "Can't use 'this' outside of a class.");
+        }
+
+        if (currentFunction == FunctionType.STATIC_METHOD)
+        {
+            Lox.Error(expr.Keyword, "Can't use 'this' inside a static method.");
         }
         
         return null;
@@ -297,7 +311,8 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         NONE,
         FUNCTION,
         INITIALIZER,
-        METHOD
+        METHOD,
+        STATIC_METHOD
     }
     
     private enum VarState
