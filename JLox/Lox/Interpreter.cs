@@ -213,6 +213,15 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
     {
         globals.Add(stmt.Name.Lexeme, null);
 
+        var classMethods = new Dictionary<string, LoxFunction>();
+        foreach (var method in stmt.ClassMethods)
+        {
+            var function = new LoxFunction(method, environment, false);
+            classMethods[method.Name.Lexeme] = function;
+        }
+        
+        var metaClass = new LoxClass(null, $"{stmt.Name.Lexeme} metaclass", classMethods);
+
         var methods = new Dictionary<string, LoxFunction>();
         foreach (var method in stmt.Methods)
         {
@@ -220,7 +229,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             methods[method.Name.Lexeme] = function;
         }
         
-        var klass = new LoxClass(stmt.Name.Lexeme, methods);
+        var klass = new LoxClass(metaClass, stmt.Name.Lexeme, methods);
         globals[stmt.Name.Lexeme] = klass;
         return null;
     }
