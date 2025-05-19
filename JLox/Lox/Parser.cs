@@ -46,7 +46,7 @@ public class Parser(List<Token> tokens)
 
         while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
         {
-            var isClassMethod = Check(TokenType.CLASS);
+            var isClassMethod = Match(TokenType.CLASS);
             (isClassMethod ? classMethods : methods).Add(Function("Method"));
         }
 
