@@ -34,12 +34,21 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         currentClass = ClassType.CLASS;
         
         Declare(stmt.Name);
-
+        
+        BeginScope();
+        foreach (var method in stmt.ClassMethods)
+        {
+            ResolveFunction(method, FunctionType.CLASS_METHOD);
+        }
+        EndScope();
+        
+        BeginScope();
         foreach (var method in stmt.Methods)
         {
             var declaration = method.Name.Lexeme == "init" ? FunctionType.INITIALIZER : FunctionType.METHOD;
             ResolveFunction(method, declaration);
         }
+        EndScope();
         
         Define(stmt.Name);
         currentClass = enclosing;
@@ -297,7 +306,8 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         NONE,
         FUNCTION,
         INITIALIZER,
-        METHOD
+        METHOD,
+        CLASS_METHOD
     }
     
     private enum VarState
