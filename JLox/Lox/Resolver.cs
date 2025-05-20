@@ -33,12 +33,6 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         }
         
         EndScope();
-        
-        foreach (var method in stmt.StaticMethods)
-        {
-            ResolveFunction(method);
-        }
-        
         return null;
     }
 

@@ -1,6 +1,6 @@
 namespace Lox.Callables;
 
-public class LoxClass(string name, Dictionary<string, LoxFunction> methods, Dictionary<string, LoxFunction> staticMethods) : ILoxCallable
+public class LoxClass(string name, Dictionary<string, LoxFunction> methods) : ILoxCallable
 {
     public string Name => name;
 
@@ -25,16 +25,12 @@ public class LoxClass(string name, Dictionary<string, LoxFunction> methods, Dict
     private int GetArity()
     {
         var initializer = FindMethod("init");
-        return initializer?.Arity ?? 0;
+        if (initializer == null) return 0;
+        return initializer.Arity;
     }
     
     public override string ToString()
     {
         return name;
-    }
-
-    public LoxFunction? GetStatic(Token methodName)
-    {
-        return staticMethods.GetValueOrDefault(methodName.Lexeme);
     }
 }

@@ -42,22 +42,14 @@ public class Parser(List<Token> tokens)
         Consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
 
         var methods = new List<Stmt.Function>();
-        var staticMethods = new List<Stmt.Function>();
 
         while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
         {
-            if (Match(TokenType.CLASS))
-            {
-                staticMethods.Add(Function("static Method"));
-            }
-            else
-            {
-                methods.Add(Function("Method"));
-            }
+            methods.Add(Function("Method"));
         }
 
         Consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
-        return new Stmt.Class(name, methods, staticMethods);
+        return new Stmt.Class(name, methods);
     }
     
     private Stmt.Function Function(string kind)
