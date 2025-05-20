@@ -337,9 +337,12 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
     private static bool IsTruthy(object? right)
     {
-        if (right is null) return false;
-        if (right is bool boolean) return boolean;
-        return true;
+        return right switch
+        {
+            null => false,
+            bool boolean => boolean,
+            _ => true
+        };
     }
 
     private static bool IsEqual(object? right, object? left)

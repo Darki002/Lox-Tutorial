@@ -34,6 +34,7 @@ internal static class Lox
             if (line is "exit" or null) break;
             Run(line);
             hadError = false;
+            hadRuntimeError = false;
         }
     }
 

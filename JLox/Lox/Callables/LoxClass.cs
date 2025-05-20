@@ -6,14 +6,11 @@ public class LoxClass(LoxClass? metaClass, string name, Dictionary<string, LoxFu
 
     public int Arity => GetArity();
 
-    public object? Call(Interpreter interpreter, List<object?> arguments)
+    public object Call(Interpreter interpreter, List<object?> arguments)
     {
         var instance = new LoxInstance(this);
         var initializer = FindMethod("init");
-        if (initializer != null)
-        {
-            initializer.Bind(instance).Call(interpreter, arguments);
-        }
+        initializer?.Bind(instance).Call(interpreter, arguments);
         return instance;
     }
     
@@ -25,12 +22,8 @@ public class LoxClass(LoxClass? metaClass, string name, Dictionary<string, LoxFu
     private int GetArity()
     {
         var initializer = FindMethod("init");
-        if (initializer == null) return 0;
-        return initializer.Arity;
+        return initializer?.Arity ?? 0;
     }
     
-    public override string ToString()
-    {
-        return name;
-    }
+    public override string ToString() => name;
 }
