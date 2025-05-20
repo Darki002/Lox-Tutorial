@@ -1,6 +1,6 @@
 namespace Lox.Callables;
 
-public class LoxClass(string name, Dictionary<string, LoxFunction> methods) : ILoxCallable
+public class LoxClass(LoxClass? metaClass, string name, Dictionary<string, LoxFunction> methods) : LoxInstance(metaClass), ILoxCallable
 {
     public string Name => name;
 

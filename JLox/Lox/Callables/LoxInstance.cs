@@ -2,7 +2,7 @@ using Lox.Errors;
 
 namespace Lox.Callables;
 
-public class LoxInstance(LoxClass loxClass)
+public class LoxInstance(LoxClass? loxClass)
 {
     private readonly Dictionary<string, object?> fields = [];
     
@@ -13,7 +13,7 @@ public class LoxInstance(LoxClass loxClass)
             return value;
         }
 
-        var method = loxClass.FindMethod(name.Lexeme);
+        var method = loxClass?.FindMethod(name.Lexeme);
         if (method is not null) return method.Bind(this);
 
         throw new RuntimeError(name, $"Undefined property '{name.Lexeme}'.");
@@ -26,6 +26,6 @@ public class LoxInstance(LoxClass loxClass)
     
     public override string ToString()
     {
-        return $"{loxClass.Name} instance";
+        return $"{loxClass?.Name} instance";
     }
 }
