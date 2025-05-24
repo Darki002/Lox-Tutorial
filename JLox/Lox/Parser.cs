@@ -39,6 +39,15 @@ public class Parser(List<Token> tokens)
     private Stmt.Class ClassDeclaration()
     {
         var name = Consume(TokenType.IDENTIFIER, "Expect class name.");
+
+        Expr.Variable? superclass = null;
+        
+        if (Match(TokenType.LESS))
+        {
+            Consume(TokenType.IDENTIFIER, "Expected superclass name.");
+            superclass = new Expr.Variable(Previous());
+        }
+        
         Consume(TokenType.LEFT_BRACE, "Expect '{' before class body.");
 
         var methods = new List<Stmt.Function>();
@@ -51,7 +60,7 @@ public class Parser(List<Token> tokens)
         }
 
         Consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
-        return new Stmt.Class(name, methods, classMethods);
+        return new Stmt.Class(name, superclass, methods, classMethods);
     }
     
     private Stmt.Function Function(string kind)

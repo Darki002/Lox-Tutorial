@@ -24,6 +24,8 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     {
         Declare(stmt.Name);
         
+        if(stmt.Superclass is not null) Resolve(stmt.Superclass);
+        
         BeginScope();
         scopes.Peek()["this"] = 0;
         foreach (var method in stmt.ClassMethods)

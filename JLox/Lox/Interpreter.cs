@@ -222,6 +222,16 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
     public Void? VisitClassStmt(Stmt.Class stmt)
     {
+        object? superclass = null;
+        if (stmt.Superclass is not null)
+        {
+            superclass = Evaluate(stmt.Superclass);
+            if (superclass is not LoxClass)
+            {
+                throw new RuntimeError(stmt.Superclass.Name, "Superclass must be a class.");
+            }
+        }
+        
         globals.Add(stmt.Name.Lexeme, null);
 
         var classMethods = new Dictionary<string, LoxFunction>();
@@ -231,7 +241,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             classMethods[method.Name.Lexeme] = function;
         }
         
-        var metaClass = new LoxClass(null, $"{stmt.Name.Lexeme} metaclass", classMethods);
+        var metaClass = new LoxClass(null, null, $"{stmt.Name.Lexeme} metaclass", classMethods);
 
         var methods = new Dictionary<string, LoxFunction>();
         foreach (var method in stmt.Methods)
@@ -240,7 +250,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             methods[method.Name.Lexeme] = function;
         }
         
-        var klass = new LoxClass(metaClass, stmt.Name.Lexeme, methods);
+        var klass = new LoxClass(metaClass, (LoxClass?)superclass, stmt.Name.Lexeme, methods);
         globals[stmt.Name.Lexeme] = klass;
         return null;
     }

@@ -1,6 +1,6 @@
 namespace Lox.Callables;
 
-public class LoxClass(LoxClass? metaClass, string name, Dictionary<string, LoxFunction> methods) : LoxInstance(metaClass), ILoxCallable
+public class LoxClass(LoxClass? metaClass, LoxClass? superclass, string name, Dictionary<string, LoxFunction> methods) : LoxInstance(metaClass), ILoxCallable
 {
     public string Name => name;
 
@@ -16,7 +16,7 @@ public class LoxClass(LoxClass? metaClass, string name, Dictionary<string, LoxFu
     
     public LoxFunction? FindMethod(string methodName)
     {
-        return methods.GetValueOrDefault(methodName);
+        return methods.GetValueOrDefault(methodName) ?? superclass?.FindMethod(methodName);
     }
 
     private int GetArity()

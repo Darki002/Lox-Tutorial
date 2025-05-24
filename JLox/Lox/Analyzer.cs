@@ -34,6 +34,14 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         currentClass = ClassType.CLASS;
         
         Declare(stmt.Name);
+        Define(stmt.Name);
+
+        if (stmt.Superclass is not null && stmt.Name.Lexeme == stmt.Superclass.Name.Lexeme)
+        {
+            Lox.Error(stmt.Superclass.Name, "A class can't inherit from itself.");
+        }
+        
+        if(stmt.Superclass is not null) Resolve(stmt.Superclass);
         
         BeginScope();
         foreach (var method in stmt.ClassMethods)
@@ -50,7 +58,6 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         }
         EndScope();
         
-        Define(stmt.Name);
         currentClass = enclosing;
         return null;
     }
