@@ -208,9 +208,13 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     private void ResolveFunction(Stmt.Function function)
     {
         BeginScope();
-        foreach (var param in function.Params)
+
+        if (function.Params is not null)
         {
-            Declare(param);
+            foreach (var param in function.Params)
+            {
+                Declare(param);
+            }
         }
         
         Resolve(function.Body);

@@ -74,9 +74,15 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
                 CheckNumberOperand(expr.Operator, left, right);
                 return (double)left! - (double)right!;
             case TokenType.PLUS:
-                if (left is double leftNum && right is double rightNum) return leftNum + rightNum;
-                if (left is string leftStr && right is string rightStr) return leftStr + rightStr;
-                throw new RuntimeError(expr.Operator, "Operands must be two numbers or two strings.");
+                return left switch
+                {
+                    double leftNum when right is double rightNum => leftNum + rightNum,
+                    string leftStr when right is string rightStr => leftStr + rightStr,
+                    double leftNumToStr when right is string rightNumStr => leftNumToStr + rightNumStr,
+                    string leftNumStr when right is double rightNumToStr => leftNumStr + rightNumToStr,
+                    _ => throw new RuntimeError(expr.Operator, "Operands must be two numbers or two strings.")
+                };
+
             case TokenType.GREATER:
                 CheckNumberOperand(expr.Operator, left, right);
                 return (double)left! > (double)right!;
@@ -187,7 +193,12 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         var obj = Evaluate(expr.Obj);
         if (obj is LoxInstance instance)
         {
-            return instance.Get(expr.Name);
+            var result = instance.Get(expr.Name);
+            if (result is LoxFunction function)
+            {
+                return function.IsGetter ? function.Call(this) : function;
+            }
+            return result;
         }
         
         throw new RuntimeError(expr.Name, "Only instances have properties.");

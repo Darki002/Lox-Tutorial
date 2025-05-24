@@ -57,21 +57,27 @@ public class Parser(List<Token> tokens)
     private Stmt.Function Function(string kind)
     {
         var name = Consume(TokenType.IDENTIFIER, $"Expect {kind} name.");
-        Consume(TokenType.LEFT_PAREN, $"Expect '(' after {kind} name."); 
         
-        List<Token> parameters = [];
-        if (!Check(TokenType.RIGHT_PAREN))
+        List<Token>? parameters = null;
+        if (kind != "Method" || Check(TokenType.LEFT_PAREN))
         {
-            do
+            Consume(TokenType.LEFT_PAREN, $"Expect '(' after {kind} name."); 
+            parameters = [];
+
+            if (!Check(TokenType.RIGHT_PAREN))
             {
-                if (parameters.Count >= 255) {
-                    Error(Peek(), "Can't have more than 255 parameters.");
-                }
+                do
+                {
+                    if (parameters.Count >= 255) {
+                        Error(Peek(), "Can't have more than 255 parameters.");
+                    }
                 
-                parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
-            } while (Match(TokenType.COMMA));
+                    parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
+                } while (Match(TokenType.COMMA));
+            }
+            
+            Consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
         }
-        Consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
 
         Consume(TokenType.LEFT_BRACE, $"Expect '{{' before {kind} body.");
         var body = Block();

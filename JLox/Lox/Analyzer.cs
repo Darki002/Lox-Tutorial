@@ -283,10 +283,14 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         currentFunction = type;
         
         BeginScope();
-        foreach (var param in function.Params)
+
+        if (function.Params is not null)
         {
-            Declare(param);
-            Define(param);
+            foreach (var param in function.Params)
+            {
+                Declare(param);
+                Define(param);
+            }
         }
         
         Resolve(function.Body);

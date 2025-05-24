@@ -4,14 +4,16 @@ namespace Lox.Callables;
 
 public class LoxFunction(Stmt.Function declaration, Environment? closure, bool isInitializer) : ILoxCallable
 {
-    public int Arity => declaration.Params.Count;
+    public int Arity => declaration.Params?.Count ?? 0;
+
+    public bool IsGetter => declaration.Params is null;
     
-    public object? Call(Interpreter interpreter, List<object?> arguments)
+    public object? Call(Interpreter interpreter, List<object?>? arguments = null)
     {
         var env = new Environment(closure);
 
-        declaration.Params
-            .Zip(arguments)
+        declaration.Params?
+            .Zip(arguments!)
             .ToList()
             .ForEach(zip => env.Define(zip.Second));
 

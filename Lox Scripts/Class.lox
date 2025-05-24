@@ -41,6 +41,12 @@ class Math {
   class square(n) {
     return n * n;
   }
+  
+  class pi {
+    return 3.14;
+  }
 }
 
 print Math.square(3); // Prints "9".
+
+print "Pi: " + Math.pi;

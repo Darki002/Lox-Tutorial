@@ -27,7 +27,7 @@ public abstract record Stmt
 		}
 	}
 
-	public record Function(Token Name, List<Token> Params, List<Stmt> Body) : Stmt
+	public record Function(Token Name, List<Token>? Params, List<Stmt> Body) : Stmt
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
 		{

@@ -33,7 +33,7 @@ public class GenerateAst : ITool
             "Block      : List<Stmt> Statements",
             "Class      : Token Name, List<Stmt.Function> Methods, List<Stmt.Function> ClassMethods",
             "Expression : Expr Body",
-            "Function   : Token Name, List<Token> Params, List<Stmt> Body",
+            "Function   : Token Name, List<Token>? Params, List<Stmt> Body",
             "If         : Expr Condition, Stmt ThenBranch, Stmt? ElseBranch",
             "Print      : Expr Right",
             "Return     : Token Keyword, Expr? Value",
