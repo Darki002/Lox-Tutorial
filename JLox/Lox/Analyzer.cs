@@ -172,6 +172,16 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         Resolve(expr.Obj);
         return null;
     }
+    
+    public Void? VisitSuperExpr(Expr.Super expr)
+    {
+        if (currentClass == ClassType.NONE)
+        {
+            Lox.Error(expr.Keyword, "Can't use 'super' outside of a class.");
+        }
+        
+        return null;
+    }
 
     public Void? VisitThisExpr(Expr.This expr)
     {

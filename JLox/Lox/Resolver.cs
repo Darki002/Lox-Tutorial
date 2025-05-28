@@ -24,7 +24,12 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     {
         Declare(stmt.Name);
         
-        if(stmt.Superclass is not null) Resolve(stmt.Superclass);
+        if(stmt.Superclass is not null)
+        {
+            Resolve(stmt.Superclass);
+            BeginScope();
+            scopes.Peek()["super"] = 0;
+        }
         
         BeginScope();
         scopes.Peek()["this"] = 0;
@@ -41,6 +46,8 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
             ResolveFunction(method);
         }
         EndScope();
+        
+        if(stmt.Superclass is not null) EndScope();
         return null;
     }
 
@@ -130,6 +137,12 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     {
         Resolve(expr.Value);
         Resolve(expr.Obj);
+        return null;
+    }
+    
+    public Void? VisitSuperExpr(Expr.Super expr)
+    {
+        ResolveLocal(expr, expr.Keyword);
         return null;
     }
 

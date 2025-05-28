@@ -67,6 +67,11 @@ class Doughnut {
     }
 }
 
-class BostonCream < Doughnut {}
+class BostonCream < Doughnut {
+    cook() {
+        super.cook();
+        print "Stuff it with cream";
+    }
+}
 
 BostonCream().cook();

@@ -2,7 +2,7 @@
 
 public class Environment(Environment? enclosing = null)
 {
-    private readonly Environment? enclosing = enclosing;
+    public readonly Environment? Enclosing = enclosing;
     
     private readonly List<object?> values = [];
 
@@ -24,7 +24,7 @@ public class Environment(Environment? enclosing = null)
         var env = this;
         for (var i = 0; i < distance; i++)
         {
-            env = env?.enclosing;
+            env = env?.Enclosing;
         }
 
         return env;

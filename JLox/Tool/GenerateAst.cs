@@ -21,6 +21,7 @@ public class GenerateAst : ITool
             "Literal  : object? Value",
             "Logical  : Expr Left, Token Operator, Expr Right",
             "Set      : Expr Obj, Token Name, Expr Value",
+            "Super    : Token Keyword, Token Method",
             "This     : Token Keyword",
             "Unary    : Token Operator, Expr Right",
             "Call     : Expr Callee, Token Paren, List<Expr> Arguments",
