@@ -41,7 +41,11 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
             Lox.Error(stmt.Superclass.Name, "A class can't inherit from itself.");
         }
         
-        if(stmt.Superclass is not null) Resolve(stmt.Superclass);
+        if(stmt.Superclass is not null)
+        {
+            currentClass = ClassType.SUBCLASS;
+            Resolve(stmt.Superclass);
+        }
         
         BeginScope();
         foreach (var method in stmt.ClassMethods)
@@ -178,6 +182,10 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         if (currentClass == ClassType.NONE)
         {
             Lox.Error(expr.Keyword, "Can't use 'super' outside of a class.");
+        }
+        else if(currentClass != ClassType.SUBCLASS)
+        {
+            Lox.Error(expr.Keyword, "Can't use 'super' ina class with no superclass.");
         }
         
         return null;
@@ -341,6 +349,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     private enum ClassType
     {
         NONE,
-        CLASS
+        CLASS,
+        SUBCLASS
     }
 }
