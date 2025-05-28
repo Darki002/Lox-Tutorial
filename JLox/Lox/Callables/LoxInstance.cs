@@ -6,7 +6,7 @@ public class LoxInstance(LoxClass? loxClass)
 {
     private readonly Dictionary<string, object?> fields = [];
     
-    public object? Get(Token name)
+    public virtual object? Get(Token name)
     {
         if (fields.TryGetValue(name.Lexeme, out var value))
         {
