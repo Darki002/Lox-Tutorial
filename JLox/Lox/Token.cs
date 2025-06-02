@@ -29,7 +29,7 @@ public class Token(TokenType type, string lexeme, object? literal, int line)
 public enum TokenType
 {
     // Single-character tokens.
-    LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
+    LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET,
     COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
 
     // One or two character tokens.

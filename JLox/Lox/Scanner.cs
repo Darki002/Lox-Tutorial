@@ -61,6 +61,12 @@ public class Scanner(string source)
             case '}':
                 AddToken(TokenType.RIGHT_BRACE);
                 break;
+            case '[':
+                AddToken(TokenType.LEFT_SQUARE_BRACKET);
+                break;
+            case ']':
+                AddToken(TokenType.RIGHT_SQUARE_BRACKET);
+                break;
             case ',':
                 AddToken(TokenType.COMMA);
                 break;
