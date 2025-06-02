@@ -2,3 +2,5 @@ var ka = array(2);
 print ka.get(0);
 ka.set(1, "hi");
 print ka.get(1);
+print ka.length;
+print ka.get(2);

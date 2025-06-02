@@ -2,8 +2,8 @@ namespace Lox.Callables.StandardLibrary;
 
 public class ArrayCallable : ILoxCallable
 {
-    public int Arity { get; } = 1;
-    
+    public int Arity => 1;
+
     public object? Call(Interpreter interpreter, List<object?> arguments)
     {
         var size = Convert.ToInt32(arguments[0]);
