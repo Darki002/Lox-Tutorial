@@ -1,3 +1,5 @@
+using Lox.Helpers;
+
 namespace Lox;
 
 public class Scanner(string source)
@@ -182,12 +184,7 @@ public class Scanner(string source)
 
         Advance();
 
-        // ReSharper disable LocalVariableHidesMember
-        var start = this.start + 1;
-        var current = this.current - 1;
-        // ReSharper restore LocalVariableHidesMember
-
-        var value = source.Sub(start, current);
+        var value = source.Sub(start + 1, current - 1);
         AddToken(TokenType.STRING, value);
     }
 
@@ -222,7 +219,7 @@ public class Scanner(string source)
 
     private static bool IsDigit(char c)
     {
-        return c >= '0' && c <= '9';
+        return c is >= '0' and <= '9';
     }
 
     private static bool IsAlpha(char c)

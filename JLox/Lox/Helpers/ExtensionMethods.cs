@@ -1,4 +1,4 @@
-﻿namespace Lox;
+﻿namespace Lox.Helpers;
 
 public static class ExtensionMethods
 {

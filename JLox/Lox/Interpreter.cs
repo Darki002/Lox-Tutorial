@@ -2,6 +2,7 @@
 using Lox.Callables;
 using Lox.Callables.StandardLibrary;
 using Lox.Errors;
+using Lox.Helpers;
 
 namespace Lox;
 
