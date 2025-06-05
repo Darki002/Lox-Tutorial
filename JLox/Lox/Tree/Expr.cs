@@ -51,7 +51,7 @@ public abstract record Expr
 		}
 	}
 
-	public record IndexSet(Expr Obj, Expr Index, Expr Value) : Expr
+	public record IndexSet(Expr Obj, Expr Index, Expr Value, Token Token) : Expr
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
@@ -99,7 +99,7 @@ public abstract record Expr
 		}
 	}
 
-	public record IndexGet(Expr Obj, Expr Index) : Expr
+	public record IndexGet(Expr Obj, Expr Index, Token Token) : Expr
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
 		{

@@ -158,13 +158,14 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
                 array.SetValue(i, value);
                 return null;
             }
-            // TODO: Runtime Error, index must be a number
+
+            throw new RuntimeError(expr.Token, "Expected value of type number for index set after '['");
         }
         
-        // TODO: Runtime Error, index access only for array
+        throw new RuntimeError(expr.Token, "Can only access arrays with '[]'");
     }
 
-    public object? VisitSuperExpr(Expr.Super expr)
+    public object VisitSuperExpr(Expr.Super expr)
     {
         var distance = locals[expr];
         var superclass = (LoxClass)environment!.GetAt(distance, 0)!;
@@ -249,10 +250,10 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             var index = Evaluate(expr);
             if (index is double i)
                 return array.GetValue(i);
-            // TODO: Runtime Error, index must be a number
+            throw new RuntimeError(expr.Token, "Expected value of type number for index set after '['");
         }
         
-        // TODO: Runtime Error, index access only for array
+        throw new RuntimeError(expr.Token, "Can only access arrays with '[]'");
     }
 
     public object? VisitVariableExpr(Expr.Variable expr)

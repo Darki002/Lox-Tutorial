@@ -275,7 +275,7 @@ public class Parser(List<Token> tokens)
 
             if (expr is Expr.IndexGet indexGet)
             {
-                return new Expr.IndexSet(indexGet.Obj, indexGet.Index, value);
+                return new Expr.IndexSet(indexGet.Obj, indexGet.Index, value, indexGet.Token);
             }
 
             Error(equals, "Invalid assignment target.");
@@ -396,8 +396,10 @@ public class Parser(List<Token> tokens)
             }
             else if (Match(TokenType.LEFT_SQUARE_BRACKET))
             {
+                var token = Previous();
                 var index = Expression();
-                expr = new Expr.IndexGet(expr, index);
+                expr = new Expr.IndexGet(expr, index, token);
+                Consume(TokenType.RIGHT_SQUARE_BRACKET, "Expected closing ']'.");
             }
             else
             {
