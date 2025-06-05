@@ -273,6 +273,11 @@ public class Parser(List<Token> tokens)
                 return new Expr.Set(get.Obj, get.Name, value);
             }
 
+            if (expr is Expr.IndexGet indexGet)
+            {
+                return new Expr.IndexSet(indexGet.Obj, indexGet.Index, value);
+            }
+
             Error(equals, "Invalid assignment target.");
         }
 
@@ -388,6 +393,11 @@ public class Parser(List<Token> tokens)
             {
                 var name = Consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
                 expr = new Expr.Get(expr, name);
+            }
+            else if (Match(TokenType.LEFT_SQUARE_BRACKET))
+            {
+                var index = Expression();
+                expr = new Expr.IndexGet(expr, index);
             }
             else
             {
