@@ -1,3 +1,4 @@
+using System.Text;
 using Lox.Errors;
 
 namespace Lox.Callables.StandardLibrary;
@@ -26,7 +27,21 @@ public class ArrayInstance(int size) : LoxInstance(null)
     {
         values[(int)index] = value;
     }
-    
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append('[');
+        for (var index = 0; index < values.Length; index++)
+        {
+            sb.Append(Interpreter.Stringify(values[index]));
+            if (index < values.Length - 1) sb.Append(", ");
+        }
+
+        sb.Append(']');
+        return sb.ToString();
+    }
+
     public readonly struct ArrayGet(object?[] values, Token name) : ILoxCallable
     {
         public int Arity => 1;

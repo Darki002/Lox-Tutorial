@@ -448,7 +448,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         throw new RuntimeError(@operator, "Operand must be a number.");
     }
 
-    private static string? Stringify(object? obj)
+    public static string? Stringify(object? obj)
     {
         if (obj == null) return "nil";
 

@@ -2,7 +2,10 @@ var ka = Array(2);
 print ka.get(0);
 ka.set(1, "hi");
 print ka.get(1);
+
+print ka;
 print ka.length;
+
 
 // var ka2 = [1, 2, 3];
 // ka2[1] = 5;
