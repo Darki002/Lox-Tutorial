@@ -139,7 +139,15 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         Resolve(expr.Obj);
         return null;
     }
-    
+
+    public Void? VisitIndexSetExpr(Expr.IndexSet expr)
+    {
+        Resolve(expr.Obj);
+        Resolve(expr.Index);
+        Resolve(expr.Value);
+        return null;
+    }
+
     public Void? VisitSuperExpr(Expr.Super expr)
     {
         ResolveLocal(expr, expr.Keyword);
@@ -168,6 +176,13 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
     public Void? VisitGetExpr(Expr.Get expr)
     {
         Resolve(expr.Obj);
+        return null;
+    }
+
+    public Void? VisitIndexGetExpr(Expr.IndexGet expr)
+    {
+        Resolve(expr.Obj);
+        Resolve(expr.Index);
         return null;
     }
 

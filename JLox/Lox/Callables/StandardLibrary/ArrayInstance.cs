@@ -16,8 +16,18 @@ public class ArrayInstance(int size) : LoxInstance(null)
             _ => throw new RuntimeError(name, $"Undefined property '{name.Lexeme}'.")
         };
     }
+
+    public object? GetValue(double index)
+    {
+        return values[(int)index];
+    }
     
-    private readonly struct ArrayGet(object?[] values, Token name) : ILoxCallable
+    public void SetValue(double index, object? value)
+    {
+        values[(int)index] = value;
+    }
+    
+    public readonly struct ArrayGet(object?[] values, Token name) : ILoxCallable
     {
         public int Arity => 1;
 
@@ -29,7 +39,7 @@ public class ArrayInstance(int size) : LoxInstance(null)
         }
     }
     
-    private readonly struct ArraySet(object?[] values, Token name) : ILoxCallable
+    public readonly struct ArraySet(object?[] values, Token name) : ILoxCallable
     {
         public int Arity => 2;
 

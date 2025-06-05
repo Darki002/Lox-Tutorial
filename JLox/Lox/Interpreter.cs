@@ -145,6 +145,25 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return value;
     }
 
+    public object? VisitIndexSetExpr(Expr.IndexSet expr)
+    {
+        var obj = Evaluate(expr.Obj);
+
+        if (obj is ArrayInstance array)
+        {
+            var index = Evaluate(expr.Index);
+            if (index is double i)
+            {
+                var value = Evaluate(expr.Value);
+                array.SetValue(i, value);
+                return null;
+            }
+            // TODO: Runtime Error, index must be a number
+        }
+        
+        // TODO: Runtime Error, index access only for array
+    }
+
     public object? VisitSuperExpr(Expr.Super expr)
     {
         var distance = locals[expr];
@@ -219,6 +238,21 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         }
         
         throw new RuntimeError(expr.Name, "Only instances have properties.");
+    }
+
+    public object? VisitIndexGetExpr(Expr.IndexGet expr)
+    {
+        var obj = Evaluate(expr.Obj);
+
+        if (obj is ArrayInstance array)
+        {
+            var index = Evaluate(expr);
+            if (index is double i)
+                return array.GetValue(i);
+            // TODO: Runtime Error, index must be a number
+        }
+        
+        // TODO: Runtime Error, index access only for array
     }
 
     public object? VisitVariableExpr(Expr.Variable expr)

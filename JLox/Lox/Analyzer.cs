@@ -176,7 +176,15 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         Resolve(expr.Obj);
         return null;
     }
-    
+
+    public Void? VisitIndexSetExpr(Expr.IndexSet expr)
+    {
+        Resolve(expr.Obj);
+        Resolve(expr.Index);
+        Resolve(expr.Value);
+        return null;
+    }
+
     public Void? VisitSuperExpr(Expr.Super expr)
     {
         if (currentClass == ClassType.NONE)
@@ -217,6 +225,13 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     public Void? VisitGetExpr(Expr.Get expr)
     {
         Resolve(expr.Obj);
+        return null;
+    }
+
+    public Void? VisitIndexGetExpr(Expr.IndexGet expr)
+    {
+        Resolve(expr.Obj);
+        Resolve(expr.Index);
         return null;
     }
 
