@@ -6,6 +6,10 @@ print ka.get(1);
 print ka;
 print ka.length;
 
+ka[0] = "bye";
+print ka[0];
+
+
 // var ka2 = [1, 2, 3];
 // ka2[1] = 5;
 // print ka2[1];
