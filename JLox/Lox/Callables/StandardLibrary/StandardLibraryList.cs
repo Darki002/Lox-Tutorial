@@ -6,6 +6,6 @@ public static class StandardLibraryList
         new()
         {
             {"clock", new Clock()},
-            {"array", new ArrayCallable()}
+            {"Array", new ArrayCallable()}
         };
 }

@@ -1,4 +1,4 @@
-var ka = array(2);
+var ka = Array(2);
 print ka.get(0);
 ka.set(1, "hi");
 print ka.get(1);
