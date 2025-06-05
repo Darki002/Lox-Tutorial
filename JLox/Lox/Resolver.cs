@@ -205,6 +205,15 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         return null;
     }
 
+    public Void? VisitArrayExpr(Expr.Array expr)
+    {
+        foreach (var item in expr.Items)
+        {
+            Resolve(item);
+        }
+        return null;
+    }
+
     private void Declare(Token name)
     {
         if (scopes.Count < 1) return;

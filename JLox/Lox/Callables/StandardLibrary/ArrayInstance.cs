@@ -3,10 +3,20 @@ using Lox.Errors;
 
 namespace Lox.Callables.StandardLibrary;
 
-public class ArrayInstance(int size) : LoxInstance(null)
+public class ArrayInstance : LoxInstance
 {
-    private readonly object?[] values = new object?[size];
-    
+    private readonly object?[] values;
+
+    public ArrayInstance(object?[] values) : base(null)
+    {
+        this.values = values;
+    }
+
+    public ArrayInstance(int size) : base(null)
+    {
+        values = new object?[size];
+    }
+
     public override object Get(Token name)
     {
         return name.Lexeme switch

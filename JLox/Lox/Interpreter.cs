@@ -265,6 +265,17 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         return new LoxAnonymousFunction(expr, environment);
     }
 
+    public object VisitArrayExpr(Expr.Array expr)
+    {
+        var items = new object?[expr.Items.Count];
+        for (var i = 0; i < expr.Items.Count; i++)
+        {
+            items[i] = Evaluate(expr.Items[i]);
+        }
+
+        return new ArrayInstance(items);
+    }
+
     public Void? VisitBlockStmt(Stmt.Block stmt)
     {
         ExecuteBlock(stmt.Statements, new Environment(environment));

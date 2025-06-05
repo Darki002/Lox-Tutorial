@@ -259,7 +259,17 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         EndScope();
         return null;
     }
-    
+
+    public Void? VisitArrayExpr(Expr.Array expr)
+    {
+        foreach (var item in expr.Items)
+        {
+            Resolve(item);
+        }
+
+        return null;
+    }
+
     private void Declare(Token name)
     {
         var scope = scopes.Peek();
