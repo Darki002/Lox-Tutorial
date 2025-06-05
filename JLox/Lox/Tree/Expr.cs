@@ -51,6 +51,14 @@ public abstract record Expr
 		}
 	}
 
+	public record IndexSet(Expr Obj, Expr Index, Expr Value) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitIndexSetExpr(this);
+		}
+	}
+
 	public record Super(Token Keyword, Token Method) : Expr
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
@@ -91,6 +99,14 @@ public abstract record Expr
 		}
 	}
 
+	public record IndexGet(Expr Obj, Expr Index) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitIndexGetExpr(this);
+		}
+	}
+
 	public record Variable(Token Name) : Expr
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
@@ -117,11 +133,13 @@ public abstract record Expr
 		T VisitLiteralExpr (Literal expr);
 		T VisitLogicalExpr (Logical expr);
 		T VisitSetExpr (Set expr);
+		T VisitIndexSetExpr (IndexSet expr);
 		T VisitSuperExpr (Super expr);
 		T VisitThisExpr (This expr);
 		T VisitUnaryExpr (Unary expr);
 		T VisitCallExpr (Call expr);
 		T VisitGetExpr (Get expr);
+		T VisitIndexGetExpr (IndexGet expr);
 		T VisitVariableExpr (Variable expr);
 		T VisitFunctionExpr (Function expr);
 	}
