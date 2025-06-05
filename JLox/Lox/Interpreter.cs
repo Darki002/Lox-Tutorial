@@ -247,7 +247,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
         if (obj is ArrayInstance array)
         {
-            var index = Evaluate(expr);
+            var index = Evaluate(expr.Index);
             if (index is double i)
                 return array.GetValue(i);
             throw new RuntimeError(expr.Token, "Expected value of type number for index set after '['");
