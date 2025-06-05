@@ -123,6 +123,14 @@ public abstract record Expr
 		}
 	}
 
+	public record Array(List<Expr> Items) : Expr
+	{
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitArrayExpr(this);
+		}
+	}
+
 	public abstract T Accept<T>(IVisitor<T> visitor);
 
 	public interface IVisitor<out T>
@@ -142,5 +150,6 @@ public abstract record Expr
 		T VisitIndexGetExpr (IndexGet expr);
 		T VisitVariableExpr (Variable expr);
 		T VisitFunctionExpr (Function expr);
+		T VisitArrayExpr (Array expr);
 	}
 }

@@ -29,7 +29,8 @@ public class GenerateAst : ITool
             "Get      : Expr Obj, Token Name",
             "IndexGet : Expr Obj, Expr Index, Token Token",
             "Variable : Token Name",
-            "Function : List<Token> Params, List<Stmt> Body"
+            "Function : List<Token> Params, List<Stmt> Body",
+            "Array    : List<Expr> Items"
         ]);
 
         DefineAst(outputDir, "Stmt", [

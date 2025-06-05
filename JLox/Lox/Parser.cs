@@ -484,6 +484,22 @@ public class Parser(List<Token> tokens)
             return new Expr.Function(parameters, body);
         }
 
+        if (Match(TokenType.LEFT_SQUARE_BRACKET))
+        {
+            var arguments = new List<Expr>();
+            
+            if (!Check(TokenType.RIGHT_SQUARE_BRACKET))
+            {
+                do
+                {
+                    arguments.Add(Expression());
+                } while (Match(TokenType.COMMA));
+            }
+            
+            Consume(TokenType.RIGHT_SQUARE_BRACKET, "Expected ']' after arguments.");
+            return new Expr.Array(arguments);
+        }
+
         throw Error(Peek(), "Expect expression.");
     }
     
