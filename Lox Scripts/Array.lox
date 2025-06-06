@@ -19,4 +19,3 @@ print ka2.length;
 
 var test = ["test", 3, Array(1)];
 print test;
-print test[1.1];
