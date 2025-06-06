@@ -154,9 +154,14 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
             var index = Evaluate(expr.Index);
             if (index is double i)
             {
-                var value = Evaluate(expr.Value);
-                array.SetValue(i, value);
-                return null;
+                if (i % 1 == 0)
+                {
+                    var value = Evaluate(expr.Value);
+                    array.SetValue((int)i, value);
+                    return null;
+                }
+                
+                throw new RuntimeError(expr.Token, "Expected integer as an index.");
             }
 
             throw new RuntimeError(expr.Token, "Expected value of type number for index set after '['");
@@ -248,7 +253,15 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         if (obj is ArrayInstance array)
         {
             var index = Evaluate(expr.Index);
-            if (index is double i) return array.GetValue(i);
+            if (index is double i)
+            {
+                if (i % 1 == 0)
+                {
+                    return array.GetValue((int)i);
+                }
+
+                throw new RuntimeError(expr.Token, "Expected integer as an index.");
+            }
             throw new RuntimeError(expr.Token, "Expected value of type number for index set after '['");
         }
         

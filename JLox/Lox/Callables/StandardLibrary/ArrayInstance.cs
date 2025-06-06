@@ -28,14 +28,14 @@ public class ArrayInstance : LoxInstance
         };
     }
 
-    public object? GetValue(double index)
+    public object? GetValue(int index)
     {
-        return values[(int)index];
+        return values[index];
     }
     
-    public void SetValue(double index, object? value)
+    public void SetValue(int index, object? value)
     {
-        values[(int)index] = value;
+        values[index] = value;
     }
 
     public override string ToString()

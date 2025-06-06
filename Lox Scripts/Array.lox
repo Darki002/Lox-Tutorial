@@ -14,3 +14,9 @@ var ka2 = [1, 2, 3];
 ka2[1] = 5;
 print ka2[1];
 print ka2;
+print ka2.length;
+
+
+var test = ["test", 3, Array(1)];
+print test;
+print test[1.1];
