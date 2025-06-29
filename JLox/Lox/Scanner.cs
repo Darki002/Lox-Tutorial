@@ -85,6 +85,9 @@ public class Scanner(string source)
             case '*':
                 AddToken(TokenType.STAR);
                 break;
+            case '%':
+                AddToken(TokenType.PERCENT);
+                break;
             case '!':
                 AddToken(Match('=') ? TokenType.BANG_EQUAL : TokenType.BANG);
                 break;

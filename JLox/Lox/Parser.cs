@@ -358,7 +358,7 @@ public class Parser(List<Token> tokens)
     {
         var expr = Unary();
 
-        while (Match(TokenType.STAR, TokenType.SLASH))
+        while (Match(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT))
         {
             var @operator = Previous();
             var right = Unary();

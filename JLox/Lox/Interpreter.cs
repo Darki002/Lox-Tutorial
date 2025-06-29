@@ -71,6 +71,10 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
                 CheckNumberOperand(expr.Operator, left, right);
                 if ((double)right! != 0) return (double)left! / (double)right;
                 throw new RuntimeError(expr.Operator, "Division by Zero.");
+            case TokenType.PERCENT:
+                CheckNumberOperand(expr.Operator, left, right);
+                if ((double)right! != 0) return (double)left! % (double)right;
+                throw new RuntimeError(expr.Operator, "Modulo by Zero.");
             case TokenType.MINUS:
                 CheckNumberOperand(expr.Operator, left, right);
                 return (double)left! - (double)right!;
