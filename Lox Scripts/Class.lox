@@ -1,3 +1,10 @@
+var test = 10;
+print test;
+
+
+
+
+
 class DevonshireCream {
   serveOn() {
     return "Scones";

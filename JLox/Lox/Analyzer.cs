@@ -8,7 +8,7 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
     
     private FunctionType currentFunction = FunctionType.NONE;
     private ClassType currentClass = ClassType.NONE;
-    private bool isLoop = false;
+    private bool isLoop;
     
     public void Start(List<Stmt?> statements)
     {
