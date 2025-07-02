@@ -322,6 +322,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         var classMethods = new Dictionary<string, LoxFunction>();
         foreach (var method in stmt.ClassMethods)
         {
+            // TODO: add operators with token as names to meta class. It is not possible to get those in the runtime, except for us.
             var function = new LoxFunction(method, environment, false);
             classMethods[method.Name.Lexeme] = function;
         }
