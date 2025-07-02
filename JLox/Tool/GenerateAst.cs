@@ -35,7 +35,7 @@ public class GenerateAst : ITool
 
         DefineAst(outputDir, "Stmt", [
             "Block      : List<Stmt> Statements",
-            "Class      : Token Name, Expr.Variable? Superclass, List<Stmt.Function> Methods, List<Stmt.Function> ClassMethods",
+            "Class      : Token Name, Expr.Variable? Superclass, List<Stmt.Function> Methods, List<Stmt.Function> ClassMethods, List<Stmt.Function> OperatorOverloads",
             "Expression : Expr Body",
             "Function   : Token Name, List<Token>? Params, List<Stmt> Body",
             "If         : Expr Condition, Stmt ThenBranch, Stmt? ElseBranch",
