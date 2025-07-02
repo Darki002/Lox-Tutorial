@@ -52,23 +52,50 @@ public class Parser(List<Token> tokens)
 
         var methods = new List<Stmt.Function>();
         var classMethods = new List<Stmt.Function>();
+        var operatorOverloads = new List<Stmt.Function>();
 
         while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
         {
-            var isClassMethod = Match(TokenType.CLASS);
-            (isClassMethod ? classMethods : methods).Add(Function("Method"));
+            if (Match(TokenType.CLASS))
+            {
+                if (Match(TokenType.OPERATOR))
+                {
+                    var op = ConsumeAny("Expected operator that can be overloaded.", TokenType.PLUS, TokenType.MINUS,
+                        TokenType.STAR, TokenType.SLASH, TokenType.PERCENT);
+                    var parameters = GetParameters("Method");
+                    if (parameters == null || parameters.Count != 2) Error(op, "Operator overload must have 2 Parameters");
+                    var body = Block();
+                    operatorOverloads.Add(new Stmt.Function(op, parameters, body));
+                }
+                else
+                {
+                    classMethods.Add(Function("Method"));
+                }
+            }
+            else
+            {
+                methods.Add(Function("Method"));
+            }
         }
 
         Consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
-        return new Stmt.Class(name, superclass, methods, classMethods);
+        return new Stmt.Class(name, superclass, methods, classMethods, operatorOverloads);
     }
     
     private Stmt.Function Function(string kind)
     {
         var name = Consume(TokenType.IDENTIFIER, $"Expect {kind} name.");
+        var parameters = GetParameters(kind);
         
+        Consume(TokenType.LEFT_BRACE, $"Expect '{{' before {kind} body.");
+        var body = Block();
+        return new Stmt.Function(name, parameters, body);
+    }
+
+    private List<Token>? GetParameters(string kind)
+    {
         List<Token>? parameters = null;
-        if (kind != "Method" || Check(TokenType.LEFT_PAREN))
+        if (kind is not "Method" and not "function" || Check(TokenType.LEFT_PAREN))
         {
             Consume(TokenType.LEFT_PAREN, $"Expect '(' after {kind} name."); 
             parameters = [];
@@ -88,9 +115,7 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
         }
 
-        Consume(TokenType.LEFT_BRACE, $"Expect '{{' before {kind} body.");
-        var body = Block();
-        return new Stmt.Function(name, parameters, body);
+        return parameters;
     }
     
     private Stmt.Var VarDeclaration()
@@ -539,6 +564,13 @@ public class Parser(List<Token> tokens)
     private Token Consume(TokenType type, string message)
     {
         if(Check(type)) return Advance();
+
+        throw Error(Peek(), message);
+    }
+    
+    private Token ConsumeAny(string message, params TokenType[] type)
+    {
+        if(Match(type)) return Advance();
 
         throw Error(Peek(), message);
     }
