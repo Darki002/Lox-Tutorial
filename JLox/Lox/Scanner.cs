@@ -22,7 +22,8 @@ public class Scanner(string source)
         { "true", TokenType.TRUE },
         { "var", TokenType.VAR },
         { "while", TokenType.WHILE },
-        { "break", TokenType.BREAK }
+        { "break", TokenType.BREAK },
+        { "operator", TokenType.OPERATOR }
     };
 
     private readonly List<Token> tokens = [];
