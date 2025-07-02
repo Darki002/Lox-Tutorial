@@ -55,6 +55,13 @@ public class Analyzer: Stmt.IVisitor<Void?>, Expr.IVisitor<Void?>
         EndScope();
         
         BeginScope();
+        foreach (var method in stmt.OperatorOverloads)
+        {
+            ResolveFunction(method, FunctionType.CLASS_METHOD);
+        }
+        EndScope();
+        
+        BeginScope();
         foreach (var method in stmt.Methods)
         {
             var declaration = method.Name.Lexeme == "init" ? FunctionType.INITIALIZER : FunctionType.METHOD;

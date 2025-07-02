@@ -32,8 +32,14 @@ public class Resolver(Interpreter interpreter) : Stmt.IVisitor<Void?>, Expr.IVis
         }
         
         BeginScope();
-        scopes.Peek()["this"] = 0;
         foreach (var method in stmt.ClassMethods)
+        {
+            ResolveFunction(method);
+        }
+        EndScope();
+        
+        BeginScope();
+        foreach (var method in stmt.OperatorOverloads)
         {
             ResolveFunction(method);
         }
