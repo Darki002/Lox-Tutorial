@@ -11,7 +11,7 @@ public abstract record Stmt
 		}
 	}
 
-	public record Class(Token Name, Expr.Variable? Superclass, List<Stmt.Function> Methods, List<Stmt.Function> ClassMethods) : Stmt
+	public record Class(Token Name, Expr.Variable? Superclass, List<Stmt.Function> Methods, List<Stmt.Function> ClassMethods, List<Stmt.Function> OperatorOverloads) : Stmt
 	{
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
