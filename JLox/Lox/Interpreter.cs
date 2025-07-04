@@ -62,6 +62,17 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         var right = Evaluate(expr.Right);
         var left = Evaluate(expr.Left);
 
+        if (left is LoxInstance leftInstance)
+        {
+            var method = leftInstance.Get(expr.Operator);
+            if (method is not ILoxCallable operatorMethod)
+            {
+                throw new RuntimeError(expr.Operator, $"Class '{leftInstance.LoxClass}' does not have a operator overload for '{expr.Operator.Lexeme}'.");
+            }
+
+            return operatorMethod.Call(this, [left, right]);
+        }
+
         switch (expr.Operator.Type)
         {
             case TokenType.STAR:
@@ -87,7 +98,6 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
                     string leftNumStr when right is double rightNumToStr => leftNumStr + rightNumToStr,
                     _ => throw new RuntimeError(expr.Operator, "Operands must be two numbers or two strings.")
                 };
-
             case TokenType.GREATER:
                 CheckNumberOperand(expr.Operator, left, right);
                 return (double)left! > (double)right!;
@@ -322,9 +332,13 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         var classMethods = new Dictionary<string, LoxFunction>();
         foreach (var method in stmt.ClassMethods)
         {
-            // TODO: add operators with token as names to meta class. It is not possible to get those in the runtime, except for us.
             var function = new LoxFunction(method, environment, false);
             classMethods[method.Name.Lexeme] = function;
+        }
+        foreach (var operatorOverload in stmt.OperatorOverloads)
+        {
+            var function = new LoxFunction(operatorOverload, environment, false);
+            classMethods[operatorOverload.Name.Lexeme] = function;
         }
         
         var metaClass = new LoxClass(null, null, $"{stmt.Name.Lexeme} metaclass", classMethods);
