@@ -5,7 +5,8 @@ namespace Lox.Callables;
 public class LoxInstance(LoxClass? loxClass)
 {
     private readonly Dictionary<string, object?> fields = [];
-    
+    public LoxClass? LoxClass { get; } = loxClass;
+
     public virtual object? Get(Token name)
     {
         if (fields.TryGetValue(name.Lexeme, out var value))
@@ -13,7 +14,7 @@ public class LoxInstance(LoxClass? loxClass)
             return value;
         }
 
-        var method = loxClass?.FindMethod(name.Lexeme);
+        var method = LoxClass?.FindMethod(name.Lexeme);
         if (method is not null) return method.Bind(this);
 
         throw new RuntimeError(name, $"Undefined property '{name.Lexeme}'.");
@@ -26,6 +27,6 @@ public class LoxInstance(LoxClass? loxClass)
     
     public override string ToString()
     {
-        return $"{loxClass?.Name} instance";
+        return $"{LoxClass?.Name} instance";
     }
 }
