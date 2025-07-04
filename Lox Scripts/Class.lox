@@ -75,3 +75,23 @@ class BostonCream < Doughnut {
 }
 
 BostonCream().cook();
+
+
+
+
+// Operator Overloads
+
+class Mather {
+    init(num) {
+        this.num = num;
+    }
+    
+    class operator+(a, b) {
+        return a.num + b.num;
+    }
+}
+
+var mather1 = Mather(5);
+var mather2 = Mather(10);
+
+print mather1 + mather2;
