@@ -64,7 +64,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
 
         if (left is LoxInstance leftInstance)
         {
-            var method = leftInstance.Get(expr.Operator);
+            var method = leftInstance.LoxClass?.Get(expr.Operator);
             if (method is not ILoxCallable operatorMethod)
             {
                 throw new RuntimeError(expr.Operator, $"Class '{leftInstance.LoxClass}' does not have a operator overload for '{expr.Operator.Lexeme}'.");
