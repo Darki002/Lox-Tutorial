@@ -64,6 +64,7 @@ public class Parser(List<Token> tokens)
                         TokenType.STAR, TokenType.SLASH, TokenType.PERCENT);
                     var parameters = GetParameters("Method");
                     if (parameters == null || parameters.Count != 2) Error(op, "Operator overload must have 2 Parameters");
+                    Consume(TokenType.LEFT_BRACE, "Expect '{' before Method body.");
                     var body = Block();
                     operatorOverloads.Add(new Stmt.Function(op, parameters, body));
                 }
@@ -95,7 +96,7 @@ public class Parser(List<Token> tokens)
     private List<Token>? GetParameters(string kind)
     {
         List<Token>? parameters = null;
-        if (kind is not "Method" and not "function" || Check(TokenType.LEFT_PAREN))
+        if (kind != "Method" || Check(TokenType.LEFT_PAREN))
         {
             Consume(TokenType.LEFT_PAREN, $"Expect '(' after {kind} name."); 
             parameters = [];
@@ -570,7 +571,7 @@ public class Parser(List<Token> tokens)
     
     private Token ConsumeAny(string message, params TokenType[] type)
     {
-        if(Match(type)) return Advance();
+        if(Match(type)) return Previous();
 
         throw Error(Peek(), message);
     }
