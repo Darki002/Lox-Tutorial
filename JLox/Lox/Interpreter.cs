@@ -522,11 +522,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<Void?>
         // it could mean we can safely look for a class instance and try get it from there.
         // But what if it is a global? And it is not even a method?
         
-        if (globals.TryGetValue(name.Lexeme, out var value))
-        {
-            return value;
-        }
-        
+        if (globals.TryGetValue(name.Lexeme, out var value)) return value;
         throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
     }
 
