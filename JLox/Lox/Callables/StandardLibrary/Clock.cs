@@ -6,7 +6,7 @@ public class Clock : ILoxCallable
     
     public object? Call(Interpreter interpreter, List<object?> arguments)
     {
-        return DateTime.Now.Millisecond / 1000.0;
+        return (double)DateTime.Now.Ticks / TimeSpan.TicksPerMicrosecond;
     }
 
     public override string ToString()
