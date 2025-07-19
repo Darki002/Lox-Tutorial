@@ -61,7 +61,9 @@ public class Parser(List<Token> tokens)
                 if (Match(TokenType.OPERATOR))
                 {
                     var op = ConsumeAny("Expected operator that can be overloaded.", TokenType.PLUS, TokenType.MINUS,
-                        TokenType.STAR, TokenType.SLASH, TokenType.PERCENT);
+                        TokenType.STAR, TokenType.SLASH, TokenType.PERCENT, TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL, 
+                        TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL);
+                    
                     var parameters = GetParameters("Method");
                     if (parameters == null || parameters.Count != 2) Error(op, "Operator overload must have 2 Parameters");
                     Consume(TokenType.LEFT_BRACE, "Expect '{' before Method body.");
