@@ -9,7 +9,7 @@
  Non-Zero | Smaller than oldSize | Shrink existing allocation
  Non-zero | Larger than oldSize | Grow existing allocation.
  */
-void* reallocate(void* pointer, size_t oldSize, const size_t newSize) {
+void* reallocate(void* pointer, size_t oldSize, const size_t newSize) { //TODO: why is oldSize even there? do we use that later on?
     if (newSize == 0) {
         free(pointer);
         return nullptr;
