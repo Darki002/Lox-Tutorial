@@ -3,4 +3,6 @@ project(CLox C)
 
 set(CMAKE_C_STANDARD 23)
 
-add_executable(CLox clox.c)
+add_executable(CLox clox.c
+        common.h
+        chunk.h)
