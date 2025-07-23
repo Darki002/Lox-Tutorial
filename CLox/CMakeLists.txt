@@ -5,4 +5,5 @@ set(CMAKE_C_STANDARD 23)
 
 add_executable(CLox clox.c
         common.h
-        chunk.h)
+        chunk.h
+        chunk.c)
