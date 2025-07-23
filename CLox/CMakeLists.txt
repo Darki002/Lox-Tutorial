@@ -7,4 +7,5 @@ add_executable(CLox clox.c
         common.h
         chunk.h
         chunk.c
-        memory.h)
+        memory.h
+        memory.c)
