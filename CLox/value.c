@@ -14,7 +14,7 @@ void freeValueArray(ValueArray* array) {
     FREE_ARRAY(Value, array->values, array->capacity);
     initValueArray(array);
 }
-void writeValueArray(ValueArray* array, Value value) {
+void writeValueArray(ValueArray* array, const Value value) {
     if (array->capacity < array->count + 1) {
         const int oldCapacity = array->capacity;
         array->capacity = GROW_CAPACITY(oldCapacity);
