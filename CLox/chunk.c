@@ -56,8 +56,8 @@ void writeConstant(Chunk* chunk, const Value value, const int line) {
     } else {
         writeChunk(chunk, OP_CONSTANT_LONG, line);
         writeChunk(chunk, offset & 0xff, line);
-        writeChunk(chunk, offset >> 8 & 0xff, line);
-        writeChunk(chunk, offset >> 16 & 0xff, line);
+        writeChunk(chunk, (offset >> 8) & 0xff, line);
+        writeChunk(chunk, (offset >> 16) & 0xff, line);
     }
 }
 
