@@ -13,5 +13,4 @@ add_executable(CLox clox.c
         debug.c
         value.h
         value.c
-        line.c
-        line.h)
+)

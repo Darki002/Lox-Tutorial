@@ -2,7 +2,6 @@
 #define clox_chunk_h
 
 #include "common.h"
-#include "line.h"
 #include "value.h"
 
 typedef enum {
@@ -11,16 +10,24 @@ typedef enum {
 } OpCode;
 
 typedef struct {
+    int offset;
+    int line;
+} LineStart;
+
+typedef struct {
     int count;
     int capacity;
     uint8_t* code;
-    LineArray lines;
     ValueArray constants;
+    int lineCount;
+    int lineCapacity;
+    LineStart* lines;
 } Chunk;
 
 void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
 int addConstant(Chunk* chunk, Value value);
+int getLine(const Chunk* chunk, int instruction);
 
 #endif //clox_chunk_h
