@@ -43,7 +43,7 @@ void writeChunk(Chunk* chunk, const uint8_t byte, const int line) {
     lineStart->line = line;
 }
 
-int addConstant(Chunk* chunk, const Value value) {
+int addConstant(Chunk* chunk, const Value value) { // TODO: support OP_CONSTANT_LONG 24-bit and write the OP directly to the chunk
     writeValueArray(&chunk->constants, value);
     return chunk->constants.count - 1;
 }
