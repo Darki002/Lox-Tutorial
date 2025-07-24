@@ -24,10 +24,11 @@ static int constantInstruction(const char * name, const Chunk * chunk, const int
 
 int disassembleInstruction(const Chunk* chunk, const int offset) {
     printf("%04d ", offset);
-    if (offset > 0 && chunk->lines[offset] == chunk->lines[offset-1]) {
+    const int line = getLine(&chunk->lines, offset);
+    if (offset > 0 && line == getLine(&chunk->lines, offset + 1)) {
         printf("   | ");
     } else {
-        printf("%4d ", chunk->lines[offset]);
+        printf("%4d ", line);
     }
 
     const uint8_t instruction = chunk->code[offset];

@@ -6,13 +6,13 @@ void initChunk(Chunk* chunk) {
     chunk->count = 0;
     chunk->capacity = 0;
     chunk->code = nullptr;
-    chunk->lines = nullptr;
+    initLineArray(&chunk->lines);
     initValueArray(&chunk->constants);
 }
 
 void freeChunk(Chunk* chunk) {
     FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
-    FREE_ARRAY(int, chunk->lines, chunk->capacity);
+    freeLineArray(&chunk->lines);
     freeValueArray(&chunk->constants);
     initChunk(chunk);
 }
@@ -22,11 +22,10 @@ void writeChunk(Chunk* chunk, const uint8_t byte, const int line) {
         const int oldCapacity = chunk->capacity;
         chunk->capacity = GROW_CAPACITY(oldCapacity);
         chunk->code = GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
-        chunk->lines = GROW_ARRAY(int, chunk->lines, oldCapacity, chunk->capacity);
     }
 
+    writeLineArray(&chunk->lines, line);
     chunk->code[chunk->count] = byte;
-    chunk->lines[chunk->count] = line;
     chunk->count++;
 }
 
