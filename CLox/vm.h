@@ -1,6 +1,7 @@
 #ifndef clox_vm_h
 #define clox_vm_h
 
+#include "common.h"
 #include "chunk.h"
 #include "value.h"
 
@@ -21,6 +22,8 @@ typedef enum {
 
 void initVM();
 InterpretResult interpret(Chunk* chunk);
+void push(Value value);
+Value pop();
 void freeVM();
 
 #endif //clox_vm_h

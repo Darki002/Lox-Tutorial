@@ -22,7 +22,7 @@ static int constantInstruction(const char * name, const Chunk * chunk, const int
     return offset + 2;
 }
 
-int longConstantInstruction(char * name, const Chunk * chunk, const int offset) {
+static int longConstantInstruction(const char * name, const Chunk * chunk, const int offset) {
     const uint32_t constant = chunk->code[offset + 1] | (chunk->code[offset + 2] << 8) | (chunk->code[offset + 3] << 16);
     printf("%-16s %4d '", name, constant);
     printValue(chunk->constants.values[constant]);
@@ -47,6 +47,16 @@ int disassembleInstruction(const Chunk* chunk, const int offset) {
             return constantInstruction("OP_CONSTANT", chunk, offset);
         case OP_CONSTANT_LONG:
             return longConstantInstruction("OP_CONSTANT_LONG", chunk, offset);
+        case OP_NEGATE:
+            return simpleInstruction("OP_NEGATE", offset);
+        case OP_ADD:
+            return simpleInstruction("OP_ADD", offset);
+        case OP_SUBTRACT:
+            return simpleInstruction("OP_SUBTRACT", offset);
+        case OP_MULTIPLY:
+            return simpleInstruction("OP_MULTIPLY", offset);
+        case OP_DIVIDE:
+            return simpleInstruction("OP_DIVIDE", offset);
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;
