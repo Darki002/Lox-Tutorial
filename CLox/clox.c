@@ -2,6 +2,8 @@
 #include "common.h"
 #include "debug.h"
 
+// TODO: how to make tests for a language. Write it in the language its self, but how to automatically run the tests and validate them?
+
 int main(int argc, const char* argv[]) {
 
     Chunk chunk;
