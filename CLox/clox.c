@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <time.h>
+
 #include "chunk.h"
 #include "common.h"
 #include "debug.h"
@@ -24,7 +27,16 @@ int main(int argc, const char* argv[]) {
     writeChunk(&chunk, OP_NEGATE, 123);
     writeChunk(&chunk, OP_RETURN, 123);
     disassembleChunk(&chunk, "test chunk");
+
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
     interpret(&chunk);
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    const long long time_spent_ns = (end.tv_sec - start.tv_sec) * 1000000000LL
+                              + (end.tv_nsec - start.tv_nsec);
+    printf("Time: %lld nanoseconds\n", time_spent_ns);
 
     freeVM();
     freeChunk(&chunk);
