@@ -7,6 +7,7 @@ typedef struct {
     const char* start;
     const char* current;
     int line;
+    int braceCount;
 } Scanner;
 
 Scanner scanner;
@@ -141,13 +142,23 @@ static TokenType identifierType() {
     return TOKEN_IDENTIFIER;
 }
 
-static Token string() { // TODO: string interpolation
-    while (peek() != '"' && !isAtEnd()) {
+static Token string() {
+    while (peek() != '"' && peek() != '$' && !isAtEnd()) {
         if (peek() == '\n') scanner.line++;
         advance();
     }
 
     if (isAtEnd()) return errorToken("Unterminated string.");
+
+    if (peek() == '$') { // TODO: test if this code really works as expected. Also test with nested interpolation!
+        advance();
+        if (peek('{')) {
+            scanner.braceCount++;
+            return makeToken(TOKEN_INTERPOLATION);
+        }
+
+        return errorToken("Expected { after $ in string interpolation.");
+    }
 
     advance();
     return makeToken(TOKEN_STRING);
@@ -183,7 +194,12 @@ Token scanToken() {
         case '(': return makeToken(TOKEN_LEFT_PAREN);
         case ')': return makeToken(TOKEN_RIGHT_PAREN);
         case '{': return makeToken(TOKEN_LEFT_BRACE);
-        case '}': return makeToken(TOKEN_RIGHT_BRACE);
+        case '}':
+            if (scanner.braceCount > 0) {
+                scanner.braceCount--;
+                return string();
+            }
+            return makeToken(TOKEN_RIGHT_BRACE);
         case ';': return makeToken(TOKEN_SEMICOLON);
         case ',': return makeToken(TOKEN_COMMA);
         case '.': return makeToken(TOKEN_DOT);
