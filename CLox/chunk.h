@@ -33,7 +33,7 @@ typedef struct {
 void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
-void writeConstant(Chunk* chunk, Value value, int line);
+bool writeConstant(Chunk* chunk, Value value, int line);
 int getLine(const Chunk* chunk, int instruction);
 
 #endif //clox_chunk_h

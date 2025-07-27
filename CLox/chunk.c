@@ -48,17 +48,22 @@ int addConstant(Chunk* chunk, const Value value) {
     return chunk->constants.count - 1;
 }
 
-void writeConstant(Chunk* chunk, const Value value, const int line) {
+bool writeConstant(Chunk* chunk, const Value value, const int line) {
     const int offset = addConstant(chunk, value);
     if (offset < 256) {
         writeChunk(chunk, OP_CONSTANT, line);
         writeChunk(chunk, offset, line);
-    } else {
+        return true;
+    }
+    if (offset < 0xFFFFFF) {
         writeChunk(chunk, OP_CONSTANT_LONG, line);
         writeChunk(chunk, offset & 0xff, line);
         writeChunk(chunk, (offset >> 8) & 0xff, line);
         writeChunk(chunk, (offset >> 16) & 0xff, line);
+        return true;
     }
+
+    return false;
 }
 
 int getLine(const Chunk* chunk, const int instruction) {
