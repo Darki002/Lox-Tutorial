@@ -152,7 +152,7 @@ static Token string() {
 
     if (peek() == '$') { // TODO: test if this code really works as expected. Also test with nested interpolation!
         advance();
-        if (peek('{')) {
+        if (match('{')) {
             scanner.braceCount++;
             return makeToken(TOKEN_INTERPOLATION);
         }

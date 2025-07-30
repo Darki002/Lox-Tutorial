@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef DEBUG_PRINT_CODE
+#include "debug.h"
+#endif //DEBUG_PRINT_CODE
+
 typedef struct {
     Token current;
     Token previous;
@@ -106,6 +110,12 @@ static void emitConstant(const Value value) {
 
 static void endCompiler() {
     emitReturn();
+
+#ifdef DEBUG_PRINT_CODE
+    if (!parser.hadError) {
+        disassembleChunk(currentChunk(), "code");
+    }
+#endif //DEBUG_PRINT_CODE
 }
 
 static void expression();
@@ -190,8 +200,21 @@ ParseRule rules[] = {
     [TOKEN_EOF]           = {nullptr,     nullptr,   PREC_NONE},
 };
 
-static void parsePrecedence(Precedence precedence){
+static void parsePrecedence(const Precedence precedence){
+    advance();
+    const ParseFn prefixRule = getRule(parser.previous.type)->prefix;
+    if (prefixRule == nullptr) {
+        error("Expect expression.");
+        return;
+    }
 
+    prefixRule();
+
+    while (precedence <= getRule(parser.current.type)->precedence) {
+        advance();
+        const ParseFn infixRule = getRule(parser.previous.type)->infix;
+        infixRule();
+    }
 }
 
 static ParseRule* getRule(const TokenType type) {
