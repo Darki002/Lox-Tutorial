@@ -66,7 +66,7 @@ bool writeConstant(Chunk* chunk, const Value value, const int line) {
     return false;
 }
 
-int getLine(const Chunk* chunk, const int instruction) {
+int getLine(const Chunk* chunk, const size_t instruction) {
     int start = 0;
     int end = chunk->lineCount - 1;
 

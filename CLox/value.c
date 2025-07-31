@@ -26,5 +26,5 @@ void writeValueArray(ValueArray* array, const Value value) {
 }
 
 void printValue(const Value value) {
-    printf("%g", value);
+    printf("%g", AS_NUMBER(value));
 }

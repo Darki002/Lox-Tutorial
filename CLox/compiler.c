@@ -143,7 +143,7 @@ static void grouping() {
 
 static void number() {
     const double value = strtod(parser.previous.start, nullptr);
-    emitConstant(value);
+    emitConstant(NUMBER_VAL(value));
 }
 
 static void unary() {
