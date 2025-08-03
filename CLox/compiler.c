@@ -136,6 +136,15 @@ static void binary() {
     }
 }
 
+static void literal() {
+    switch (parser.previous.type) {
+        case TOKEN_FALSE: emitByte(OP_FALSE); break;
+        case TOKEN_TRUE: emitByte(OP_TRUE); break;
+        case TOKEN_NIL: emitByte(OP_NIL); break;
+        default: break; // Unreachable
+    }
+}
+
 static void grouping() {
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
@@ -183,17 +192,17 @@ ParseRule rules[] = {
     [TOKEN_AND]           = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_CLASS]         = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_ELSE]          = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_FALSE]         = {nullptr,     nullptr,   PREC_NONE},
+    [TOKEN_FALSE]         = {literal,     nullptr,   PREC_NONE},
     [TOKEN_FOR]           = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_FUN]           = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_IF]            = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_NIL]           = {nullptr,     nullptr,   PREC_NONE},
+    [TOKEN_NIL]           = {literal,     nullptr,   PREC_NONE},
     [TOKEN_OR]            = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_PRINT]         = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_RETURN]        = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_SUPER]         = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_THIS]          = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_TRUE]          = {nullptr,     nullptr,   PREC_NONE},
+    [TOKEN_TRUE]          = {literal,     nullptr,   PREC_NONE},
     [TOKEN_VAR]           = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_WHILE]         = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_ERROR]         = {nullptr,     nullptr,   PREC_NONE},
