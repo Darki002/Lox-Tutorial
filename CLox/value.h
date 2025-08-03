@@ -35,7 +35,7 @@ typedef struct {
 void initValueArray(ValueArray* array);
 void freeValueArray(ValueArray* array);
 void writeValueArray(ValueArray* array, Value value);
-
+bool valuesEqual(Value a, Value b);
 void printValue(Value value);
 
 #endif //clox_value_h

@@ -128,6 +128,12 @@ static void binary() {
     parsePrecedence((Precedence)(rule->precedence + 1));
 
     switch (operatorType) {
+        case TOKEN_BANG_EQUAL: emitBytes(OP_EQUAL, OP_NOT); break;
+        case TOKEN_EQUAL_EQUAL: emitByte(OP_EQUAL); break;
+        case TOKEN_GREATER: emitByte(OP_GREATER); break;
+        case TOKEN_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
+        case TOKEN_LESS: emitByte(OP_LESS); break;
+        case TOKEN_LESS_EQUAL: emitBytes(OP_GREATER, OP_NOT); break;
         case TOKEN_PLUS:  emitByte(OP_ADD); break;
         case TOKEN_MINUS: emitByte(OP_SUBTRACT); break;
         case TOKEN_STAR:  emitByte(OP_MULTIPLY); break;
@@ -161,6 +167,7 @@ static void unary() {
     parsePrecedence(PREC_UNARY);
 
     switch (operatorType) {
+        case TOKEN_BANG: emitByte(OP_NOT); break;
         case TOKEN_MINUS: emitByte(OP_NEGATE); break;
         default: return; // Unreachable
     }
@@ -178,14 +185,14 @@ ParseRule rules[] = {
     [TOKEN_SEMICOLON]     = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_SLASH]         = {nullptr,     binary,    PREC_FACTOR},
     [TOKEN_STAR]          = {nullptr,     binary,    PREC_FACTOR},
-    [TOKEN_BANG]          = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_BANG_EQUAL]    = {nullptr,     nullptr,   PREC_NONE},
+    [TOKEN_BANG]          = {unary,       nullptr,   PREC_NONE},
+    [TOKEN_BANG_EQUAL]    = {nullptr,     binary,    PREC_EQUALITY},
     [TOKEN_EQUAL]         = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_EQUAL_EQUAL]   = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_GREATER]       = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_GREATER_EQUAL] = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_LESS]          = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_LESS_EQUAL]    = {nullptr,     nullptr,   PREC_NONE},
+    [TOKEN_EQUAL_EQUAL]   = {nullptr,     binary,    PREC_EQUALITY},
+    [TOKEN_GREATER]       = {nullptr,     binary,    PREC_EQUALITY},
+    [TOKEN_GREATER_EQUAL] = {nullptr,     binary,    PREC_EQUALITY},
+    [TOKEN_LESS]          = {nullptr,     binary,    PREC_EQUALITY},
+    [TOKEN_LESS_EQUAL]    = {nullptr,     binary,    PREC_EQUALITY},
     [TOKEN_IDENTIFIER]    = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_STRING]        = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_NUMBER]        = {number,      nullptr,   PREC_NONE},

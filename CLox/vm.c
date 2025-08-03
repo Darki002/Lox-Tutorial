@@ -51,6 +51,10 @@ void replace(const Value value) {
     *(vm.stackTop - 1) = value;
 }
 
+static bool isFalsey(const Value value) {
+    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
@@ -95,10 +99,22 @@ static InterpretResult run() {
             case OP_NIL: push(NIL_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
+            case OP_EQUAL: {
+                const Value b = pop();
+                const Value a = peek(0);
+                replace(BOOL_VAL(valuesEqual(a, b)));
+                break;
+            }
+            case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
+            case OP_LESS:     BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD:      BINARY_OP(NUMBER_VAL, +); break;
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
+            case OP_NOT: {
+                replace(BOOL_VAL(isFalsey(peek(0))));
+                break;
+            }
             case OP_NEGATE: {
                 if (!IS_NUMBER(peek(0))) {
                     runtimeError("Operand must be a number.");
@@ -106,6 +122,7 @@ static InterpretResult run() {
                 }
 
                 replace(NUMBER_VAL(-AS_NUMBER(peek(0))));
+                break;
             }
         }
     }
