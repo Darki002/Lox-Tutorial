@@ -12,6 +12,9 @@
 static Obj* allocateObject(const size_t size, const ObjType type) {
     Obj* obj = reallocate(nullptr, 0, size);
     obj->type = type;
+
+    obj->next = vm.objects;
+    vm.objects = obj;
     return obj;
 }
 
