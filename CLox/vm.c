@@ -1,10 +1,14 @@
 #include "common.h"
 #include "vm.h"
+
+#include <math.h>
+
 #include "debug.h"
 #include "compiler.h"
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "memory.h"
@@ -60,10 +64,7 @@ static bool isFalsey(const Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-static void concatenate() {
-    const ObjString* b = AS_STRING(pop());
-    const ObjString* a = AS_STRING(peek(0));
-
+static void concatenateString(const ObjString* a, const ObjString* b) {
     const int length = a->length + b->length;
     char* chars = ALLOCATE(char, length + 1);
     memcpy(chars, a->chars, a->length);
@@ -72,6 +73,55 @@ static void concatenate() {
 
     ObjString* result = takeString(chars, length);
     replace(OBJ_VAL(result));
+}
+
+static ObjString* numberToString(const Value value) {
+    const double num = AS_NUMBER(value);
+
+    int len = snprintf(nullptr, 0, "%f", num) + 1;
+    char buffer[len];
+    snprintf(buffer, len, "%f", num);
+
+    char* end = buffer + len - 2;
+    const char* dot = strchr(buffer, '.');
+    if (dot != nullptr) {
+        while (end > dot && *end == '0') {
+            *end = '\0';
+            end--;
+        }
+        if (*end == '.') {
+            *end = '\0';
+        }
+    }
+    return copyString(buffer, (int)(end - buffer + 1));
+}
+
+static void concatenate() {
+    const Value bValue = pop();
+    const Value aValue = peek(0);
+
+    ObjString* aString;
+    ObjString* bString;
+
+    if (IS_STRING(aValue)) {
+        aString = AS_STRING(aValue);
+    } else if (IS_NUMBER(aValue)) {
+        aString = numberToString(aValue);
+    } else {
+        runtimeError("Can only concatenate strings and numbers.");
+        return;
+    }
+
+    if (IS_STRING(bValue)) {
+        bString = AS_STRING(bValue);
+    } else if (IS_NUMBER(bValue)) {
+        bString = numberToString(bValue);
+    } else {
+        runtimeError("Can only concatenate strings and numbers.");
+        return;
+    }
+
+    concatenateString(aString, bString);
 }
 
 static InterpretResult run() {
@@ -127,7 +177,7 @@ static InterpretResult run() {
             case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
             case OP_LESS:     BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD: {
-                if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                if (IS_STRING(peek(0)) || IS_STRING(peek(1))) {
                     concatenate();
                 } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
                     BINARY_OP(NUMBER_VAL, +);
