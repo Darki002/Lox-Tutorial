@@ -90,6 +90,16 @@ static void consume(const TokenType type, const char* message) {
     errorAtCurrent(message);
 }
 
+static bool check(const TokenType type) {
+    return parser.current.type == type;
+}
+
+static bool match(const TokenType type) {
+    if (!check(type)) return false;
+    advance();
+    return true;
+}
+
 static void emitByte(const uint8_t byte) {
     writeChunk(currentChunk(), byte, parser.previous.line);
 }
@@ -167,6 +177,18 @@ static void string() {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
+static void interpolation() {
+    do {
+        string();
+        expression();
+        emitByte(OP_ADD); // TODO: maybe later with a better stdlib we can do this in a better way and with better performance. Goal, it is faster then concatenate
+    } while (match(TOKEN_INTERPOLATION));
+
+    consume(TOKEN_STRING, "Expect end of string interpolation.");
+    string();
+    emitByte(OP_ADD);
+}
+
 static void unary() {
     const TokenType operatorType = parser.previous.type;
 
@@ -201,7 +223,7 @@ ParseRule rules[] = {
     [TOKEN_LESS_EQUAL]    = {nullptr,     binary,    PREC_EQUALITY},
     [TOKEN_IDENTIFIER]    = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_STRING]        = {string,      nullptr,   PREC_NONE},
-    [TOKEN_INTERPOLATION] = {nullptr,     nullptr,   PREC_NONE}, // TODO: help how to do this shit
+    [TOKEN_INTERPOLATION] = {interpolation,nullptr,  PREC_NONE},
     [TOKEN_NUMBER]        = {number,      nullptr,   PREC_NONE},
     [TOKEN_AND]           = {nullptr,     nullptr,   PREC_NONE},
     [TOKEN_CLASS]         = {nullptr,     nullptr,   PREC_NONE},

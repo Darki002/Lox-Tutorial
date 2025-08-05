@@ -150,11 +150,13 @@ static Token string() {
 
     if (isAtEnd()) return errorToken("Unterminated string.");
 
-    if (peek() == '$') { // TODO: test if this code really works as expected. Also test with nested interpolation!
+    if (peek() == '$') {
         advance();
-        if (match('{')) {
+        if (peek() == '{') {
             scanner.braceCount++;
-            return makeToken(TOKEN_INTERPOLATION);
+            const Token token = makeToken(TOKEN_INTERPOLATION);
+            advance();
+            return token;
         }
 
         return errorToken("Expected { after $ in string interpolation.");
