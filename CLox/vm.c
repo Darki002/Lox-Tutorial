@@ -78,22 +78,9 @@ static void concatenateString(const ObjString* a, const ObjString* b) {
 static ObjString* numberToString(const Value value) {
     const double num = AS_NUMBER(value);
 
-    int len = snprintf(nullptr, 0, "%f", num) + 1;
-    char buffer[len];
-    snprintf(buffer, len, "%f", num);
-
-    char* end = buffer + len - 2;
-    const char* dot = strchr(buffer, '.');
-    if (dot != nullptr) {
-        while (end > dot && *end == '0') {
-            *end = '\0';
-            end--;
-        }
-        if (*end == '.') {
-            *end = '\0';
-        }
-    }
-    return copyString(buffer, (int)(end - buffer + 1));
+    char buffer[24];
+    const int length = sprintf(buffer, "%.14g", AS_NUMBER(value));
+    return copyString(buffer, length);
 }
 
 static void concatenate() {
