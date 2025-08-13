@@ -65,12 +65,10 @@ static void concatenate() {
     const ObjString* a = AS_STRING(peek(0));
 
     const int length = a->length + b->length;
-    char* chars = ALLOCATE(char, length + 1);
-    memcpy(chars, a->chars, a->length);
-    memcpy(chars + a->length, b->chars, b->length);
-    chars[length] = '\0';
-
-    ObjString* result = takeString(chars, length);
+    ObjString* result = allocateString(length + 1);
+    memcpy(result->chars, a->chars, a->length);
+    memcpy(result->chars + a->length, b->chars, b->length);
+    result->chars[length] = '\0';
     replace(OBJ_VAL(result));
 }
 
