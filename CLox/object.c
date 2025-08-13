@@ -6,8 +6,8 @@
 #include "value.h"
 #include "vm.h"
 
-#define  ALLOCATE_OBJ(type, size, objectType) \
-    (type*)allocateObject(size, objectType)
+#define  ALLOCATE_OBJ(type, objectType) \
+    (type*)allocateObject(sizeof(type), objectType)
 
 static Obj* allocateObject(const size_t size, const ObjType type) {
     Obj* obj = reallocate(nullptr, 0, size);
@@ -19,8 +19,8 @@ static Obj* allocateObject(const size_t size, const ObjType type) {
 }
 
 ObjString* allocateString(const int length) {
-    const size_t size = sizeof(ObjString) + length * sizeof(char);
-    ObjString* string = ALLOCATE_OBJ(ObjString, size, OBJ_STRING);
+    const size_t size = sizeof(ObjString) + length + 1;
+    ObjString* string = (ObjString*)allocateObject(size, OBJ_STRING);
     string->length = length;
     return string;
 }
