@@ -32,10 +32,12 @@ static void runtimeError(const char* format, ...) {
 void initVM() {
     resetStack();
     vm.objects = nullptr;
+    initTable(&vm.strings);
 }
 
 void freeVM() {
     freeObjects();
+    freeTable(&vm.strings);
 }
 
 void push(const Value value) {
@@ -70,6 +72,17 @@ static void concatenate() {
     memcpy(result->chars + a->length, b->chars, b->length);
     result->chars[length] = '\0';
     result->hash = hashString(result->chars, length);
+
+    printf("Result %s\n", result->chars);
+
+    ObjString* interned = tableFindString(&vm.strings, result->chars, length, result->hash);
+
+    if (interned != nullptr) {
+        reallocate(result, sizeof(ObjString) + result->length + 1, 0);
+        result = interned;
+    }
+
+    tableSet(&vm.strings, result, NIL_VAL);
     replace(OBJ_VAL(result));
 }
 

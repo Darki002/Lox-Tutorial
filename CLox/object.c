@@ -35,10 +35,16 @@ uint32_t hashString(const char* key, const int length) {
 }
 
 ObjString* copyString(const char* chars, const int length) {
+    const uint32_t hash = hashString(chars, length);
+    ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
+
+    if (interned != nullptr) return interned;
+
     ObjString* string = allocateString(length);
     memcpy(string->chars, chars, length);
     string->chars[length] = '\0';
-    string->hash = hashString(chars, length);;
+    string->hash = hash;
+    tableSet(&vm.strings, string, NIL_VAL);
     return string;
 }
 
