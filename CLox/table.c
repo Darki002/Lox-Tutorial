@@ -27,9 +27,8 @@ static Entry* findEntry(Entry* entries, const int capacity, const ObjString* key
         if (entry->key == nullptr) {
             if (IS_NIL(entry->value)) {
                 return tombstone != nullptr ? tombstone : entry;
-            } else {
-                if (tombstone == nullptr) tombstone = entry;
             }
+            if (tombstone == nullptr) tombstone = entry;
         } else if (entry->key == key) {
             return entry;
         }
