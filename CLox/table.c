@@ -20,9 +20,17 @@ void freeTable(Table* table) {
 
 static Entry* findEntry(Entry* entries, const int capacity, const ObjString* key) {
     uint32_t index = key->hash % capacity;
+    Entry* tombstone = nullptr;
+
     for (;;) {
         Entry* entry = &entries[index];
-        if (entry->key == key || entry->key == nullptr) {
+        if (entry->key == nullptr) {
+            if (IS_NIL(entry->value)) {
+                return tombstone != nullptr ? tombstone : entry;
+            } else {
+                if (tombstone == nullptr) tombstone = entry;
+            }
+        } else if (entry->key == key) {
             return entry;
         }
 
@@ -45,12 +53,14 @@ static void adjustCapacity(Table* table, const int capacity) {
         entries[i].value = NIL_VAL;
     }
 
+    table->count = 0;
     for (int i = 0; i < table->capacity; i ++) {
         const Entry* entry = &table->entries[i];
         if (entry->key == nullptr) continue;
         Entry* dest = findEntry(entries, capacity, entry->key);
         dest->key = entry->key;
         dest->value = entry->value;
+        table->count++;
     }
 
     FREE_ARRAY(Entry, table->entries, table->capacity);
@@ -58,19 +68,30 @@ static void adjustCapacity(Table* table, const int capacity) {
     table->capacity = capacity;
 }
 
-bool tableSet(Table* table, ObjString* key, const Value value) {
+bool tableSet(Table* table, const ObjString* key, const Value value) {
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
-        int capacity = GROW_CAPACITY(table->capacity);
+        const int capacity = GROW_CAPACITY(table->capacity);
         adjustCapacity(table, capacity);
     }
 
     Entry* entry = findEntry(table->entries, table->capacity, key);
     const bool isNewKey = entry->key == nullptr;
-    if (isNewKey) table->count++;
+    if (isNewKey && IS_NIL(entry->value)) table->count++;
 
     entry->key;
     entry->value = value;
     return isNewKey;
+}
+
+bool tableDelete(const Table* table, const ObjString* key) {
+    if (table->count == 0) return false;
+
+    Entry* entry = findEntry(table->entries, table->capacity, key);
+    if (entry->key == nullptr) return false;
+
+    entry->key = nullptr;
+    entry->value = BOOL_VAL(true);
+    return true;
 }
 
 void tableAddAll(const Table* from, Table* to) {
