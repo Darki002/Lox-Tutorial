@@ -73,7 +73,7 @@ static void concatenate() {
     result->chars[length] = '\0';
     result->hash = hashString(result->chars, length);
 
-    printf("Result %s\n", result->chars);
+    printf("Result \"%s\"\n", result->chars);
 
     ObjString* interned = tableFindString(&vm.strings, result->chars, length, result->hash);
 
