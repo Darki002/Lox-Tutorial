@@ -67,13 +67,11 @@ static void concatenate() {
     const ObjString* a = AS_STRING(peek(0));
 
     const int length = a->length + b->length;
-    ObjString* result = allocateString(length + 1);
+    ObjString* result = allocateString(length);
     memcpy(result->chars, a->chars, a->length);
     memcpy(result->chars + a->length, b->chars, b->length);
     result->chars[length] = '\0';
     result->hash = hashString(result->chars, length);
-
-    printf("Result \"%s\"\n", result->chars);
 
     ObjString* interned = tableFindString(&vm.strings, result->chars, length, result->hash);
 

@@ -19,8 +19,7 @@ static Obj* allocateObject(const size_t size, const ObjType type) {
 }
 
 ObjString* allocateString(const int length) {
-    const size_t size = sizeof(ObjString) + length + 1;
-    ObjString* string = (ObjString*)allocateObject(size, OBJ_STRING);
+    ObjString* string = (ObjString*)allocateObject(sizeof(ObjString) + length + 1, OBJ_STRING);
     string->length = length;
     return string;
 }
