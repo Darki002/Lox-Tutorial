@@ -64,3 +64,12 @@ bool tableSet(Table* table, ObjString* key, const Value value) {
     entry->value = value;
     return isNewKey;
 }
+
+void tableAddAll(const Table* from, Table* to) {
+    for (int i = 0; i < from->capacity; i++) {
+        const Entry* entry = &from->entries[i];
+        if (entry->key != nullptr) {
+            tableSet(to, entry->key, entry->value);
+        }
+    }
+}
