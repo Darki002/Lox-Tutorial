@@ -30,6 +30,14 @@ static Entry* findEntry(Entry* entries, const int capacity, const ObjString* key
     }
 }
 
+bool tableGet(const Table* table, const ObjString* key, Value* value) {
+    if (table->count == 0) return false;
+    const Entry* entry = findEntry(table->entries, table->capacity, key);
+    if (entry->key == nullptr) return false;
+    *value = entry->value;
+    return true;
+}
+
 static void adjustCapacity(Table* table, const int capacity) {
     Entry* entries = ALLOCATE(Entry, capacity);
     for (int i = 0; i < capacity; i++) {
