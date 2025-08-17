@@ -18,18 +18,40 @@ void freeTable(Table* table) {
     initTable(table);
 }
 
-static Entry* findEntry(Entry* entries, const int capacity, const ObjString* key) {
-    uint32_t index = key->hash % capacity;
+static uint32_t hashDouble(const double value) {
+    union BitCast {
+        double value;
+        uint32_t ints[2];
+    };
+
+    union BitCast cast;
+    cast.value = value + 1.0;
+    return cast.ints[0] + cast.ints[1];
+}
+
+static uint32_t hashValue(const Value value) {
+    switch (value.type) {
+        case VAL_BOOL:   return AS_BOOL(value) ? 3 : 5;
+        case VAL_NIL:    return 7;
+        case VAL_NUMBER: return hashDouble(AS_NUMBER(value));
+        case VAL_OBJ:    return AS_STRING(value)->hash;
+        case VAL_EMPTY:  return 0;
+        default:         return -1; // Unreachable
+    }
+}
+
+static Entry* findEntry(Entry* entries, const int capacity, const Value key) {
+    uint32_t index = hashValue(key) % capacity;
     Entry* tombstone = nullptr;
 
     for (;;) {
         Entry* entry = &entries[index];
-        if (entry->key == nullptr) {
+        if (entry->key.type == VAL_EMPTY) {
             if (IS_NIL(entry->value)) {
                 return tombstone != nullptr ? tombstone : entry;
             }
             if (tombstone == nullptr) tombstone = entry;
-        } else if (entry->key == key) {
+        } else if (valuesEqual(key, entry->key)) {
             return entry;
         }
 
@@ -37,10 +59,10 @@ static Entry* findEntry(Entry* entries, const int capacity, const ObjString* key
     }
 }
 
-bool tableGet(const Table* table, const ObjString* key, Value* value) {
+bool tableGet(const Table* table, const Value key, Value* value) {
     if (table->count == 0) return false;
     const Entry* entry = findEntry(table->entries, table->capacity, key);
-    if (entry->key == nullptr) return false;
+    if (entry->key.type == VAL_EMPTY) return false;
     *value = entry->value;
     return true;
 }
@@ -48,14 +70,14 @@ bool tableGet(const Table* table, const ObjString* key, Value* value) {
 static void adjustCapacity(Table* table, const int capacity) {
     Entry* entries = ALLOCATE(Entry, capacity);
     for (int i = 0; i < capacity; i++) {
-        entries[i].key = nullptr;
+        entries[i].key = EMPTY_VAL;
         entries[i].value = NIL_VAL;
     }
 
     table->count = 0;
     for (int i = 0; i < table->capacity; i ++) {
         const Entry* entry = &table->entries[i];
-        if (entry->key == nullptr) continue;
+        if (entry->key.type == VAL_EMPTY) continue;
         Entry* dest = findEntry(entries, capacity, entry->key);
         dest->key = entry->key;
         dest->value = entry->value;
@@ -67,36 +89,36 @@ static void adjustCapacity(Table* table, const int capacity) {
     table->capacity = capacity;
 }
 
-bool tableSet(Table* table, const ObjString* key, const Value value) {
+bool tableSet(Table* table, const Value key, const Value value) {
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
         const int capacity = GROW_CAPACITY(table->capacity);
         adjustCapacity(table, capacity);
     }
 
     Entry* entry = findEntry(table->entries, table->capacity, key);
-    const bool isNewKey = entry->key == nullptr;
+    const bool isNewKey = entry->key.type == VAL_EMPTY;
     if (isNewKey && IS_NIL(entry->value)) table->count++;
 
-    entry->key;
+    entry->key = key;
     entry->value = value;
     return isNewKey;
 }
 
-bool tableDelete(const Table* table, const ObjString* key) {
+bool tableDelete(const Table* table, const Value key) {
     if (table->count == 0) return false;
 
     Entry* entry = findEntry(table->entries, table->capacity, key);
-    if (entry->key == nullptr) return false;
+    if (entry->key.type == VAL_EMPTY) return false;
 
-    entry->key = nullptr;
-    entry->value = BOOL_VAL(true);
+    entry->key = EMPTY_VAL;
+    entry->value = EMPTY_VAL;
     return true;
 }
 
 void tableAddAll(const Table* from, Table* to) {
     for (int i = 0; i < from->capacity; i++) {
         const Entry* entry = &from->entries[i];
-        if (entry->key != nullptr) {
+        if (entry->key.type != VAL_EMPTY) {
             tableSet(to, entry->key, entry->value);
         }
     }
@@ -108,12 +130,12 @@ ObjString* tableFindString(const Table* table, const char* chars, const int leng
     uint32_t index = hash % table->capacity;
     for (;;) {
         const Entry* entry = &table->entries[index];
-        if (entry->key == nullptr) {
+        if (entry->key.type == VAL_EMPTY) {
             if (IS_NIL(entry->value)) return nullptr;
-        } else if (entry->key->length == length
-            && entry->key->hash == hash
-            && memcmp(entry->key->chars, chars, length) == 0) {
-            return entry->key;
+        } else if (AS_STRING(entry->key)->length == length
+            && AS_STRING(entry->key)->hash == hash
+            && memcmp(AS_STRING(entry->key)->chars, chars, length) == 0) {
+            return AS_STRING(entry->key);
         }
 
         index = (index + 1) & table->capacity;
