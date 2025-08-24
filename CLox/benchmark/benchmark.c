@@ -8,17 +8,16 @@ const char* basePath = "C:/Developement/Lox-Tutorial/CLox/benchmark";
 
 typedef void (*bench_func)();
 
-void run_benchmark(bench_func func, int warmup, int iterations, int inner_loops, const char* filename) {
+void run_benchmark(const bench_func func, const int warmup, const int iterations, const int inner_loops, const char* filename) {
     LARGE_INTEGER freq_li;
     QueryPerformanceFrequency(&freq_li);
-    double freq = (double)freq_li.QuadPart; // ticks per second
+    const double freq = (double)freq_li.QuadPart; // ticks per second
 
     char fullPath[MAX_PATH];
     snprintf(fullPath, sizeof(fullPath), "%s/%s", basePath, filename);
 
-    // Optional: pin to one core for stability
     HANDLE thread = GetCurrentThread();
-    DWORD_PTR oldMask = SetThreadAffinityMask(thread, 1);
+    const DWORD_PTR oldMask = SetThreadAffinityMask(thread, 1);
 
     // --- Warmup ---
     for (int i = 0; i < warmup; i++) {
@@ -46,9 +45,9 @@ void run_benchmark(bench_func func, int warmup, int iterations, int inner_loops,
 
     if (oldMask) SetThreadAffinityMask(thread, oldMask);
 
-    double avg_ns = total_ns / iterations;
-    double per_op_avg_ns = avg_ns / inner_loops;
-    double ops_per_sec = 1e9 / per_op_avg_ns;
+    const double avg_ns = total_ns / iterations;
+    const double per_op_avg_ns = avg_ns / inner_loops;
+    const double ops_per_sec = 1e9 / per_op_avg_ns;
 
     const time_t now = time(nullptr);
     struct tm local;
