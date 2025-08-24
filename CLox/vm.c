@@ -80,8 +80,9 @@ static void concatenate() {
         result = interned;
     }
 
-    tableSet(&vm.strings, result, NIL_VAL);
-    replace(OBJ_VAL(result));
+    const Value resultVal = OBJ_VAL(result);
+    tableSet(&vm.strings, resultVal, NIL_VAL);
+    replace(resultVal);
 }
 
 static InterpretResult run() {

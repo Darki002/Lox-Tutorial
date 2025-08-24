@@ -1,0 +1,7 @@
+Benchmark Results
+[2025-08-24 19:36:31]
+Warmup: 3, Iterations: 30, Inner loops: 100
+Batch time (ns): min=111219400  max=117361900  avg=112986360
+Per-op avg (ns): 1129863.60
+Throughput (ops/s): 885
+--------------------------------------
