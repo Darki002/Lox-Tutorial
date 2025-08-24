@@ -1,26 +1,22 @@
 ﻿#include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "insert.h"
-
-#include "../../object.h"
 #include "../../table.h"
 
 Table table;
-
-Value values[1000];
+Value values[];
 
 void setUp() {
     initTable(&table);
 
-    for (int i = 0; i < 1000; i++) {
-        const char* str = "str";
-        ObjString* strObj = realloc(nullptr, sizeof(ObjString) + strlen(str));
-        strObj->length = (int)strlen(str);
-        memcpy(strObj->chars, str, strObj->length);
-        strObj->hash = hashString(str, strObj->length);
-        strObj->obj.type = OBJ_STRING;
-        values[i] = OBJ_VAL(strObj);
+    const char* path = "C:/Developement/Lox-Tutorial/CLox/benchmark/hashtable/string_literals.txt";
+    const int loaded = loadStringsFromFile(path, values, COUNT);
+    printf("Loaded %d strings into values[]\n", loaded);
+
+    for (int i = loaded; i < COUNT; i++) {
+        values[i] = values[i % (loaded > 0 ? loaded : 1)];
     }
 }
 

@@ -63,8 +63,7 @@ void run_benchmark(const bench_func func, const int warmup, const int iterations
 
     FILE* f = fopen(fullPath, "a");
     if (f) {
-        fprintf(f, "Benchmark Results\n");
-        fprintf(f, "[%s]\n", timestamp);
+        fprintf(f, "Benchmark Results [%s]\n", timestamp);
         fprintf(f, "Warmup: %d, Iterations: %d, Inner loops: %d\n", warmup, iterations, inner_loops);
         fprintf(f, "Batch time (ns): min=%.0f  max=%.0f  avg=%.0f\n", min_ns, max_ns, avg_ns);
         fprintf(f, "Per-op avg (ns): %.2f\n", per_op_avg_ns);
