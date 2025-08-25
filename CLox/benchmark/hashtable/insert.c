@@ -11,7 +11,7 @@ Value values[];
 void setUp() {
     initTable(&table);
 
-    const char* path = "C:/Developement/Lox-Tutorial/CLox/benchmark/hashtable/string_literals.txt";
+    const char* path = "C:/Development/Private/Lox-Tutorial/CLox/benchmark/hashtable/string_literals.txt";
     const int loaded = loadStringsFromFile(path, values, COUNT);
     printf("Loaded %d strings into values[]\n", loaded);
 
