@@ -4,7 +4,7 @@
 
 #include "hashtable/insert.h"
 
-const char* basePath = "C:/Development/Private/Lox-Tutorial/CLox/benchmark";
+const char* basePath = "C:/Developement/Lox-Tutorial/CLox/benchmark";
 
 typedef void (*bench_func)();
 
