@@ -44,7 +44,7 @@ add_executable(Benchmark benchmark/benchmark.c
         object.c
         table.c
         table.h
-        benchmark/hashtable/insert_string_literals.c
-        benchmark/hashtable/insert_string_literals.h
+        benchmark/hashtable/string_literals/insert.c
+        benchmark/hashtable/string_literals/insert.h
         benchmark/benchmark_config.h
 )

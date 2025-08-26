@@ -3,8 +3,6 @@
 #include <time.h>
 #include "benchmark_config.h"
 
-#include "hashtable/insert_string_literals.h"
-
 typedef void (*bench_func)();
 
 void run_benchmark() {

@@ -1,6 +1,8 @@
 #ifndef BENCHMARK_CONFIG_H
 #define BENCHMARK_CONFIG_H
 
+#include "hashtable/string_literals/insert.h"
+
 #define runBenchmark run
 #define setUpBenchmark setUp
 #define freeBenchmark freeBench
@@ -10,7 +12,7 @@
 #define innerLoops 100
 
 const char* basePath = "C:/Developement/Lox-Tutorial/CLox/benchmark";
-const char* resultFile = "hashtable/insert_result.txt";
+const char* resultFile = "hashtable/string_literals/insert_result.txt";
 const char* benchmarkName = "PrimeNumbers";
 
 #endif //BENCHMARK_CONFIG_H

@@ -1,8 +1,8 @@
 ﻿#include <stdlib.h>
 #include <stdio.h>
 
-#include "insert_string_literals.h"
-#include "../../table.h"
+#include "insert.h"
+#include "../../../table.h"
 
 Table table;
 Value values[];
@@ -10,7 +10,7 @@ Value values[];
 void setUp() {
     initTable(&table);
 
-    const char* path = "C:/Developement/Lox-Tutorial/CLox/benchmark/hashtable/string_literals.txt";
+    const char* path = "C:/Developement/Lox-Tutorial/CLox/benchmark/hashtable/string_literals/string_literals.txt";
     const int loaded = loadStringsFromFile(path, values, COUNT);
     printf("Loaded %d strings into values[]\n", loaded);
 
