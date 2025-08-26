@@ -5,7 +5,7 @@
 
 typedef void (*bench_func)();
 
-void run_benchmark() {
+void runBenchmark() {
     LARGE_INTEGER freq_li;
     QueryPerformanceFrequency(&freq_li);
     const double freq = (double)freq_li.QuadPart; // ticks per second
@@ -18,7 +18,7 @@ void run_benchmark() {
 
     // --- Warmup ---
     for (int i = 0; i < warmups; i++) {
-        for (int k = 0; k < innerLoops; k++) runBenchmark();
+        for (int k = 0; k < innerLoops; k++) benchmark();
     }
 
     double total_ns = 0.0;
@@ -28,7 +28,7 @@ void run_benchmark() {
         LARGE_INTEGER s, e;
         QueryPerformanceCounter(&s);
 
-        for (int k = 0; k < innerLoops; k++) runBenchmark();
+        for (int k = 0; k < innerLoops; k++) benchmark();
 
         QueryPerformanceCounter(&e);
 
@@ -75,7 +75,7 @@ void run_benchmark() {
 
 int main() {
     setUpBenchmark();
-    run_benchmark();
+    runBenchmark();
     freeBenchmark();
     return 0;
 }

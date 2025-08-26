@@ -3,7 +3,7 @@
 
 #include "hashtable/string_literals/insert.h"
 
-#define runBenchmark run
+#define benchmark run
 #define setUpBenchmark setUp
 #define freeBenchmark freeBench
 
