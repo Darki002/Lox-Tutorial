@@ -1,8 +1,7 @@
 ﻿#include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
 
-#include "insert.h"
+#include "insert_string_literals.h"
 #include "../../table.h"
 
 Table table;

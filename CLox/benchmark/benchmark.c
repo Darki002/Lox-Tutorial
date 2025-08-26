@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <time.h>
 
-#include "hashtable/insert.h"
+#include "hashtable/insert_string_literals.h"
 
 const char* basePath = "C:/Developement/Lox-Tutorial/CLox/benchmark";
 
