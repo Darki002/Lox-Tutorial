@@ -4,6 +4,7 @@
 #define runBenchmark run
 #define setUpBenchmark setUp
 #define freeBenchmark freeBench
+
 #define warmups 3
 #define iterations 30
 #define innerLoops 100
