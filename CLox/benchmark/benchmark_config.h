@@ -9,7 +9,7 @@
 #define iterations 30
 #define innerLoops 100
 
-const char* basePath = "C:/Developement/Lox-Tutorial/CLox/benchmark";
+const char* basePath = "C:/Development/Private/Lox-Tutorial/CLox/benchmark";
 const char* resultFile = "hashtable/insert_result.txt";
 const char* benchmarkName = "PrimeNumbers";
 

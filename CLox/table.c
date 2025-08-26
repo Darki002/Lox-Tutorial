@@ -6,7 +6,6 @@
 #include "table.h"
 #include "value.h"
 
-
 void initTable(Table* table) {
     table->count = 0;
     table->capacity = 0;
@@ -91,7 +90,7 @@ static void adjustCapacity(Table* table, const int capacity) {
 
 bool tableSet(Table* table, const Value key, const Value value) {
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
-        const int capacity = GROW_CAPACITY(table->capacity);
+        const int capacity = GROW_PRIME(table->capacity);
         adjustCapacity(table, capacity);
     }
 

@@ -11,3 +11,25 @@ Warmup: 3, Iterations: 30, Inner loops: 100
 Batch time (ns): min=926000  max=991400  avg=956737
 Per-op avg (ns): 9567.37
 Throughput (ops/s): 104522
+--------------------------------------
+Benchmark Results (PrimeNumbers) 
+Timestamp: [2025-08-26 16:24:24]
+Warmup: 3, Iterations: 30, Inner loops: 100
+Batch time (ns): min=941000  max=2035100  avg=1063013
+Per-op avg (ns): 10630.13
+Throughput (ops/s): 94072
+--------------------------------------
+Benchmark Results (PrimeNumbers) 
+Timestamp: [2025-08-26 16:33:36]
+Warmup: 3, Iterations: 30, Inner loops: 100
+Batch time (ns): min=981400  max=1950900  avg=1198970
+Per-op avg (ns): 11989.70
+Throughput (ops/s): 83405
+--------------------------------------
+Benchmark Results (PrimeNumbers) 
+Timestamp: [2025-08-26 16:34:13]
+Warmup: 3, Iterations: 30, Inner loops: 100
+Batch time (ns): min=940500  max=1107500  avg=986870
+Per-op avg (ns): 9868.70
+Throughput (ops/s): 101330
+--------------------------------------
