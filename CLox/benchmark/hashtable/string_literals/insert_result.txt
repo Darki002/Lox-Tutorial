@@ -1,13 +1,7 @@
-Benchmark Results (Orig)
-Timestamp: [2025-08-24 20:09:42]
+Benchmark Results (Better Strings)
+Timestamp: [2025-08-29 09:39:02]
 Warmup: 3, Iterations: 30, Inner loops: 100
-Batch time (ns): min=714800  max=941400  avg=748650
-Per-op avg (ns): 7486.50
-Throughput (ops/s): 133574
+Batch time (ns): min=960300  max=1148000  avg=1000063
+Per-op avg (ns): 10000.63
+Throughput (ops/s): 99994
 --------------------------------------
-Benchmark Results (Orig)
-Timestamp: [2025-08-25 16:28:47]
-Warmup: 3, Iterations: 30, Inner loops: 100
-Batch time (ns): min=926000  max=991400  avg=956737
-Per-op avg (ns): 9567.37
-Throughput (ops/s): 104522
