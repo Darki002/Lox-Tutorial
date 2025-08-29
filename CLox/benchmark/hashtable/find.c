@@ -1,4 +1,4 @@
-#include "insert.h"
+#include "find.h"
 
 #include <stdlib.h>
 
@@ -7,22 +7,29 @@
 static Table table;
 static Value values[COUNT];
 
-void setUpInsert() {
+void setUpFind() {
     initTable(&table);
     for (int i = 0; i < COUNT; i++) {
         values[i] = OBJ_VAL(makeRandomStringObj());
+        tableSet(&table, values[i], NUMBER_VAL(i));
     }
+
+    shuffleStringObjs(values, COUNT);
 }
 
-void freeInsert() {
+void freeFind() {
     for (int i = 0; i < COUNT; i++) {
         free(AS_OBJ(values[i]));
     }
     freeTable(&table);
 }
 
-void runInsert() {
+void runFind() {
     for (int i = 0; i < COUNT; i++) {
-        tableSet(&table, values[i], NUMBER_VAL(i));
+        Value out;
+        const bool ok = tableGet(&table, values[i], &out);
+
+        // optionally branchless consume result to avoid optimizing away
+        if (!ok) abort();
     }
 }

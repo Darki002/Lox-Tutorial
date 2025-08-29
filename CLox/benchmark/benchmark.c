@@ -18,7 +18,9 @@ int main() {
 
     // --- Warmup ---
     for (int i = 0; i < warmups; i++) {
+        setUpBenchmark();
         benchmark();
+        freeBenchmark();
     }
 
     double total_ns = 0.0;
