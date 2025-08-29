@@ -47,4 +47,6 @@ add_executable(Benchmark benchmark/benchmark.c
         benchmark/hashtable/insertHighCollision.c
         benchmark/hashtable/insertHighCollision.h
         benchmark/benchmark_config.h
+        benchmark/hashtable/insert.c
+        benchmark/hashtable/insert.h
 )

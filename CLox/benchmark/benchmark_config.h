@@ -3,16 +3,15 @@
 
 #include "hashtable/insertHighCollision.h"
 
-#define benchmark run
-#define setUpBenchmark setUp
-#define freeBenchmark freeBench
+#define benchmark runInsertHighCollision
+#define setUpBenchmark setUpInsertHighCollision
+#define freeBenchmark freeInsertHighCollision
 
 #define warmups 3
-#define iterations 30
-#define innerLoops 100
+#define iterations 100
 
 const char* basePath = "C:/Development/Private/Lox-Tutorial/CLox/benchmark";
-const char* resultFile = "hashtable/high-collission.txt";
-const char* benchmarkName = "Orig 10000";
+const char* resultFile = "hashtable/insertHighCollision.txt";
+const char* benchmarkName = "Orig 1000";
 
 #endif //BENCHMARK_CONFIG_H

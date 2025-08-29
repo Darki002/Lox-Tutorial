@@ -1,7 +1,6 @@
-﻿#include <stdlib.h>
+#include "insert.h"
 
-#include "insertHighCollision.h"
-#include "../../table.h"
+#include <stdlib.h>
 
 static Table table;
 static Value values[COUNT];
@@ -29,28 +28,27 @@ static ObjString* makeRandomStringObj() {
     if (!strObj) return NULL;
 
     randomString(strObj->chars, len);
-    strObj->hash = 10;
+    strObj->hash = hashString(strObj->chars, len);
     strObj->length = len;
     strObj->obj.type = OBJ_STRING;
 
     return strObj;
 }
 
-void setUpInsertHighCollision() {
+void setUpInsert() {
     initTable(&table);
     for (int i = 0; i < COUNT; i++) {
         values[i] = OBJ_VAL(makeRandomStringObj());
     }
 }
 
-void freeInsertHighCollision() {
+void freeInsert() {
     for (int i = 0; i < COUNT; i++) {
         free(AS_OBJ(values[i]));
     }
-    freeTable(&table);
 }
 
-void runInsertHighCollision() {
+void runInsert() {
     for (int i = 0; i < COUNT; i++) {
         tableSet(&table, values[i], NUMBER_VAL(i));
     }
