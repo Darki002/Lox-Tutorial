@@ -31,7 +31,7 @@ static void runtimeError(const char* format, ...) {
 
 void initVM() {
     resetStack();
-    vm.objects = nullptr;
+    vm.objects = NULL;
     initTable(&vm.strings);
 }
 
@@ -75,7 +75,7 @@ static void concatenate() {
 
     ObjString* interned = tableFindString(&vm.strings, result->chars, length, result->hash);
 
-    if (interned != nullptr) {
+    if (interned != NULL) {
         reallocate(result, sizeof(ObjString) + result->length + 1, 0);
         result = interned;
     }

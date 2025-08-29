@@ -9,7 +9,7 @@
 void initValueArray(ValueArray* array) {
     array->count = 0;
     array->capacity = 0;
-    array->values = nullptr;
+    array->values = NULL;
 }
 
 void freeValueArray(ValueArray* array) {

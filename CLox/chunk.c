@@ -5,10 +5,10 @@
 void initChunk(Chunk* chunk) {
     chunk->count = 0;
     chunk->capacity = 0;
-    chunk->code = nullptr;
+    chunk->code = NULL;
     chunk->lineCount = 0;
     chunk->lineCapacity = 0;
-    chunk->lines = nullptr;
+    chunk->lines = NULL;
     initValueArray(&chunk->constants);
 }
 

@@ -10,7 +10,7 @@
 void initTable(Table* table) {
     table->count = 0;
     table->capacity = 0;
-    table->entries = nullptr;
+    table->entries = NULL;
 }
 
 void freeTable(Table* table) {
@@ -42,15 +42,15 @@ static uint32_t hashValue(const Value value) {
 
 static Entry* findEntry(Entry* entries, const int capacity, const Value key) {
     uint32_t index = hashValue(key) % capacity;
-    Entry* tombstone = nullptr;
+    Entry* tombstone = NULL;
 
     for (;;) {
         Entry* entry = &entries[index];
         if (entry->key.type == VAL_EMPTY) {
             if (IS_NIL(entry->value)) {
-                return tombstone != nullptr ? tombstone : entry;
+                return tombstone != NULL ? tombstone : entry;
             }
-            if (tombstone == nullptr) tombstone = entry;
+            if (tombstone == NULL) tombstone = entry;
         } else if (valuesEqual(key, entry->key)) {
             return entry;
         }
@@ -125,13 +125,13 @@ void tableAddAll(const Table* from, Table* to) {
 }
 
 ObjString* tableFindString(const Table* table, const char* chars, const int length, const uint32_t hash) {
-    if (table->count == 0) return nullptr;
+    if (table->count == 0) return NULL;
 
     uint32_t index = hash % table->capacity;
     for (;;) {
         const Entry* entry = &table->entries[index];
         if (entry->key.type == VAL_EMPTY) {
-            if (IS_NIL(entry->value)) return nullptr;
+            if (IS_NIL(entry->value)) return NULL;
         } else if (AS_STRING(entry->key)->length == length
             && AS_STRING(entry->key)->hash == hash
             && memcmp(AS_STRING(entry->key)->chars, chars, length) == 0) {

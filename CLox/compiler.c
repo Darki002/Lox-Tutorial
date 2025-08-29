@@ -169,7 +169,7 @@ static void grouping() {
 }
 
 static void number() {
-    const double value = strtod(parser.previous.start, nullptr);
+    const double value = strtod(parser.previous.start, NULL);
     emitConstant(NUMBER_VAL(value));
 }
 
@@ -202,53 +202,53 @@ static void unary() {
 }
 
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN]  =   {grouping,    nullptr,   PREC_NONE},
-    [TOKEN_RIGHT_PAREN]   = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_LEFT_BRACE]    = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_RIGHT_BRACE]   = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_COMMA]         = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_DOT]           = {nullptr,     nullptr,   PREC_NONE},
+    [TOKEN_LEFT_PAREN]  =   {grouping,    NULL,   PREC_NONE},
+    [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_MINUS]         = {unary,       binary,    PREC_TERM},
-    [TOKEN_PLUS]          = {nullptr,     binary,    PREC_TERM},
-    [TOKEN_SEMICOLON]     = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_SLASH]         = {nullptr,     binary,    PREC_FACTOR},
-    [TOKEN_STAR]          = {nullptr,     binary,    PREC_FACTOR},
-    [TOKEN_BANG]          = {unary,       nullptr,   PREC_NONE},
-    [TOKEN_BANG_EQUAL]    = {nullptr,     binary,    PREC_EQUALITY},
-    [TOKEN_EQUAL]         = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_EQUAL_EQUAL]   = {nullptr,     binary,    PREC_EQUALITY},
-    [TOKEN_GREATER]       = {nullptr,     binary,    PREC_EQUALITY},
-    [TOKEN_GREATER_EQUAL] = {nullptr,     binary,    PREC_EQUALITY},
-    [TOKEN_LESS]          = {nullptr,     binary,    PREC_EQUALITY},
-    [TOKEN_LESS_EQUAL]    = {nullptr,     binary,    PREC_EQUALITY},
-    [TOKEN_IDENTIFIER]    = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_STRING]        = {string,      nullptr,   PREC_NONE},
-    [TOKEN_INTERPOLATION] = {interpolation,nullptr,  PREC_NONE},
-    [TOKEN_NUMBER]        = {number,      nullptr,   PREC_NONE},
-    [TOKEN_AND]           = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_CLASS]         = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_ELSE]          = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_FALSE]         = {literal,     nullptr,   PREC_NONE},
-    [TOKEN_FOR]           = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_FUN]           = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_IF]            = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_NIL]           = {literal,     nullptr,   PREC_NONE},
-    [TOKEN_OR]            = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_PRINT]         = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_RETURN]        = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_SUPER]         = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_THIS]          = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_TRUE]          = {literal,     nullptr,   PREC_NONE},
-    [TOKEN_VAR]           = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_WHILE]         = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_ERROR]         = {nullptr,     nullptr,   PREC_NONE},
-    [TOKEN_EOF]           = {nullptr,     nullptr,   PREC_NONE},
+    [TOKEN_PLUS]          = {NULL,     binary,    PREC_TERM},
+    [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_SLASH]         = {NULL,     binary,    PREC_FACTOR},
+    [TOKEN_STAR]          = {NULL,     binary,    PREC_FACTOR},
+    [TOKEN_BANG]          = {unary,       NULL,   PREC_NONE},
+    [TOKEN_BANG_EQUAL]    = {NULL,     binary,    PREC_EQUALITY},
+    [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_EQUAL_EQUAL]   = {NULL,     binary,    PREC_EQUALITY},
+    [TOKEN_GREATER]       = {NULL,     binary,    PREC_EQUALITY},
+    [TOKEN_GREATER_EQUAL] = {NULL,     binary,    PREC_EQUALITY},
+    [TOKEN_LESS]          = {NULL,     binary,    PREC_EQUALITY},
+    [TOKEN_LESS_EQUAL]    = {NULL,     binary,    PREC_EQUALITY},
+    [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_STRING]        = {string,      NULL,   PREC_NONE},
+    [TOKEN_INTERPOLATION] = {interpolation,NULL,  PREC_NONE},
+    [TOKEN_NUMBER]        = {number,      NULL,   PREC_NONE},
+    [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_FALSE]         = {literal,     NULL,   PREC_NONE},
+    [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_NIL]           = {literal,     NULL,   PREC_NONE},
+    [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_TRUE]          = {literal,     NULL,   PREC_NONE},
+    [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
 };
 
 static void parsePrecedence(const Precedence precedence){
     advance();
     const ParseFn prefixRule = getRule(parser.previous.type)->prefix;
-    if (prefixRule == nullptr) {
+    if (prefixRule == NULL) {
         error("Expect expression.");
         return;
     }

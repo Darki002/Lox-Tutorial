@@ -1,7 +1,7 @@
 #ifndef BENCHMARK_CONFIG_H
 #define BENCHMARK_CONFIG_H
 
-#include "hashtable/string_literals/insert.h"
+#include "hashtable/insertHighCollision.h"
 
 #define benchmark run
 #define setUpBenchmark setUp
@@ -12,7 +12,7 @@
 #define innerLoops 100
 
 const char* basePath = "C:/Development/Private/Lox-Tutorial/CLox/benchmark";
-const char* resultFile = "hashtable/string_literals/insert_result.txt";
-const char* benchmarkName = "Better Strings";
+const char* resultFile = "hashtable/high-collission.txt";
+const char* benchmarkName = "Orig 10000";
 
 #endif //BENCHMARK_CONFIG_H

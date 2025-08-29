@@ -46,7 +46,7 @@ void runBenchmark() {
     const double per_op_avg_ns = avg_ns / innerLoops;
     const double ops_per_sec = 1e9 / per_op_avg_ns;
 
-    const time_t now = time(nullptr);
+    const time_t now = time(NULL);
     struct tm local;
     localtime_s(&local, &now);
 
@@ -74,8 +74,15 @@ void runBenchmark() {
 }
 
 int main() {
+    printf("Setting up!\n");
     setUpBenchmark();
+    printf("Set up finished!\n");
+
+    printf("Starting Benchmark test!\n");
     runBenchmark();
+
+    printf("Cleaning up memory!\n");
     freeBenchmark();
+    printf("Clean up finished!\n");
     return 0;
 }

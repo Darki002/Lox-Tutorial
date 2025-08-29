@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.31)
 project(CLox C)
 
-set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD 99)
 
 add_executable(CLox clox.c
         common.h
@@ -44,7 +44,7 @@ add_executable(Benchmark benchmark/benchmark.c
         object.c
         table.c
         table.h
-        benchmark/hashtable/string_literals/insert.c
-        benchmark/hashtable/string_literals/insert.h
+        benchmark/hashtable/insertHighCollision.c
+        benchmark/hashtable/insertHighCollision.h
         benchmark/benchmark_config.h
 )

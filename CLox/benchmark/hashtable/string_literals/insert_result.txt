@@ -1,7 +1,0 @@
-Benchmark Results (Better Strings Laptop)
-Timestamp: [2025-08-29 10:03:27]
-Warmup: 3, Iterations: 30, Inner loops: 100
-Batch time (ns): min=139500  max=412400  avg=217580
-Per-op avg (ns): 2175.80
-Throughput (ops/s): 459601
---------------------------------------
