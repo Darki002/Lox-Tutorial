@@ -20,13 +20,13 @@ void setUp() {
 }
 
 void freeBench() {
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < COUNT; i++) {
         free(AS_OBJ(values[i]));
     }
 }
 
 void run() {
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < COUNT; i++) {
         tableSet(&table, values[i], NIL_VAL);
     }
 }

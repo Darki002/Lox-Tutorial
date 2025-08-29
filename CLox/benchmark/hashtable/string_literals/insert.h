@@ -8,7 +8,7 @@
 #include "../../../object.h"
 #include "../../../table.h"
 
-#define COUNT 1000
+#define COUNT 109
 
 extern Table table;
 extern Value values[COUNT];
