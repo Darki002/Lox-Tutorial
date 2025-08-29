@@ -32,7 +32,7 @@ static ObjString* makeObjString(const char* bytes, const int len) {
     memcpy(strObj->chars, bytes, (size_t)len);
     strObj->chars[len] = '\0';
     strObj->hash = hashString(strObj->chars, len);
-    strObj->obj.type = OBJ_STRING; // if that's your enum
+    strObj->obj.type = OBJ_STRING;
 
     return strObj;
 }
@@ -40,7 +40,7 @@ static ObjString* makeObjString(const char* bytes, const int len) {
 static int loadStringsFromFile(const char* path, Value* outValues, const int maxValues) {
     assert(outValues && maxValues > 0);
 
-    FILE* f = fopen(path, "rb");
+    FILE* f = fopen(path, "r");
     if (!f) {
         fprintf(stderr, "Error: cannot open '%s'\n", path);
         return 0;
