@@ -8,7 +8,7 @@
 
 static char* readFile(const char* path) {
     FILE* file = fopen(path, "rb");
-    if (file == nullptr) {
+    if (file == NULL) {
         fprintf(stderr, "Could not open file \"%s\".\n", path);
         exit(74);
     }
@@ -18,7 +18,7 @@ static char* readFile(const char* path) {
     rewind(file);
 
     char* buffer = (char*)malloc(fileSize + 1);
-    if (buffer == nullptr) {
+    if (buffer == NULL) {
         fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
         exit(74);
     }
