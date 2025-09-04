@@ -49,7 +49,7 @@ static void errorAt(const Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
 
-    fprintf(stderr, "[line %d] 2Error", token->line);
+    fprintf(stderr, "[line %d] Error", token->line);
     if (token->type == TOKEN_EOF) {
         fprintf(stderr, " at end");
     } else if (token->type == TOKEN_ERROR) {
