@@ -53,4 +53,6 @@ add_executable(Benchmark benchmark/benchmark.c
         benchmark/hashtable/hashTableBenchmarkUtils.h
         benchmark/hashtable/find.c
         benchmark/hashtable/find.h
+        benchmark/hashtable/delete.c
+        benchmark/hashtable/delete.h
 )
