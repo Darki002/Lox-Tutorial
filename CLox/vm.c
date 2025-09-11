@@ -115,8 +115,6 @@ static InterpretResult run() {
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
             case OP_RETURN:
-                printValue(pop());
-                printf("\n");
                 return INTERPRET_OK;
             case OP_CONSTANT:
                 const Value constant = READ_CONSTANT();
@@ -129,6 +127,7 @@ static InterpretResult run() {
             case OP_NIL: push(NIL_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
+            case OP_POP: pop(); break;
             case OP_EQUAL: {
                 const Value b = pop();
                 const Value a = peek(0);
@@ -163,6 +162,11 @@ static InterpretResult run() {
 
                 replace(NUMBER_VAL(-AS_NUMBER(peek(0))));
                 break;
+            }
+            case OP_PRINT: {
+                printValue(pop());
+                printf("\n");
+                break;;
             }
         }
     }

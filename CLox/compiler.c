@@ -131,6 +131,8 @@ static void endCompiler() {
 }
 
 static void expression();
+static void statement();
+static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
@@ -270,6 +272,32 @@ static void expression() {
     parsePrecedence(PREC_ASSIGNMENT);
 }
 
+static void expressionStatement() {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expected ';' after expression.");
+    emitByte(OP_POP);
+}
+
+static void printStatement() {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expected ';' after value.");
+    emitByte(OP_PRINT);
+}
+
+static void statement() {
+    if (match(TOKEN_PRINT)) {
+        printStatement();
+    } else {
+        expressionStatement();
+    }
+}
+
+static void declaration() {
+    statement();
+
+    if (parser.panicMode) synchronize();
+}
+
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
     compilingChunk = chunk;
@@ -278,8 +306,11 @@ bool compile(const char* source, Chunk* chunk) {
     parser.panicMode = false;
 
     advance();
-    expression();
-    consume(TOKEN_EOF, "Expected end of expression.");
+
+    while (!match(TOKEN_EOF)) {
+        declaration();
+    }
+
     endCompiler();
     return !parser.hadError;
 }
