@@ -136,6 +136,15 @@ static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
+static void identifierConstant(const Token* name) {
+    emitConstant(OBJ_VAL(copyString(name->start, name->length)));
+}
+
+static void parseVariable(const char* errorMessage) {
+    consume(TOKEN_IDENTIFIER, errorMessage);
+    identifierConstant(&parser.previous);
+}
+
 static void binary() {
     const TokenType operatorType = parser.previous.type;
     const ParseRule* rule = getRule(operatorType);
@@ -272,6 +281,18 @@ static void expression() {
     parsePrecedence(PREC_ASSIGNMENT);
 }
 
+static void varDeclaration() {
+    parseVariable("Expected variable name."); // we have a big problem here. we can't push the name onto the stack
+// Use something like OP_WIDE?
+    if (match(TOKEN_EQUAL)) {
+        expression();
+    } else {
+        emitByte(OP_NIL);
+    }
+    consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
+    emitByte(OP_DEFINE_GLOBAL);
+}
+
 static void expressionStatement() {
     expression();
     consume(TOKEN_SEMICOLON, "Expected ';' after expression.");
@@ -316,7 +337,11 @@ static void statement() {
 }
 
 static void declaration() {
-    statement();
+    if (match(TOKEN_VAR)) {
+        varDeclaration();
+    } else {
+        statement();
+    }
 
     if (parser.panicMode) synchronize();
 }
