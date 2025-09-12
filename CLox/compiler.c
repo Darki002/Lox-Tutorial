@@ -183,7 +183,7 @@ static void interpolation() {
     do {
         string();
         expression();
-        emitByte(OP_ADD); // TODO: maybe later with a better stdlib we can do this in a better way and with better performance. Goal, it is faster then concatenate
+        emitByte(OP_ADD); // TODO: maybe later with a better stdlib we can do this in a better way and with better performance. Goal, it is faster then concatenate  and automatically converts to string
     } while (match(TOKEN_INTERPOLATION));
 
     consume(TOKEN_STRING, "Expect end of string interpolation.");
