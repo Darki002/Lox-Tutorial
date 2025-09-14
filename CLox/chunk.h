@@ -13,6 +13,7 @@ typedef enum {
     OP_TRUE,
     OP_FALSE,
     OP_POP,
+    OP_GET_GLOBAL,
     OP_DEFINE_GLOBAL,
     OP_EQUAL,
     OP_GREATER,
@@ -45,8 +46,8 @@ typedef struct {
 void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
+bool writeConstantCode(OpCode code, Chunk* chunk, Value value, int line);
 bool writeConstant(Chunk* chunk, Value value, int line);
-bool writeGlobal(Chunk* chunk, Value value, int line);
 int getLine(const Chunk* chunk, size_t instruction);
 
 #endif //clox_chunk_h

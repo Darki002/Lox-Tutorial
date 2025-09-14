@@ -133,9 +133,19 @@ static InterpretResult run() {
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
             case OP_POP: pop(); break;
+            case OP_GET_GLOBAL:
+                const Value globalGet = READ_CONSTANT();
+                Value value;
+                if (!tableGet(&vm.globals, globalGet, &value)) {
+                    runtimeError("Undefined variable '%s'.", AS_STRING(globalGet)->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                push(value);
+                break;
             case OP_DEFINE_GLOBAL:
-                const Value name = READ_CONSTANT();
-                tableSet(&vm.globals, name, peek(0));
+                const Value globalDefine = READ_CONSTANT();
+                tableSet(&vm.globals, globalDefine, peek(0));
+                pop();
                 break;
             case OP_EQUAL: {
                 const Value b = pop();

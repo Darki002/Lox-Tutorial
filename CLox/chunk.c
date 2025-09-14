@@ -71,10 +71,6 @@ bool writeConstant(Chunk* chunk, const Value value, const int line) {
     return writeConstantCode(OP_CONSTANT, chunk, value, line);
 }
 
-bool writeGlobal(Chunk* chunk, const Value value, const int line) {
-    return writeConstantCode(OP_DEFINE_GLOBAL, chunk, value, line);
-}
-
 int getLine(const Chunk* chunk, const size_t instruction) {
     int start = 0;
     int end = chunk->lineCount - 1;

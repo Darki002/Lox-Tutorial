@@ -120,8 +120,8 @@ static void emitConstant(const Value value) {
     }
 }
 
-static void emitGlobal(const Value value, const int line) {
-    const bool result = writeGlobal(currentChunk(), value, line);
+static void emitGlobal(const OpCode code, const Value value, const int line) {
+    const bool result = writeConstantCode(code, currentChunk(), value, line);
     if (!result) {
         error("Too many constants in one chunk.");
     }
@@ -143,8 +143,13 @@ static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static void defineVariable(const Token* name) {
-    emitGlobal(OBJ_VAL(copyString(name->start, name->length)), name->line);
+static void emitIdentifierConstant(const OpCode code, const Token* name) {
+    emitGlobal(code, OBJ_VAL(copyString(name->start, name->length)), name->line);
+}
+
+static Token consumeIdentifier() {
+    consume(TOKEN_IDENTIFIER, "Expected variable name.");
+    return  parser.previous;
 }
 
 static void binary() {
@@ -190,6 +195,10 @@ static void string() {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
+static void variable() {
+    emitIdentifierConstant(OP_GET_GLOBAL, &parser.previous);
+}
+
 static void interpolation() {
     do {
         string();
@@ -215,43 +224,43 @@ static void unary() {
 }
 
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN]  =   {grouping,    NULL,   PREC_NONE},
+    [TOKEN_LEFT_PAREN]  =   {grouping,    NULL,  PREC_NONE},
     [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
     [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
     [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
     [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_MINUS]         = {unary,       binary,    PREC_TERM},
-    [TOKEN_PLUS]          = {NULL,     binary,    PREC_TERM},
+    [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
+    [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
     [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_SLASH]         = {NULL,     binary,    PREC_FACTOR},
-    [TOKEN_STAR]          = {NULL,     binary,    PREC_FACTOR},
-    [TOKEN_BANG]          = {unary,       NULL,   PREC_NONE},
-    [TOKEN_BANG_EQUAL]    = {NULL,     binary,    PREC_EQUALITY},
+    [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
+    [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
+    [TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
+    [TOKEN_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
     [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_EQUAL_EQUAL]   = {NULL,     binary,    PREC_EQUALITY},
-    [TOKEN_GREATER]       = {NULL,     binary,    PREC_EQUALITY},
-    [TOKEN_GREATER_EQUAL] = {NULL,     binary,    PREC_EQUALITY},
-    [TOKEN_LESS]          = {NULL,     binary,    PREC_EQUALITY},
-    [TOKEN_LESS_EQUAL]    = {NULL,     binary,    PREC_EQUALITY},
-    [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_STRING]        = {string,      NULL,   PREC_NONE},
-    [TOKEN_INTERPOLATION] = {interpolation,NULL,  PREC_NONE},
-    [TOKEN_NUMBER]        = {number,      NULL,   PREC_NONE},
+    [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
+    [TOKEN_GREATER]       = {NULL,     binary, PREC_EQUALITY},
+    [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_EQUALITY},
+    [TOKEN_LESS]          = {NULL,     binary, PREC_EQUALITY},
+    [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
+    [TOKEN_IDENTIFIER]    = {variable,  NULL,PREC_NONE},
+    [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
+    [TOKEN_INTERPOLATION] = {interpolation,NULL, PREC_NONE},
+    [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
     [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_FALSE]         = {literal,     NULL,   PREC_NONE},
+    [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
     [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_NIL]           = {literal,     NULL,   PREC_NONE},
+    [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
     [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
     [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
     [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_TRUE]          = {literal,     NULL,   PREC_NONE},
+    [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
     [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
@@ -284,8 +293,7 @@ static void expression() {
 }
 
 static void varDeclaration() {
-    consume(TOKEN_IDENTIFIER, "Expected variable name.");
-    const Token name = parser.previous;
+    const Token name = consumeIdentifier();
 
     if (match(TOKEN_EQUAL)) {
         expression();
@@ -293,7 +301,7 @@ static void varDeclaration() {
         emitByte(OP_NIL);
     }
     consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
-    defineVariable(&name);
+    emitIdentifierConstant(OP_DEFINE_GLOBAL, &name);
 }
 
 static void expressionStatement() {
