@@ -30,7 +30,7 @@ typedef enum {
     PREC_PRIMARY
 } Precedence;
 
-typedef void (*ParseFn)();
+typedef void (*ParseFn)(bool canAssign);
 
 typedef struct {
     ParseFn prefix;
@@ -152,7 +152,7 @@ static Token consumeIdentifier() {
     return  parser.previous;
 }
 
-static void binary() {
+static void binary(bool _) {
     const TokenType operatorType = parser.previous.type;
     const ParseRule* rule = getRule(operatorType);
     parsePrecedence((Precedence)(rule->precedence + 1));
@@ -172,7 +172,7 @@ static void binary() {
     }
 }
 
-static void literal() {
+static void literal(bool _) {
     switch (parser.previous.type) {
         case TOKEN_FALSE: emitByte(OP_FALSE); break;
         case TOKEN_TRUE: emitByte(OP_TRUE); break;
@@ -181,37 +181,44 @@ static void literal() {
     }
 }
 
-static void grouping() {
+static void grouping(bool _) {
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static void number() {
+static void number(bool _) {
     const double value = strtod(parser.previous.start, NULL);
     emitConstant(NUMBER_VAL(value));
 }
 
-static void string() {
+static void string(bool _) {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-static void variable() {
-    emitIdentifierConstant(OP_GET_GLOBAL, &parser.previous);
+static void variable(const bool canAssign) {
+    const Token name = parser.previous;
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
+        emitIdentifierConstant(OP_SET_GLOBAL, &name);
+    } else {
+        emitIdentifierConstant(OP_GET_GLOBAL, &name);
+    }
 }
 
-static void interpolation() {
+static void interpolation(bool _) {
     do {
-        string();
+        string(false);
         expression();
         emitByte(OP_ADD); // TODO: maybe later with a better stdlib we can do this in a better way and with better performance. Goal, it is faster then concatenate  and automatically converts to string
     } while (match(TOKEN_INTERPOLATION));
 
     consume(TOKEN_STRING, "Expect end of string interpolation.");
-    string();
+    string(false);
     emitByte(OP_ADD);
 }
 
-static void unary() {
+static void unary(bool _) {
     const TokenType operatorType = parser.previous.type;
 
     parsePrecedence(PREC_UNARY);
@@ -275,12 +282,17 @@ static void parsePrecedence(const Precedence precedence){
         return;
     }
 
-    prefixRule();
+    const bool canAssign = precedence <= PREC_ASSIGNMENT;
+    prefixRule(canAssign);
 
     while (precedence <= getRule(parser.current.type)->precedence) {
         advance();
         const ParseFn infixRule = getRule(parser.previous.type)->infix;
-        infixRule();
+        infixRule(canAssign);
+    }
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        error("Invalid assignment target.");
     }
 }
 

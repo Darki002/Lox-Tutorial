@@ -147,6 +147,14 @@ static InterpretResult run() {
                 tableSet(&vm.globals, globalDefine, peek(0));
                 pop();
                 break;
+            case OP_SET_GLOBAL:
+                const Value globalSet = READ_CONSTANT();
+                if (tableSet(&vm.globals, globalSet, peek(0))) {
+                    tableDelete(&vm.globals, globalSet);
+                    runtimeError("Undefined variable '%s'.", AS_STRING(globalSet)->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
             case OP_EQUAL: {
                 const Value b = pop();
                 const Value a = peek(0);

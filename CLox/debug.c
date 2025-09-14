@@ -72,6 +72,10 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return wideInstruction
                 ? wideConstantInstruction("OP_DEFINE_GLOBAL.W", chunk, offset)
                 : constantInstruction("OP_DEFINE_GLOBAL", chunk, offset);
+        case OP_SET_GLOBAL:
+            return wideInstruction
+                ? wideConstantInstruction("OP_SET_GLOBAL.W", chunk, offset)
+                : constantInstruction("OP_SET_GLOBAL", chunk, offset);
         case OP_EQUAL:
             return simpleInstruction("OP_EQUAL", offset);
         case OP_GREATER:
