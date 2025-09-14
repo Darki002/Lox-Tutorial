@@ -22,7 +22,7 @@ static int constantInstruction(const char * name, const Chunk * chunk, const int
     return offset + 2;
 }
 
-static int longConstantInstruction(const char * name, const Chunk * chunk, const int offset) {
+static int wideConstantInstruction(const char * name, const Chunk * chunk, const int offset) {
     const uint32_t constant = chunk->code[offset + 1] | (chunk->code[offset + 2] << 8) | (chunk->code[offset + 3] << 16);
     printf("%-16s %4d '", name, constant);
     printValue(chunk->constants.values[constant]);
@@ -30,7 +30,7 @@ static int longConstantInstruction(const char * name, const Chunk * chunk, const
     return offset + 4;
 }
 
-int disassembleInstruction(const Chunk* chunk, const int offset) {
+int disassembleInstruction(const Chunk* chunk, int offset) {
     printf("%04d ", offset);
     const int line = getLine(chunk, offset);
     if (offset > 0 && line == getLine(chunk, offset + 1)) {
@@ -39,14 +39,23 @@ int disassembleInstruction(const Chunk* chunk, const int offset) {
         printf("%4d ", line);
     }
 
-    const uint8_t instruction = chunk->code[offset];
+    uint8_t instruction = chunk->code[offset];
+    bool wideInstruction = false;
+
+    if (instruction == OP_WIDE) {
+        wideInstruction = true;
+        instruction = chunk->code[++offset];
+    }
+
     switch (instruction) {
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
+        case OP_WIDE:
+            return simpleInstruction("OP_WIDE", offset);
         case OP_CONSTANT:
-            return constantInstruction("OP_CONSTANT", chunk, offset);
-        case OP_CONSTANT_LONG:
-            return longConstantInstruction("OP_CONSTANT_LONG", chunk, offset);
+            return wideInstruction
+                ? wideConstantInstruction("OP_CONSTANT.W", chunk, offset)
+                : constantInstruction("OP_CONSTANT", chunk, offset);
         case OP_NIL:
             return simpleInstruction("OP_NIL", offset);
         case OP_TRUE:
@@ -55,6 +64,10 @@ int disassembleInstruction(const Chunk* chunk, const int offset) {
             return simpleInstruction("OP_FALSE", offset);
         case OP_POP:
             return simpleInstruction("OP_POP", offset);
+        case OP_DEFINE_GLOBAL:
+            return wideInstruction
+                ? wideConstantInstruction("OP_DEFINE_GLOBAL.W", chunk, offset)
+                : constantInstruction("OP_DEFINE_GLOBAL", chunk, offset);
         case OP_EQUAL:
             return simpleInstruction("OP_EQUAL", offset);
         case OP_GREATER:

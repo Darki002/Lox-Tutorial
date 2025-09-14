@@ -32,11 +32,13 @@ static void runtimeError(const char* format, ...) {
 void initVM() {
     resetStack();
     vm.objects = NULL;
+    initTable(&vm.globals);
     initTable(&vm.strings);
 }
 
 void freeVM() {
     freeObjects();
+    freeTable(&vm.globals);
     freeTable(&vm.strings);
 }
 
@@ -109,7 +111,7 @@ static InterpretResult run() {
             printf(" ]");
         }
         printf("\n");
-    disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
+        disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif //DEBUG_TRACE_EXECUTION
 
         uint8_t instruction  = READ_BYTE();
@@ -123,7 +125,6 @@ static InterpretResult run() {
         switch (instruction) {
             case OP_RETURN:
                 return INTERPRET_OK;
-                break;
             case OP_CONSTANT:
                 const Value constant = READ_CONSTANT();
                 push(constant);
@@ -135,6 +136,7 @@ static InterpretResult run() {
             case OP_DEFINE_GLOBAL:
                 const Value name = READ_CONSTANT();
                 tableSet(&vm.globals, name, peek(0));
+                break;
             case OP_EQUAL: {
                 const Value b = pop();
                 const Value a = peek(0);

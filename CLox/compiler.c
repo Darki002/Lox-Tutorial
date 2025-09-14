@@ -285,7 +285,7 @@ static void expression() {
 
 static void varDeclaration() {
     consume(TOKEN_IDENTIFIER, "Expected variable name.");
-    const Token* name = &parser.previous;
+    const Token name = parser.previous;
 
     if (match(TOKEN_EQUAL)) {
         expression();
@@ -293,7 +293,7 @@ static void varDeclaration() {
         emitByte(OP_NIL);
     }
     consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
-    defineVariable(name);
+    defineVariable(&name);
 }
 
 static void expressionStatement() {
