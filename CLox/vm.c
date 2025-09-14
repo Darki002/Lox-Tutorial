@@ -144,8 +144,7 @@ static InterpretResult run() {
                 break;
             case OP_DEFINE_GLOBAL:
                 const Value globalDefine = READ_CONSTANT();
-                tableSet(&vm.globals, globalDefine, peek(0));
-                pop();
+                tableSet(&vm.globals, globalDefine, pop());
                 break;
             case OP_SET_GLOBAL:
                 const Value globalSet = READ_CONSTANT();
