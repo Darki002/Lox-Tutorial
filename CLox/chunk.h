@@ -7,8 +7,8 @@
 // TODO: add op codes for, 1, 2, 0, -1, increment 1, decrement 1
 
 typedef enum {
+    OP_WIDE,
     OP_CONSTANT,
-    OP_CONSTANT_LONG,
     OP_NIL,
     OP_TRUE,
     OP_FALSE,
@@ -46,6 +46,7 @@ void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
 bool writeConstant(Chunk* chunk, Value value, int line);
+bool writeGlobal(Chunk* chunk, Value value, int line);
 int getLine(const Chunk* chunk, size_t instruction);
 
 #endif //clox_chunk_h

@@ -120,6 +120,13 @@ static void emitConstant(const Value value) {
     }
 }
 
+static void emitGlobal(const Value value, const int line) {
+    const bool result = writeGlobal(currentChunk(), value, line);
+    if (!result) {
+        error("Too many constants in one chunk.");
+    }
+}
+
 static void endCompiler() {
     emitReturn();
 
@@ -136,13 +143,8 @@ static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static void identifierConstant(const Token* name) {
-    emitConstant(OBJ_VAL(copyString(name->start, name->length)));
-}
-
-static void parseVariable(const char* errorMessage) {
-    consume(TOKEN_IDENTIFIER, errorMessage);
-    identifierConstant(&parser.previous);
+static void defineVariable(const Token* name) {
+    emitGlobal(OBJ_VAL(copyString(name->start, name->length)), name->line);
 }
 
 static void binary() {
@@ -282,15 +284,16 @@ static void expression() {
 }
 
 static void varDeclaration() {
-    parseVariable("Expected variable name."); // we have a big problem here. we can't push the name onto the stack
-// Use something like OP_WIDE?
+    consume(TOKEN_IDENTIFIER, "Expected variable name.");
+    const Token* name = &parser.previous;
+
     if (match(TOKEN_EQUAL)) {
         expression();
     } else {
         emitByte(OP_NIL);
     }
     consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
-    emitByte(OP_DEFINE_GLOBAL);
+    defineVariable(name);
 }
 
 static void expressionStatement() {

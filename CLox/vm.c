@@ -87,8 +87,8 @@ static void concatenate() {
 
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
-#define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
-#define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16)])
+#define READ_CONSTANT_WIDE() (vm.chunk->constants.values[READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16)])
+#define READ_CONSTANT() (wideInstruction ? READ_CONSTANT_WIDE() : vm.chunk->constants.values[READ_BYTE()])
 #define BINARY_OP(valueType, op) \
     do { \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -112,24 +112,28 @@ static InterpretResult run() {
     disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif //DEBUG_TRACE_EXECUTION
 
-        uint8_t instruction;
-        switch (instruction = READ_BYTE()) {
+        uint8_t instruction  = READ_BYTE();
+        bool wideInstruction = false;
+
+        if (instruction == OP_WIDE) {
+            wideInstruction = true;
+            instruction = READ_BYTE();
+        }
+
+        switch (instruction) {
             case OP_RETURN:
                 return INTERPRET_OK;
+                break;
             case OP_CONSTANT:
                 const Value constant = READ_CONSTANT();
                 push(constant);
-                break;
-            case OP_CONSTANT_LONG:
-                const Value constantLong = READ_CONSTANT_LONG();
-                push(constantLong);
                 break;
             case OP_NIL: push(NIL_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
             case OP_POP: pop(); break;
             case OP_DEFINE_GLOBAL:
-                const Value name = pop();
+                const Value name = READ_CONSTANT();
                 tableSet(&vm.globals, name, peek(0));
             case OP_EQUAL: {
                 const Value b = pop();
@@ -175,8 +179,8 @@ static InterpretResult run() {
     }
 
 #undef BINARY_OP
-#undef READ_CONSTANT_LONG
 #undef READ_CONSTANT
+#undef READ_CONSTANT_WIDE
 #undef READ_BYTE
 }
 
