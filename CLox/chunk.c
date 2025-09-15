@@ -48,8 +48,7 @@ int addConstant(Chunk* chunk, const Value value) {
     return chunk->constants.count - 1;
 }
 
-bool writeConstantCode(const OpCode code, Chunk* chunk, const Value value, const int line) {
-    const int offset = addConstant(chunk, value);
+bool writeOffset(const OpCode code, Chunk* chunk, const int offset, const int line) {
     if (offset < 256) {
         writeChunk(chunk, code, line);
         writeChunk(chunk, offset, line);
@@ -65,6 +64,11 @@ bool writeConstantCode(const OpCode code, Chunk* chunk, const Value value, const
     }
 
     return false;
+}
+
+bool writeConstantCode(const OpCode code, Chunk* chunk, const Value value, const int line) {
+    const int offset = addConstant(chunk, value);
+    return writeOffset(code, chunk, offset, line);
 }
 
 bool writeConstant(Chunk* chunk, const Value value, const int line) {

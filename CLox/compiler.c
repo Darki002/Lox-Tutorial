@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "object.h"
+#include "table.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
@@ -40,6 +41,7 @@ typedef struct {
 
 Parser parser;
 Chunk* compilingChunk;
+Table identifiers;
 
 static Chunk* currentChunk() {
     return compilingChunk;
@@ -120,13 +122,6 @@ static void emitConstant(const Value value) {
     }
 }
 
-static void emitGlobal(const OpCode code, const Value value, const int line) {
-    const bool result = writeConstantCode(code, currentChunk(), value, line);
-    if (!result) {
-        error("Too many constants in one chunk.");
-    }
-}
-
 static void endCompiler() {
     emitReturn();
 
@@ -143,13 +138,28 @@ static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static void emitIdentifierConstant(const OpCode code, const Token* name) {
-    emitGlobal(code, OBJ_VAL(copyString(name->start, name->length)), name->line);
+static void emitIdentifierConstant(const OpCode code, const int offset, const int line) {
+    const bool result = writeOffset(code, currentChunk(), offset, line);
+    if (!result) {
+        error("Too many constants in one chunk.");
+    }
 }
 
-static Token consumeIdentifier() {
-    consume(TOKEN_IDENTIFIER, "Expected variable name.");
-    return  parser.previous;
+static int identifierConstant(const Token* name) {
+    const Value string = OBJ_VAL(copyString(name->start, name->length));
+
+    Value offset;
+    if (!tableGet(&identifiers, string, &offset)) {
+        offset = NUMBER_VAL(addConstant(currentChunk(), string));
+        tableSet(&identifiers, string, offset);
+    }
+
+    return (int)AS_NUMBER(offset);
+}
+
+static int parseVariable(const char* errorMessage) {
+    consume(TOKEN_IDENTIFIER, errorMessage);
+    return identifierConstant(&parser.previous);
 }
 
 static void binary(bool _) {
@@ -195,15 +205,19 @@ static void string(bool _) {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-static void variable(const bool canAssign) {
-    const Token name = parser.previous;
+static void namedVariable(Token* name, const bool canAssign) {
+    const int index = identifierConstant(name);
 
     if (canAssign && match(TOKEN_EQUAL)) {
         expression();
-        emitIdentifierConstant(OP_SET_GLOBAL, &name);
+        emitIdentifierConstant(OP_SET_GLOBAL, index, name->line);
     } else {
-        emitIdentifierConstant(OP_GET_GLOBAL, &name);
+        emitIdentifierConstant(OP_GET_GLOBAL, index, name->line);
     }
+}
+
+static void variable(const bool canAssign) {
+    namedVariable(&parser.previous, canAssign);
 }
 
 static void interpolation(bool _) {
@@ -305,7 +319,8 @@ static void expression() {
 }
 
 static void varDeclaration() {
-    const Token name = consumeIdentifier();
+    const int index = parseVariable("Expect variable name.");
+    const int line = parser.previous.line;
 
     if (match(TOKEN_EQUAL)) {
         expression();
@@ -313,7 +328,7 @@ static void varDeclaration() {
         emitByte(OP_NIL);
     }
     consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
-    emitIdentifierConstant(OP_DEFINE_GLOBAL, &name);
+    emitIdentifierConstant(OP_DEFINE_GLOBAL, index, line);
 }
 
 static void expressionStatement() {
@@ -372,6 +387,7 @@ static void declaration() {
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
     compilingChunk = chunk;
+    initTable(&identifiers);
 
     parser.hadError = false;
     parser.panicMode = false;
@@ -383,5 +399,6 @@ bool compile(const char* source, Chunk* chunk) {
     }
 
     endCompiler();
+    freeTable(&identifiers);
     return !parser.hadError;
 }
