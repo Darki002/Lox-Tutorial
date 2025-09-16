@@ -14,7 +14,7 @@ static int simpleInstruction(const char* name, const int offset) {
     return offset + 1;
 }
 
-static int constantInstruction(const char * name, const Chunk * chunk, const int offset) {
+static int constantInstructionU8(const char * name, const Chunk * chunk, const int offset) {
     const uint8_t constant = chunk->code[offset + 1];
     printf("%-16s %4d '", name, constant);
     printValue(chunk->constants.values[constant]);
@@ -22,11 +22,23 @@ static int constantInstruction(const char * name, const Chunk * chunk, const int
     return offset + 2;
 }
 
-static int wideConstantInstruction(const char * name, const Chunk * chunk, const int offset) {
+static int constantInstructionU24(const char * name, const Chunk * chunk, const int offset) {
     const uint32_t constant = chunk->code[offset + 1] | (chunk->code[offset + 2] << 8) | (chunk->code[offset + 3] << 16);
     printf("%-16s %4d '", name, constant);
     printValue(chunk->constants.values[constant]);
     printf("'\n");
+    return offset + 4;
+}
+
+static int indexInstructionU8(const char * name, const Chunk * chunk, const int offset) {
+    const uint8_t constant = chunk->code[offset + 1];
+    printf("%-16s %4d \n", name, constant);
+    return offset + 2;
+}
+
+static int indexInstructionU24(const char * name, const Chunk * chunk, const int offset) {
+    const uint32_t constant = chunk->code[offset + 1] | (chunk->code[offset + 2] << 8) | (chunk->code[offset + 3] << 16);
+    printf("%-16s %4d \n", name, constant);
     return offset + 4;
 }
 
@@ -54,8 +66,8 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_WIDE", offset);
         case OP_CONSTANT:
             return wideInstruction
-                ? wideConstantInstruction("OP_CONSTANT.W", chunk, offset)
-                : constantInstruction("OP_CONSTANT", chunk, offset);
+                ? constantInstructionU24("OP_CONSTANT.W", chunk, offset)
+                : constantInstructionU8("OP_CONSTANT", chunk, offset);
         case OP_NIL:
             return simpleInstruction("OP_NIL", offset);
         case OP_TRUE:
@@ -66,16 +78,16 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_POP", offset);
         case OP_GET_GLOBAL:
             return wideInstruction
-                ? wideConstantInstruction("OP_GET_GLOBAL.W", chunk, offset)
-                : constantInstruction("OP_GET_GLOBAL", chunk, offset);
+                ? indexInstructionU24("OP_GET_GLOBAL.W", chunk, offset)
+                : indexInstructionU8("OP_GET_GLOBAL", chunk, offset);
         case OP_DEFINE_GLOBAL:
             return wideInstruction
-                ? wideConstantInstruction("OP_DEFINE_GLOBAL.W", chunk, offset)
-                : constantInstruction("OP_DEFINE_GLOBAL", chunk, offset);
+                ? indexInstructionU24("OP_DEFINE_GLOBAL.W", chunk, offset)
+                : indexInstructionU8("OP_DEFINE_GLOBAL", chunk, offset);
         case OP_SET_GLOBAL:
             return wideInstruction
-                ? wideConstantInstruction("OP_SET_GLOBAL.W", chunk, offset)
-                : constantInstruction("OP_SET_GLOBAL", chunk, offset);
+                ? indexInstructionU24("OP_SET_GLOBAL.W", chunk, offset)
+                : indexInstructionU8("OP_SET_GLOBAL", chunk, offset);
         case OP_EQUAL:
             return simpleInstruction("OP_EQUAL", offset);
         case OP_GREATER:

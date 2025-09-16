@@ -32,13 +32,15 @@ static void runtimeError(const char* format, ...) {
 void initVM() {
     resetStack();
     vm.objects = NULL;
-    initTable(&vm.globals);
+    initTable(&vm.globalNames);
+    initValueArray(&vm.globalValues);
     initTable(&vm.strings);
 }
 
 void freeVM() {
     freeObjects();
-    freeTable(&vm.globals);
+    initTable(&vm.globalNames);
+    freeValueArray(&vm.globalValues);
     freeTable(&vm.strings);
 }
 
@@ -88,9 +90,10 @@ static void concatenate() {
 }
 
 static InterpretResult run() {
-#define READ_BYTE() (*vm.ip++)
-#define READ_CONSTANT_WIDE() (vm.chunk->constants.values[READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16)])
-#define READ_CONSTANT() (wideInstruction ? READ_CONSTANT_WIDE() : vm.chunk->constants.values[READ_BYTE()])
+#define READ_U8() (*vm.ip++)
+#define READ_U24() (READ_U8() | (READ_U8() << 8) | (READ_U8() << 16))
+#define READ_INDEX() (wideInstruction ? READ_U24() : READ_U8())
+#define READ_CONSTANT() (vm.chunk->constants.values[READ_INDEX()])
 #define BINARY_OP(valueType, op) \
     do { \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -114,12 +117,12 @@ static InterpretResult run() {
         disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif //DEBUG_TRACE_EXECUTION
 
-        uint8_t instruction  = READ_BYTE();
+        uint8_t instruction  = READ_U8();
         bool wideInstruction = false;
 
         if (instruction == OP_WIDE) {
             wideInstruction = true;
-            instruction = READ_BYTE();
+            instruction = READ_U8();
         }
 
         switch (instruction) {
@@ -133,27 +136,30 @@ static InterpretResult run() {
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
             case OP_POP: pop(); break;
-            case OP_GET_GLOBAL:
-                const Value globalGet = READ_CONSTANT();
-                Value value;
-                if (!tableGet(&vm.globals, globalGet, &value)) {
-                    runtimeError("Undefined variable '%s'.", AS_STRING(globalGet)->chars);
+            case OP_GET_GLOBAL: {
+                const int index = READ_INDEX();
+                const Value value = vm.globalValues.values[index];
+                if (IS_UNDEFINED(value)) {
+                    runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 push(value);
                 break;
-            case OP_DEFINE_GLOBAL:
-                const Value globalDefine = READ_CONSTANT();
-                tableSet(&vm.globals, globalDefine, pop());
+            }
+            case OP_DEFINE_GLOBAL: {
+                const int index = READ_INDEX();
+                vm.globalValues.values[index] = pop();
                 break;
-            case OP_SET_GLOBAL:
-                const Value globalSet = READ_CONSTANT();
-                if (tableSet(&vm.globals, globalSet, peek(0))) {
-                    tableDelete(&vm.globals, globalSet);
-                    runtimeError("Undefined variable '%s'.", AS_STRING(globalSet)->chars);
+            }
+            case OP_SET_GLOBAL: {
+                const int index = READ_INDEX();
+                if (IS_UNDEFINED(vm.globalValues.values[index])) {
+                    runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                vm.globalValues.values[index] = peek(0);
                 break;
+            }
             case OP_EQUAL: {
                 const Value b = pop();
                 const Value a = peek(0);
@@ -199,8 +205,9 @@ static InterpretResult run() {
 
 #undef BINARY_OP
 #undef READ_CONSTANT
-#undef READ_CONSTANT_WIDE
-#undef READ_BYTE
+#undef READ_INDEX
+#undef READ_U24
+#undef READ_U8
 }
 
 InterpretResult interpret(const char* source) {

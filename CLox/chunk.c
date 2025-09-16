@@ -48,18 +48,18 @@ int addConstant(Chunk* chunk, const Value value) {
     return chunk->constants.count - 1;
 }
 
-bool writeOffset(const OpCode code, Chunk* chunk, const int offset, const int line) {
-    if (offset < 256) {
+bool writeIndex(const OpCode code, Chunk* chunk, const int index, const int line) {
+    if (index < 256) {
         writeChunk(chunk, code, line);
-        writeChunk(chunk, offset, line);
+        writeChunk(chunk, index, line);
         return true;
     }
-    if (offset < 0xFFFFFF) {
+    if (index < 0xFFFFFF) {
         writeChunk(chunk, OP_WIDE, line);
         writeChunk(chunk, code, line);
-        writeChunk(chunk, offset & 0xff, line);
-        writeChunk(chunk, (offset >> 8) & 0xff, line);
-        writeChunk(chunk, (offset >> 16) & 0xff, line);
+        writeChunk(chunk, index & 0xff, line);
+        writeChunk(chunk, (index >> 8) & 0xff, line);
+        writeChunk(chunk, (index >> 16) & 0xff, line);
         return true;
     }
 
@@ -67,8 +67,8 @@ bool writeOffset(const OpCode code, Chunk* chunk, const int offset, const int li
 }
 
 bool writeConstantCode(const OpCode code, Chunk* chunk, const Value value, const int line) {
-    const int offset = addConstant(chunk, value);
-    return writeOffset(code, chunk, offset, line);
+    const int index = addConstant(chunk, value);
+    return writeIndex(code, chunk, index, line);
 }
 
 bool writeConstant(Chunk* chunk, const Value value, const int line) {

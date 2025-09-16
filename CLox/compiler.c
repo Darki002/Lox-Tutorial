@@ -5,6 +5,7 @@
 
 #include "object.h"
 #include "table.h"
+#include "vm.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
@@ -41,7 +42,6 @@ typedef struct {
 
 Parser parser;
 Chunk* compilingChunk;
-Table identifiers;
 
 static Chunk* currentChunk() {
     return compilingChunk;
@@ -138,8 +138,8 @@ static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static void emitIdentifierConstant(const OpCode code, const int offset, const int line) {
-    const bool result = writeOffset(code, currentChunk(), offset, line);
+static void emitIdentifierConstant(const OpCode code, const int index, const int line) {
+    const bool result = writeIndex(code, currentChunk(), index, line);
     if (!result) {
         error("Too many constants in one chunk.");
     }
@@ -148,13 +148,15 @@ static void emitIdentifierConstant(const OpCode code, const int offset, const in
 static int identifierConstant(const Token* name) {
     const Value string = OBJ_VAL(copyString(name->start, name->length));
 
-    Value offset;
-    if (!tableGet(&identifiers, string, &offset)) {
-        offset = NUMBER_VAL(addConstant(currentChunk(), string));
-        tableSet(&identifiers, string, offset);
+    Value index;
+    if (tableGet(&vm.globalNames, string, &index)) {
+        return (int)AS_NUMBER(index);
     }
 
-    return (int)AS_NUMBER(offset);
+    const int newIndex = vm.globalValues.count;
+    writeValueArray(&vm.globalValues, UNDEFINED_VAL);
+    tableSet(&vm.globalNames, string, NUMBER_VAL((double)newIndex));
+    return newIndex;
 }
 
 static int parseVariable(const char* errorMessage) {
@@ -387,7 +389,6 @@ static void declaration() {
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
     compilingChunk = chunk;
-    initTable(&identifiers);
 
     parser.hadError = false;
     parser.panicMode = false;
@@ -399,6 +400,5 @@ bool compile(const char* source, Chunk* chunk) {
     }
 
     endCompiler();
-    freeTable(&identifiers);
     return !parser.hadError;
 }

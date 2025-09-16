@@ -48,7 +48,7 @@ void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
 int addConstant(Chunk* chunk, Value value);
-bool writeOffset(OpCode code, Chunk* chunk, int offset, int line);
+bool writeIndex(OpCode code, Chunk* chunk, int index, int line);
 bool writeConstantCode(OpCode code, Chunk* chunk, Value value, int line);
 bool writeConstant(Chunk* chunk, Value value, int line);
 int getLine(const Chunk* chunk, size_t instruction);
