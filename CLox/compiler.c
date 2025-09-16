@@ -145,12 +145,16 @@ static void emitIdentifierConstant(const OpCode code, const int index, const int
     }
 }
 
-static int identifierConstant(const Token* name) {
+static int identifierConstant(const Token* name, const bool isAssignment) {
     const Value string = OBJ_VAL(copyString(name->start, name->length));
 
     Value index;
     if (tableGet(&vm.globalNames, string, &index)) {
         return (int)AS_NUMBER(index);
+    }
+
+    if (!isAssignment) {
+        errorAt(name, "Use of undeclared variable.");
     }
 
     const int newIndex = vm.globalValues.count;
@@ -161,7 +165,7 @@ static int identifierConstant(const Token* name) {
 
 static int parseVariable(const char* errorMessage) {
     consume(TOKEN_IDENTIFIER, errorMessage);
-    return identifierConstant(&parser.previous);
+    return identifierConstant(&parser.previous, true);
 }
 
 static void binary(bool _) {
@@ -207,8 +211,8 @@ static void string(bool _) {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-static void namedVariable(Token* name, const bool canAssign) {
-    const int index = identifierConstant(name);
+static void namedVariable(const Token* name, const bool canAssign) {
+    const int index = identifierConstant(name, false);
 
     if (canAssign && match(TOKEN_EQUAL)) {
         expression();
