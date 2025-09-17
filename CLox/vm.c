@@ -132,6 +132,11 @@ static InterpretResult run() {
                 const Value constant = READ_CONSTANT();
                 push(constant);
                 break;
+
+            case OP_CONSTANT_M1: push(NUMBER_VAL(-1));
+            case OP_CONSTANT_0: push(NUMBER_VAL(0));
+            case OP_CONSTANT_1: push(NUMBER_VAL(1));
+            case OP_CONSTANT_2: push(NUMBER_VAL(2));
             case OP_NIL: push(NIL_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;

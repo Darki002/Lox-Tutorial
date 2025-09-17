@@ -4,11 +4,15 @@
 #include "common.h"
 #include "value.h"
 
-// TODO: add op codes for, 1, 2, 0, -1, increment 1, decrement 1
+// TODO: add op codes for increment 1, decrement 1
 
 typedef enum {
     OP_WIDE,
     OP_CONSTANT,
+    OP_CONSTANT_M1,
+    OP_CONSTANT_0,
+    OP_CONSTANT_1,
+    OP_CONSTANT_2,
     OP_NIL,
     OP_TRUE,
     OP_FALSE,

@@ -204,7 +204,17 @@ static void grouping(bool _) {
 
 static void number(bool _) {
     const double value = strtod(parser.previous.start, NULL);
-    emitConstant(NUMBER_VAL(value));
+    if (value == -1) {
+        emitByte(OP_CONSTANT_M1);
+    } else if (value == 0) {
+        emitByte(OP_CONSTANT_0);
+    } else if (value == 1) {
+        emitByte(OP_CONSTANT_1);
+    } else if (value == 2) {
+        emitByte(OP_CONSTANT_2);
+    } else {
+        emitConstant(NUMBER_VAL(value));
+    }
 }
 
 static void string(bool _) {
