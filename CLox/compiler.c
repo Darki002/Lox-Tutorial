@@ -2,6 +2,7 @@
 #include "scanner.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "object.h"
 #include "table.h"
@@ -156,6 +157,11 @@ static void beginScope() {
 
 static void endScope() {
     current->scopeDepth--;
+
+    while (current->localCount > 0 && current->locals[current->localCount - 1].depth > current->scopeDepth) {
+        emitByte(OP_POP); // TODO: OP_POPN to optimize this
+        current->localCount--;
+    }
 }
 
 static void expression();
@@ -189,9 +195,50 @@ static int identifierConstant(const Token* name, const bool isAssignment) {
     return newIndex;
 }
 
+static bool identifiersEqual(const Token* a, const Token* b) {
+    if (a->length != b->length) return false;
+    return memcmp(a->start, b->start, a->length) == 0;
+}
+
+static void addLocal(const Token name) {
+    if (current->localCount == UINT8_COUNT) { // TODO: make use of U24
+        error("Too many local variables in function.");
+    }
+
+    Local* local = &current->locals[current->localCount++];
+    local->name = name;
+    local->depth = current->scopeDepth;
+}
+
+static void declareVariable() {
+    if (current->scopeDepth == 0) return;
+
+    const Token* name = &parser.previous;
+    for (int i = current->localCount - 1; i >= 0; i--) {
+        const Local* local = &current->locals[i];
+        if (local->depth != -1 && local->depth < current->scopeDepth) {
+            break;
+        }
+
+        if (identifiersEqual(name, &local->name)) {
+            error("Already a variable with this name in this scope.");
+        }
+    }
+    addLocal(*name);
+}
+
 static int parseVariable(const char* errorMessage) {
     consume(TOKEN_IDENTIFIER, errorMessage);
+
+    declareVariable();
+    if (current->scopeDepth > 0) return 0;
+
     return identifierConstant(&parser.previous, true);
+}
+
+static void defineVariable(const int index, const int line) {
+    if (current->scopeDepth > 0) return;
+    emitIdentifierConstant(OP_DEFINE_GLOBAL, index, line);
 }
 
 static void binary(bool _) {
@@ -378,7 +425,7 @@ static void varDeclaration() {
         emitByte(OP_NIL);
     }
     consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
-    emitIdentifierConstant(OP_DEFINE_GLOBAL, index, line);
+    defineVariable(index, line);
 }
 
 static void expressionStatement() {
