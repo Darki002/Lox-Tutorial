@@ -141,6 +141,16 @@ static InterpretResult run() {
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
             case OP_POP: pop(); break;
+            case OP_GET_LOCAL: {
+                const int index = READ_INDEX();
+                push(vm.stack[index]);
+                break;
+            }
+            case OP_SET_LOCAL: {
+                const int index = READ_INDEX();
+                vm.stack[index] = peek(0);
+                break;
+            }
             case OP_GET_GLOBAL: {
                 const int index = READ_INDEX();
                 const Value value = vm.globalValues.values[index];

@@ -43,6 +43,13 @@ static int indexInstructionU24(const char * name, const Chunk * chunk, const int
 }
 
 int disassembleInstruction(const Chunk* chunk, int offset) {
+#define constInstruction(nameU8, nameU24, chunk, offset) wideInstruction \
+        ? constantInstructionU24(nameU24, chunk, offset) \
+        : constantInstructionU8(nameU8, chunk, offset);
+
+#define indexInstruction(nameU8, nameU24, chunk, offset) wideInstruction \
+        ? indexInstructionU24(nameU24, chunk, offset) \
+        : indexInstructionU8(nameU8, chunk, offset);
     printf("%04d ", offset);
     const int line = getLine(chunk, offset);
     if (offset > 0 && line == getLine(chunk, offset + 1)) {
@@ -65,9 +72,7 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
         case OP_WIDE:
             return simpleInstruction("OP_WIDE", offset);
         case OP_CONSTANT:
-            return wideInstruction
-                ? constantInstructionU24("OP_CONSTANT.W", chunk, offset)
-                : constantInstructionU8("OP_CONSTANT", chunk, offset);
+            return constInstruction("OP_CONSTANT", "OP_CONSTANT.W", chunk, offset);
         case OP_NIL:
             return simpleInstruction("OP_NIL", offset);
         case OP_TRUE:
@@ -76,18 +81,16 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_FALSE", offset);
         case OP_POP:
             return simpleInstruction("OP_POP", offset);
+        case OP_GET_LOCAL:
+            return indexInstruction("OP_GET_LOCAL", "OP_GET_LOCAL.W", chunk, offset);
+        case OP_SET_LOCAL:
+            return indexInstruction("OP_SET_LOCAL", "OP_SET_LOCAL.W", chunk, offset);
         case OP_GET_GLOBAL:
-            return wideInstruction
-                ? indexInstructionU24("OP_GET_GLOBAL.W", chunk, offset)
-                : indexInstructionU8("OP_GET_GLOBAL", chunk, offset);
+            return indexInstruction("OP_GET_GLOBAL", "OP_GET_GLOBAL.W", chunk, offset);
         case OP_DEFINE_GLOBAL:
-            return wideInstruction
-                ? indexInstructionU24("OP_DEFINE_GLOBAL.W", chunk, offset)
-                : indexInstructionU8("OP_DEFINE_GLOBAL", chunk, offset);
+            return indexInstruction("OP_DEFINE_GLOBAL", "OP_DEFINE_GLOBAL.W", chunk, offset);
         case OP_SET_GLOBAL:
-            return wideInstruction
-                ? indexInstructionU24("OP_SET_GLOBAL.W", chunk, offset)
-                : indexInstructionU8("OP_SET_GLOBAL", chunk, offset);
+            return indexInstruction("OP_SET_GLOBAL", "OP_SET_GLOBAL.W", chunk, offset);
         case OP_EQUAL:
             return simpleInstruction("OP_EQUAL", offset);
         case OP_GREATER:
@@ -112,4 +115,7 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;
     }
+
+#undef indexInstruction
+#undef constInstruction
 }

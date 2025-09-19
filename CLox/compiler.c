@@ -173,7 +173,7 @@ static void parsePrecedence(Precedence precedence);
 static void emitIdentifierConstant(const OpCode code, const int index, const int line) {
     const bool result = writeIndex(code, currentChunk(), index, line);
     if (!result) {
-        error("Too many constants in one chunk.");
+        error("Too many identifier in one chunk.");
     }
 }
 
@@ -198,6 +198,16 @@ static int identifierConstant(const Token* name, const bool isAssignment) {
 static bool identifiersEqual(const Token* a, const Token* b) {
     if (a->length != b->length) return false;
     return memcmp(a->start, b->start, a->length) == 0;
+}
+
+static int resolveLocal(const Compiler* compiler, const Token* name) {
+    for (int i = compiler->localCount - 1; i >= 0; i--) {
+        const Local* local = &compiler->locals[i];
+        if (identifiersEqual(name, &local->name)) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 static void addLocal(const Token name) {
@@ -294,19 +304,28 @@ static void string(bool _) {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-static void namedVariable(const Token* name, const bool canAssign) {
-    const int index = identifierConstant(name, false);
+static void namedVariable(const Token name, const bool canAssign) {
+    uint8_t getOp, setOp;
+    int arg = resolveLocal(current, &name);
+    if (arg != -1) {
+        getOp = OP_GET_LOCAL;
+        setOp = OP_SET_LOCAL;
+    } else {
+        arg = identifierConstant(&name, false);
+        getOp = OP_GET_GLOBAL;
+        setOp = OP_SET_GLOBAL;
+    }
 
     if (canAssign && match(TOKEN_EQUAL)) {
         expression();
-        emitIdentifierConstant(OP_SET_GLOBAL, index, name->line);
+        emitIdentifierConstant(setOp, arg, name.line);
     } else {
-        emitIdentifierConstant(OP_GET_GLOBAL, index, name->line);
+        emitIdentifierConstant(getOp, arg, name.line);
     }
 }
 
 static void variable(const bool canAssign) {
-    namedVariable(&parser.previous, canAssign);
+    namedVariable(parser.previous, canAssign);
 }
 
 static void interpolation(bool _) {
