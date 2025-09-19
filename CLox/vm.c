@@ -147,7 +147,7 @@ static InterpretResult run() {
             case OP_FALSE: push(BOOL_VAL(false)); break;
             case OP_POP: pop(); break;
             case OP_POPN: {
-                const int popCount = READ_INDEX();
+                const int popCount = READ_INDEX(); // TODO: something is weird around here, seems to read to much from the stack and pops too much
                 popn(popCount);
             }
             case OP_GET_LOCAL: {
