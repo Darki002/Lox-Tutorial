@@ -51,7 +51,12 @@ void push(const Value value) {
 
 Value pop() {
     vm.stackTop--;
-    return  *vm.stackTop;
+    return *vm.stackTop;
+}
+
+Value popn(const int n) {
+    vm.stackTop -= n;
+    return *vm.stackTop;
 }
 
 Value peek(const int distance) {
@@ -143,6 +148,7 @@ static InterpretResult run() {
             case OP_POP: pop(); break;
             case OP_POPN: {
                 const int popCount = READ_INDEX();
+                popn(popCount);
             }
             case OP_GET_LOCAL: {
                 const int index = READ_INDEX();
