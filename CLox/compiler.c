@@ -158,10 +158,13 @@ static void beginScope() {
 static void endScope() {
     current->scopeDepth--;
 
+    const int locals = current->localCount;
     while (current->localCount > 0 && current->locals[current->localCount - 1].depth > current->scopeDepth) {
-        emitByte(OP_POP); // TODO: OP_POPN to optimize this
         current->localCount--;
     }
+
+    const int countPops = locals - current->localCount;
+    writeIndexBytes(OP_POPN, currentChunk(), countPops);
 }
 
 static void expression();
@@ -211,7 +214,7 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
 }
 
 static void addLocal(const Token name) {
-    if (current->localCount == UINT8_COUNT) { // TODO: make use of U24
+    if (current->localCount == UINT8_COUNT) { // TODO: make use of U24, but not allocate instantly all 24, grow array if necessary
         error("Too many local variables in function.");
     }
 

@@ -17,6 +17,7 @@ typedef enum {
     OP_TRUE,
     OP_FALSE,
     OP_POP,
+    OP_POPN,
     OP_GET_LOCAL,
     OP_SET_LOCAL,
     OP_GET_GLOBAL,
@@ -54,6 +55,7 @@ void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
 int addConstant(Chunk* chunk, Value value);
+bool writeIndexBytes(OpCode code, Chunk* chunk, int index);
 bool writeIndex(OpCode code, Chunk* chunk, int index, int line);
 bool writeConstantCode(OpCode code, Chunk* chunk, Value value, int line);
 bool writeConstant(Chunk* chunk, Value value, int line);

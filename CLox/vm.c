@@ -141,6 +141,9 @@ static InterpretResult run() {
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
             case OP_POP: pop(); break;
+            case OP_POPN: {
+                const int popCount = READ_INDEX();
+            }
             case OP_GET_LOCAL: {
                 const int index = READ_INDEX();
                 push(vm.stack[index]);
