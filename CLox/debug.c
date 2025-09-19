@@ -81,6 +81,8 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_FALSE", offset);
         case OP_POP:
             return simpleInstruction("OP_POP", offset);
+        case OP_POPN:
+            return indexInstruction("OP_POPN", "OP_POPN.W", chunk, offset)
         case OP_GET_LOCAL:
             return indexInstruction("OP_GET_LOCAL", "OP_GET_LOCAL.W", chunk, offset);
         case OP_SET_LOCAL:
