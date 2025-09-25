@@ -204,7 +204,27 @@ static InterpretResult run() {
                 }
                 break;
             }
+            case OP_ADD_1: {
+                const Value value = peek(0);
+                if (IS_NUMBER(value)) {
+                    replace(NUMBER_VAL(AS_NUMBER(value) + 1));
+                } else {
+                    runtimeError("Operand must be a number.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
+            case OP_SUBTRACT_1: {
+                const Value value = peek(0);
+                if (IS_NUMBER(value)) {
+                    replace(NUMBER_VAL(AS_NUMBER(value) - 1));
+                } else {
+                    runtimeError("Operand must be a number.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
             case OP_NOT: {
