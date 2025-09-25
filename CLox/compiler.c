@@ -332,6 +332,10 @@ static void namedVariable(const Token name, const bool canAssign) {
     if (canAssign && match(TOKEN_EQUAL)) {
         expression();
         emitIdentifierConstant(setOp, arg, name.line);
+    } else if (canAssign && match(TOKEN_PLUS_PLUS)) { // TODO: inc dec by one, but how to know if global or local
+
+    } else if (canAssign && match(TOKEN_MINUS_MINUS)) {
+
     } else {
         emitIdentifierConstant(getOp, arg, name.line);
     }
@@ -366,7 +370,7 @@ static void unary(bool _) {
 }
 
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN]  =   {grouping,    NULL,  PREC_NONE},
+    [TOKEN_LEFT_PAREN]  =   {grouping, NULL,   PREC_NONE},
     [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
     [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
     [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
@@ -385,9 +389,9 @@ ParseRule rules[] = {
     [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_EQUALITY},
     [TOKEN_LESS]          = {NULL,     binary, PREC_EQUALITY},
     [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
-    [TOKEN_IDENTIFIER]    = {variable,  NULL,PREC_NONE},
+    [TOKEN_IDENTIFIER]    = {variable,  NULL,  PREC_NONE},
     [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
-    [TOKEN_INTERPOLATION] = {interpolation,NULL, PREC_NONE},
+    [TOKEN_INTERPOLATION] = {interpolation,NULL,PREC_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
     [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
