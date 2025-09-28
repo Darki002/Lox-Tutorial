@@ -23,7 +23,7 @@ static int constantInstructionU8(const char * name, const Chunk * chunk, const i
 }
 
 static int constantInstructionU24(const char * name, const Chunk * chunk, const int offset) {
-    const uint32_t constant = chunk->code[offset + 1] | (chunk->code[offset + 2] << 8) | (chunk->code[offset + 3] << 16);
+    const int constant = disassembleU24Constant(chunk, offset);
     printf("%-16s %4d '", name, constant);
     printValue(chunk->constants.values[constant]);
     printf("'\n");
@@ -37,9 +37,23 @@ static int indexInstructionU8(const char * name, const Chunk * chunk, const int 
 }
 
 static int indexInstructionU24(const char * name, const Chunk * chunk, const int offset) {
-    const uint32_t constant = chunk->code[offset + 1] | (chunk->code[offset + 2] << 8) | (chunk->code[offset + 3] << 16);
+    const int constant = disassembleU24Constant(chunk, offset);
     printf("%-16s %4d \n", name, constant);
     return offset + 4;
+}
+
+static int incrementInstructionU8(const char * name, const Chunk * chunk, const int offset) {
+    const uint8_t constant = chunk->code[offset + 1];
+    const uint8_t imm = chunk->code[offset + 2];
+    printf("%-16s %4d %4d \n", name, constant, imm);
+    return offset + 3;
+}
+
+static int incrementInstructionU24(const char * name, const Chunk * chunk, const int offset) {
+    const int constant = disassembleU24Constant(chunk, offset);
+    const uint8_t imm = chunk->code[offset + 2];
+    printf("%-16s %4d %4d \n", name, constant, imm);
+    return offset + 5;
 }
 
 int disassembleInstruction(const Chunk* chunk, int offset) {
@@ -50,6 +64,11 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
 #define indexInstruction(nameU8, nameU24, chunk, offset) wideInstruction \
         ? indexInstructionU24(nameU24, chunk, offset) \
         : indexInstructionU8(nameU8, chunk, offset);
+
+#define incrementInstruction(nameU8, nameU24, chunk, offset) wideInstruction \
+        ? incrementInstructionU8(nameU24, chunk, offset) \
+        : incrementInstructionU24(nameU8, chunk, offset);
+
     printf("%04d ", offset);
     const int line = getLine(chunk, offset);
     if (offset > 0 && line == getLine(chunk, offset + 1)) {
@@ -73,6 +92,14 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_WIDE", offset);
         case OP_CONSTANT:
             return constInstruction("OP_CONSTANT", "OP_CONSTANT.W", chunk, offset);
+        case OP_CONSTANT_M1:
+            return simpleInstruction("OP_CONSTANT_M1", offset);
+        case OP_CONSTANT_0:
+            return simpleInstruction("OP_CONSTANT_0", offset);
+        case OP_CONSTANT_1:
+            return simpleInstruction("OP_CONSTANT_1", offset);
+        case OP_CONSTANT_2:
+            return simpleInstruction("OP_CONSTANT_2", offset);
         case OP_NIL:
             return simpleInstruction("OP_NIL", offset);
         case OP_TRUE:
@@ -83,10 +110,16 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_POP", offset);
         case OP_POPN:
             return indexInstruction("OP_POPN", "OP_POPN.W", chunk, offset)
+        case OP_DUP:
+            return simpleInstruction("OP_DUP", offset);
         case OP_GET_LOCAL:
             return indexInstruction("OP_GET_LOCAL", "OP_GET_LOCAL.W", chunk, offset);
         case OP_SET_LOCAL:
             return indexInstruction("OP_SET_LOCAL", "OP_SET_LOCAL.W", chunk, offset);
+        case OP_INC_LOCAL:
+            return incrementInstruction("OP_INC_LOCAL", "OP_INC_LOCAL.W", chunk, offset);
+        case OP_DEC_LOCAL:
+            return incrementInstruction("OP_DEC_LOCAL", "OP_DEC_LOCAL.W", chunk, offset);
         case OP_GET_GLOBAL:
             return indexInstruction("OP_GET_GLOBAL", "OP_GET_GLOBAL.W", chunk, offset);
         case OP_DEFINE_GLOBAL:
@@ -118,6 +151,7 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return offset + 1;
     }
 
+#undef incrementInstruction
 #undef indexInstruction
 #undef constInstruction
 }

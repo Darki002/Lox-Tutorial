@@ -138,10 +138,10 @@ static InterpretResult run() {
                 push(constant);
                 break;
             }
-            case OP_CONSTANT_M1: push(NUMBER_VAL(-1));
-            case OP_CONSTANT_0:  push(NUMBER_VAL(0));
-            case OP_CONSTANT_1:  push(NUMBER_VAL(1));
-            case OP_CONSTANT_2:  push(NUMBER_VAL(2));
+            case OP_CONSTANT_M1: push(NUMBER_VAL(-1)); break;
+            case OP_CONSTANT_0:  push(NUMBER_VAL(0)); break;
+            case OP_CONSTANT_1:  push(NUMBER_VAL(1)); break;
+            case OP_CONSTANT_2:  push(NUMBER_VAL(2)); break;
             case OP_NIL: push(NIL_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
@@ -151,6 +151,7 @@ static InterpretResult run() {
                 popn(popCount);
                 break;
             }
+            case OP_DUP: push(peek(0)); break;
             case OP_GET_LOCAL: {
                 const int index = READ_INDEX();
                 push(vm.stack[index]);
@@ -159,6 +160,22 @@ static InterpretResult run() {
             case OP_SET_LOCAL: {
                 const int index = READ_INDEX();
                 vm.stack[index] = peek(0);
+                break;
+            }
+            case OP_INC_LOCAL: {
+                const int index = READ_INDEX();
+                const int8_t imm = READ_U8();
+                const Value newValue = NUMBER_VAL(AS_NUMBER(vm.stack[index]) + imm);
+                vm.stack[index] = newValue;
+                push(newValue);
+                break;
+            }
+            case OP_DEC_LOCAL: {
+                const int index = READ_INDEX();
+                const int8_t imm = READ_U8();
+                const Value newValue = NUMBER_VAL(AS_NUMBER(vm.stack[index]) - imm);
+                vm.stack[index] = newValue;
+                push(newValue);
                 break;
             }
             case OP_GET_GLOBAL: {

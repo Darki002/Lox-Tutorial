@@ -173,7 +173,7 @@ static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static void emitIdentifierConstant(const OpCode code, const int index, const int line) {
+static void emitIndex(const OpCode code, const int index, const int line) {
     const bool result = writeIndex(code, currentChunk(), index, line);
     if (!result) {
         error("Too many identifier in one chunk.");
@@ -261,7 +261,7 @@ static void defineVariable(const int index, const int line) {
         makeInitialized();
         return;
     }
-    emitIdentifierConstant(OP_DEFINE_GLOBAL, index, line);
+    emitIndex(OP_DEFINE_GLOBAL, index, line);
 }
 
 static void binary(bool _) {
@@ -317,6 +317,18 @@ static void string(bool _) {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
+static void postIncrementVariable(const int index, const bool isLocal, const bool decrement, const int line) {
+    if (isLocal) {
+        emitIndex(decrement ? OP_DEC_LOCAL : OP_INC_LOCAL, index, line);
+        emitByte(1);
+    }  else {
+        emitByte(OP_DUP);
+        emitBytes(OP_CONSTANT_1, decrement ? OP_SUBTRACT : OP_ADD);
+        emitIndex(OP_SET_GLOBAL, index, line);
+    }
+    emitByte(OP_POP);
+}
+
 static void namedVariable(const Token name, const bool canAssign) {
     uint8_t getOp, setOp;
     int arg = resolveLocal(current, &name);
@@ -331,18 +343,48 @@ static void namedVariable(const Token name, const bool canAssign) {
 
     if (canAssign && match(TOKEN_EQUAL)) {
         expression();
-        emitIdentifierConstant(setOp, arg, name.line);
-    } else if (canAssign && match(TOKEN_PLUS_PLUS)) { // TODO: inc dec by one, but how to know if global or local
+        emitIndex(setOp, arg, name.line);
+        return;
+    }
 
-    } else if (canAssign && match(TOKEN_MINUS_MINUS)) {
+    emitIndex(getOp, arg, name.line);
 
-    } else {
-        emitIdentifierConstant(getOp, arg, name.line);
+    if (canAssign && (match(TOKEN_PLUS_PLUS) || match(TOKEN_MINUS_MINUS))) {
+        const bool isLocal = getOp == OP_GET_LOCAL;
+        const bool decrement = parser.previous.type == TOKEN_MINUS_MINUS;
+        postIncrementVariable(arg, isLocal, decrement, name.line);
     }
 }
 
 static void variable(const bool canAssign) {
     namedVariable(parser.previous, canAssign);
+}
+
+static void preIncrementVariable(const bool canAssign) {
+    if (!canAssign) return;
+
+    int8_t opLocal, opGlobal;
+    if (parser.previous.type == TOKEN_MINUS_MINUS) {
+        opLocal = OP_DEC_LOCAL;
+        opGlobal = OP_SUBTRACT;
+    } else {
+        opLocal = OP_INC_LOCAL;
+        opGlobal = OP_ADD;
+    }
+
+    consume(TOKEN_IDENTIFIER, "Expected variable name.");
+    const Token name = parser.previous;
+    int arg = resolveLocal(current, &name);
+
+    if (arg != -1) {
+        emitIndex(opLocal, arg, name.line);
+        emitByte(1);
+    } else {
+        arg = identifierConstant(&name, false);
+        emitIndex(OP_GET_GLOBAL, arg, name.line);
+        emitBytes(OP_CONSTANT_1, opGlobal);
+        emitIndex(OP_SET_GLOBAL, arg, name.line);
+    }
 }
 
 static void interpolation(bool _) {
@@ -377,7 +419,9 @@ ParseRule rules[] = {
     [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
+    [TOKEN_MINUS_MINUS]   = {preIncrementVariable,NULL,PREC_UNARY},
     [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
+    [TOKEN_PLUS_PLUS]     = {preIncrementVariable,NULL,PREC_UNARY},
     [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
     [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
     [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
