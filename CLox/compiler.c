@@ -349,7 +349,7 @@ static void namedVariable(const Token name, const bool canAssign) {
 
     emitIndex(getOp, arg, name.line);
 
-    if (canAssign && (match(TOKEN_PLUS_PLUS) || match(TOKEN_MINUS_MINUS))) {
+    if (match(TOKEN_PLUS_PLUS) || match(TOKEN_MINUS_MINUS)) {
         const bool isLocal = getOp == OP_GET_LOCAL;
         const bool decrement = parser.previous.type == TOKEN_MINUS_MINUS;
         postIncrementVariable(arg, isLocal, decrement, name.line);
@@ -360,9 +360,7 @@ static void variable(const bool canAssign) {
     namedVariable(parser.previous, canAssign);
 }
 
-static void preIncrementVariable(const bool canAssign) {
-    if (!canAssign) return;
-
+static void preIncrementVariable(const bool _) {
     int8_t opLocal, opGlobal;
     if (parser.previous.type == TOKEN_MINUS_MINUS) {
         opLocal = OP_DEC_LOCAL;
