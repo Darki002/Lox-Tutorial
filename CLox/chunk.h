@@ -4,8 +4,6 @@
 #include "common.h"
 #include "value.h"
 
-// TODO: add op codes for increment 1, decrement 1
-
 typedef enum {
     OP_WIDE,
     OP_CONSTANT,
