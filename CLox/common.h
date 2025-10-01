@@ -8,5 +8,7 @@
 #define DEBUG_PRINT_CODE
 
 #define UINT8_COUNT (UINT8_MAX + 1)
+#define UINT24_MAX (16777215)
+#define UINT24_COUNT (UINT24_MAX + 1)
 
 #endif //clox_common_h
