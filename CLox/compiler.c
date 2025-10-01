@@ -1,7 +1,10 @@
+#include "compiler.h"
+#include "scanner.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "memory.h"
 #include "object.h"
 #include "table.h"
 #include "vm.h"
@@ -47,9 +50,10 @@ typedef struct {
 } Local;
 
 typedef struct {
-    Local locals[UINT8_COUNT];
+    int localCapacity;
     int localCount;
     int scopeDepth;
+    Local* locals;
 } Compiler;
 
 Parser parser;
@@ -136,9 +140,28 @@ static void emitConstant(const Value value) {
 }
 
 static void initCompiler(Compiler* compiler) {
+    compiler->localCapacity = 0;
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
+    compiler->locals = NULL;
     current = compiler;
+}
+
+static void writeLocalsArray(Compiler* compiler, const Local local) {
+    if (compiler->localCount + 1 > UINT24_MAX) {
+        error("Too many local variables in function");
+        return;
+    }
+
+    if (compiler->localCapacity < compiler->localCount + 1) {
+        const int oldCapacity = compiler->localCapacity;
+        const int newCapacity = GROW_CAPACITY(oldCapacity);
+        compiler->localCapacity = newCapacity < UINT24_MAX ? newCapacity : UINT24_MAX;
+        compiler->locals = GROW_ARRAY(Local, compiler->locals, oldCapacity, compiler->localCapacity);
+    }
+
+    compiler->locals[compiler->localCount] = local;
+    compiler->localCount++;
 }
 
 static void endCompiler() {
@@ -208,7 +231,7 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
         const Local* local = &compiler->locals[i];
         if (identifiersEqual(name, &local->name)) {
             if (local->depth == -1) {
-                error("Can't read local variable in it's own initializer.");
+                error("Can't read local variable in iwtss own initializer.");
             }
             return i;
         }
@@ -217,13 +240,10 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
 }
 
 static void addLocal(const Token name) {
-    if (current->localCount == UINT8_COUNT) {
-        error("Too many local variables in function.");
-    }
-
-    Local* local = &current->locals[current->localCount++];
-    local->name = name;
-    local->depth = -1;
+    Local local;
+    local.name = name;
+    local.depth = -1;
+    writeLocalsArray(current, local);
 }
 
 static void declareVariable() {
@@ -597,8 +617,8 @@ static void declaration() {
 
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
-    Compiler compiler;
-    initCompiler(&compiler);
+    Compiler* compiler = ALLOCATE(Compiler, sizeof(int) * 3);
+    initCompiler(compiler);
     compilingChunk = chunk;
 
     parser.hadError = false;
@@ -611,5 +631,6 @@ bool compile(const char* source, Chunk* chunk) {
     }
 
     endCompiler();
+    FREE(Compiler, compiler);
     return !parser.hadError;
 }
