@@ -1,5 +1,3 @@
-#include "compiler.h"
-#include "scanner.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +5,8 @@
 #include "object.h"
 #include "table.h"
 #include "vm.h"
+#include "compiler.h"
+#include "scanner.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
