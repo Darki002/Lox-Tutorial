@@ -1,8 +1,4 @@
-﻿# Use U24 for Locals in Compiler Struct
-
-make use of U24, but not allocate instantly all 24, grow array if necessary
-
-# Self Assignment
+﻿# Self Assignment
 
 Syntax for:
 
