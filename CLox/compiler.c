@@ -330,6 +330,15 @@ static void postIncrementVariable(const int index, const bool isLocal, const boo
 }
 
 static void namedVariable(const Token name, const bool canAssign) {
+#define SELF_ASSIGN(op) \
+    do { \
+        advance(); \
+        expression(); \
+        emitIndex(getOp, arg, name.line); \
+        emitByte(op); \
+        emitIndex(setOp, arg, name.line); \
+    } while(false);
+
     uint8_t getOp, setOp;
     int arg = resolveLocal(current, &name);
     if (arg != -1) {
@@ -341,10 +350,32 @@ static void namedVariable(const Token name, const bool canAssign) {
         setOp = OP_SET_GLOBAL;
     }
 
-    if (canAssign && match(TOKEN_EQUAL)) {
-        expression();
-        emitIndex(setOp, arg, name.line);
-        return;
+    if (canAssign) {
+        switch (parser.current.type) {
+            case TOKEN_EQUAL: {
+                advance();
+                expression();
+                emitIndex(setOp, arg, name.line);
+                return;
+            }
+            case TOKEN_PLUS_EQUAL: {
+                SELF_ASSIGN(OP_ADD)
+                return;
+            }
+            case TOKEN_MINUS_EQUAL: {
+                SELF_ASSIGN(OP_SUBTRACT)
+                return;
+            }
+            case TOKEN_STAR_EQUAL: {
+                SELF_ASSIGN(OP_MULTIPLY)
+                return;
+            }
+            case TOKEN_SLASH_EQUAL: {
+                SELF_ASSIGN(OP_SUBTRACT)
+                return;
+            }
+            default: break;
+        }
     }
 
     emitIndex(getOp, arg, name.line);
@@ -354,6 +385,7 @@ static void namedVariable(const Token name, const bool canAssign) {
         const bool decrement = parser.previous.type == TOKEN_MINUS_MINUS;
         postIncrementVariable(arg, isLocal, decrement, name.line);
     }
+#undef SELF_ASSIGN
 }
 
 static void variable(const bool canAssign) {
