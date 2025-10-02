@@ -217,7 +217,7 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
 }
 
 static void addLocal(const Token name) {
-    if (current->localCount == UINT8_COUNT) { // TODO: make use of U24, but not allocate instantly all 24, grow array if necessary
+    if (current->localCount == UINT8_COUNT) {
         error("Too many local variables in function.");
     }
 
