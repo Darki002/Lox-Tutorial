@@ -65,6 +65,10 @@ static Chunk* currentChunk() {
     return compilingChunk;
 }
 
+static Table* currentLocalMap() {
+    return &current->localMap[current->scopeDepth];
+}
+
 static void errorAt(const Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
@@ -181,7 +185,7 @@ static void beginScope() {
     }
 
     current->scopeDepth++;
-    initTable(&current->localMap[current->scopeDepth]);
+    initTable(currentLocalMap());
 }
 
 static void endScope() {
@@ -240,28 +244,27 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
     return -1;
 }
 
-static void addLocal(const Token name) {
+static void addLocal(const Token name, const Value key) {
     Local local;
     local.name = name;
     local.depth = -1;
     writeLocalsArray(current, local);
+    tableSet(currentLocalMap(), key, NUMBER_VAL(current->localCount - 1));
 }
 
 static void declareVariable() {
     if (current->scopeDepth == 0) return;
 
     const Token* name = &parser.previous;
-    for (int i = current->localCount - 1; i >= 0; i--) {
-        const Local* local = &current->locals[i];
-        if (local->depth != -1 && local->depth < current->scopeDepth) {
-            break;
-        }
+    const Value string = OBJ_VAL(copyString(name->start, name->length));
 
-        if (identifiersEqual(name, &local->name)) {
-            error("Already a variable with this name in this scope.");
-        }
+    Value v;
+    if (tableGet(currentLocalMap(), string, &v)) {
+        error("Already a variable with this name in this scope.");
+        return;
     }
-    addLocal(*name);
+
+    addLocal(*name, string);
 }
 
 static int parseVariable(const char* errorMessage) {
