@@ -226,22 +226,20 @@ static int identifierConstant(const Token* name, const bool isAssignment) {
     return newIndex;
 }
 
-static bool identifiersEqual(const Token* a, const Token* b) {
-    if (a->length != b->length) return false;
-    return memcmp(a->start, b->start, a->length) == 0;
-}
-
 static int resolveLocal(const Compiler* compiler, const Token* name) {
-    for (int i = compiler->localCount - 1; i >= 0; i--) {
-        const Local* local = &compiler->locals[i];
-        if (identifiersEqual(name, &local->name)) {
-            if (local->depth == -1) {
-                error("Can't read local variable in it's own initializer.");
-            }
-            return i;
-        }
+    const Value string = OBJ_VAL(copyString(name->start, name->length));
+
+    Value slot;
+    if (!tableGet(&compiler->localMap[compiler->scopeDepth], string, &slot)) {
+        return -1;
     }
-    return -1;
+
+    if (AS_NUMBER(slot) == -1) {
+        error("Can't read local variable in it's own initializer.");
+        return -1;
+    }
+
+    return AS_NUMBER(slot);
 }
 
 static void addLocal(const Token name, const Value key) {
@@ -635,6 +633,5 @@ bool compile(const char* source, Chunk* chunk) {
     }
 
     endCompiler();
-    FREE(Compiler, &compiler);
     return !parser.hadError;
 }
