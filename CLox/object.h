@@ -27,6 +27,12 @@ struct ObjString {
     char chars[];
 };
 
+struct ObjVar {
+    Obj obj;
+    bool immutable;
+    int depth;
+};
+
 ObjString* allocateString(int length);
 uint32_t hashString(const char* key, int length);
 ObjString* copyString(const char* chars, int length);

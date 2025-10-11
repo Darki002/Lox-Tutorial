@@ -47,7 +47,7 @@ typedef struct {
 } Local;
 
 typedef struct {
-    Table localMap[MAX_SCOPE_DEPTH];
+    Table localMap[STACK_MAX];
     int localCapacity;
     int localCount;
     int scopeDepth;
@@ -177,7 +177,7 @@ static void endCompiler() {
 }
 
 static void beginScope() {
-    if (current->scopeDepth + 1 >= MAX_SCOPE_DEPTH) {
+    if (current->scopeDepth + 1 >= STACK_MAX) {
         error("Too many scopes.");
     }
 
@@ -557,6 +557,21 @@ static void varDeclaration() {
     defineVariable(index, line);
 }
 
+static void constDeclaration() { // TODO: set immutable
+    const int index = parseVariable("Expect variable name.");
+    const int line = parser.previous.line;
+
+    if (match(TOKEN_EQUAL)) {
+        expression();
+    } else {
+        errorAtCurrent("Expected initializer for constant variable.");
+        return;
+    }
+
+    consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
+    defineVariable(index, line);
+}
+
 static void expressionStatement() {
     expression();
     consume(TOKEN_SEMICOLON, "Expected ';' after expression.");
@@ -607,7 +622,9 @@ static void statement() {
 static void declaration() {
     if (match(TOKEN_VAR)) {
         varDeclaration();
-    } else {
+    } else if (match(TOKEN_CONST)) {
+        constDeclaration();
+    }else {
         statement();
     }
 
