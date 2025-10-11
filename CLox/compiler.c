@@ -231,7 +231,7 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
         const Local* local = &compiler->locals[i];
         if (identifiersEqual(name, &local->name)) {
             if (local->depth == -1) {
-                error("Can't read local variable in iwtss own initializer.");
+                error("Can't read local variable in it's own initializer.");
             }
             return i;
         }
