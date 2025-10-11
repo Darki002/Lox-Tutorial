@@ -2,14 +2,11 @@
 #include "scanner.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "memory.h"
 #include "object.h"
 #include "table.h"
 #include "vm.h"
-#include "compiler.h"
-#include "scanner.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
@@ -229,17 +226,17 @@ static int identifierConstant(const Token* name, const bool isAssignment) {
 static int resolveLocal(const Compiler* compiler, const Token* name) {
     const Value string = OBJ_VAL(copyString(name->start, name->length));
 
-    Value slot;
-    if (!tableGet(&compiler->localMap[compiler->scopeDepth], string, &slot)) {
-        return -1;
+    for (int i = compiler->scopeDepth; i >= 0; i--) {
+        Value slot;
+        if (tableGet(&compiler->localMap[i], string, &slot)) {
+            if (AS_NUMBER(slot) == -1) {
+                error("Can't read local variable in it's own initializer.");
+                return -1;
+            }
+            return AS_NUMBER(slot);
+        }
     }
-
-    if (AS_NUMBER(slot) == -1) {
-        error("Can't read local variable in it's own initializer.");
-        return -1;
-    }
-
-    return AS_NUMBER(slot);
+    return -1;
 }
 
 static void addLocal(const Token name, const Value key) {
