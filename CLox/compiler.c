@@ -176,6 +176,10 @@ static void endCompiler() {
 }
 
 static void beginScope() {
+    if (current->scopeDepth + 1 >= MAX_SCOPE_DEPTH) {
+        error("Too many scopes.");
+    }
+
     current->scopeDepth++;
     initTable(&current->localMap[current->scopeDepth]);
 }
