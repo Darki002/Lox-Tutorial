@@ -50,6 +50,7 @@ typedef struct {
 } Local;
 
 typedef struct {
+    Table localMap[MAX_SCOPE_DEPTH];
     int localCapacity;
     int localCount;
     int scopeDepth;
@@ -176,18 +177,14 @@ static void endCompiler() {
 
 static void beginScope() {
     current->scopeDepth++;
+    initTable(&current->localMap[current->scopeDepth]);
 }
 
 static void endScope() {
     current->scopeDepth--;
-
-    const int locals = current->localCount;
-    while (current->localCount > 0 && current->locals[current->localCount - 1].depth > current->scopeDepth) {
-        current->localCount--;
-    }
-
-    const int countPops = locals - current->localCount;
-    writeIndexBytes(OP_POPN, currentChunk(), countPops);
+    const int popCount = current->localMap[current->scopeDepth + 1].count;
+    current->localCount -= popCount;
+    writeIndexBytes(OP_POPN, currentChunk(), popCount);
 }
 
 static void expression();
