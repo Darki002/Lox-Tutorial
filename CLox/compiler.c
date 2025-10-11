@@ -617,8 +617,8 @@ static void declaration() {
 
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
-    Compiler* compiler = ALLOCATE(Compiler, sizeof(int) * 3);
-    initCompiler(compiler);
+    Compiler compiler;
+    initCompiler(&compiler);
     compilingChunk = chunk;
 
     parser.hadError = false;
@@ -631,6 +631,6 @@ bool compile(const char* source, Chunk* chunk) {
     }
 
     endCompiler();
-    FREE(Compiler, compiler);
+    FREE(Compiler, &compiler);
     return !parser.hadError;
 }
