@@ -260,6 +260,7 @@ static InterpretResult run() {
                 if (isFalsey(peek(0))) vm.ip += offset;
                 break;
             }
+            case OP_LOOP: vm.ip -= READ_U16(); break;
             case OP_RETURN:
                 return INTERPRET_OK;
         }
