@@ -100,7 +100,8 @@ static void concatenate() {
 
 static InterpretResult run() {
 #define READ_U8() (*vm.ip++)
-#define READ_U24() (READ_U8() | (READ_U8() << 8) | (READ_U8() << 16))
+#define READ_U16() (uint16_t)(READ_U8() | (READ_U8() << 8))
+#define READ_U24() (int)(READ_U8() | (READ_U8() << 8) | (READ_U8() << 16))
 #define READ_INDEX() (wideInstruction ? READ_U24() : READ_U8())
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_INDEX()])
 #define BINARY_OP(valueType, op) \
@@ -135,8 +136,6 @@ static InterpretResult run() {
         }
 
         switch (instruction) {
-            case OP_RETURN:
-                return INTERPRET_OK;
             case OP_CONSTANT: {
                 const Value constant = READ_CONSTANT();
                 push(constant);
@@ -246,6 +245,13 @@ static InterpretResult run() {
                 printf("\n");
                 break;;
             }
+            case OP_JUMP_IF_FALSE: {
+                const uint16_t offset = READ_U16();
+                if (isFalsey(peek(0))) vm.ip += offset;
+                break;
+            }
+            case OP_RETURN:
+                return INTERPRET_OK;
         }
     }
 
@@ -253,6 +259,7 @@ static InterpretResult run() {
 #undef READ_CONSTANT
 #undef READ_INDEX
 #undef READ_U24
+#undef READ_U16
 #undef READ_U8
 }
 
