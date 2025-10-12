@@ -9,12 +9,23 @@
 #define STACK_MAX 256
 
 typedef struct {
+    Value value;
+    bool immutable;
+} Global;
+
+typedef struct {
+    Table globalNames;
+    int capacity;
+    int count;
+    Global* values;
+} GlobalArray;
+
+typedef struct {
     Chunk* chunk;
     uint8_t* ip; //instruction pointer
     Value stack[STACK_MAX];
     Value* stackTop;
-    Table globalNames;
-    ValueArray globalValues;
+    GlobalArray globals;
     Table strings;
     Obj* objects;
 } VM;

@@ -91,6 +91,21 @@ static void errorAtCurrent(const char* message) {
     errorAt(&parser.current, message);
 }
 
+static void errorIfImmutable(const Token* name, const BindingKind kind, const int index) {
+    switch (kind) {
+        case BINDING_LOCAL:
+            if (current->locals[index].immutable) {
+                errorAt(name, "Can not assign value to a constant variable.");
+            }
+            break;
+        case BINDING_GLOBAL:
+            if (vm.globals.values[index].immutable) {
+                errorAt(name, "Can not assign value to a constant variable.");
+            }
+            break;
+    }
+}
+
 static void advance() {
     parser.previous = parser.current;
 
@@ -149,6 +164,23 @@ static void initCompiler(Compiler* compiler) {
     current = compiler;
 }
 
+static int writeGlobalArray(const Value name, const bool immutable) {
+    const int newIndex = vm.globals.count;
+
+    if (vm.globals.capacity < vm.globals.count + 1) {
+        const int oldCapacity = vm.globals.capacity;
+        vm.globals.capacity = GROW_CAPACITY(oldCapacity);
+        vm.globals.values = GROW_ARRAY(Global, vm.globals.values, oldCapacity, vm.globals.capacity);
+    }
+
+    const Global global = { .value = UNDEFINED_VAL, .immutable = immutable };
+    vm.globals.values[vm.globals.count] = global;
+    vm.globals.count++;
+
+    tableSet(&vm.globals.globalNames, name, NUMBER_VAL((double)newIndex));
+    return newIndex;
+}
+
 static void writeLocalsArray(Compiler* compiler, const Local local) {
     if (compiler->localCount + 1 > UINT24_MAX) {
         error("Too many local variables in function");
@@ -205,11 +237,11 @@ static void emitIndex(const OpCode code, const int index, const int line) {
     }
 }
 
-static int identifierConstant(const Token* name, const bool isAssignment, const bool immutable) { // TODO globals immutable
-    const Value string = OBJ_VAL(copyString(name->start, name->length));
+static int identifierConstant(const Token* name, const bool isAssignment, const bool immutable) {
+    const Value nameStr = OBJ_VAL(copyString(name->start, name->length));
 
     Value index;
-    if (tableGet(&vm.globalNames, string, &index)) {
+    if (tableGet(&vm.globals.globalNames, nameStr, &index)) {
         return (int)AS_NUMBER(index);
     }
 
@@ -217,10 +249,7 @@ static int identifierConstant(const Token* name, const bool isAssignment, const 
         errorAt(name, "Use of undeclared variable.");
     }
 
-    const int newIndex = vm.globalValues.count;
-    writeValueArray(&vm.globalValues, UNDEFINED_VAL);
-    tableSet(&vm.globalNames, string, NUMBER_VAL((double)newIndex));
-    return newIndex;
+    return writeGlobalArray(nameStr, immutable);
 }
 
 static int resolveLocal(const Compiler* compiler, const Token* name) {
@@ -336,8 +365,8 @@ static void string(bool _) {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-static void postIncrementVariable(const int index, const bool isLocal, const bool decrement, const int line) {
-    if (isLocal) {
+static void postIncrementVariable(const int index, const BindingKind kind, const bool decrement, const int line) {
+    if (kind == BINDING_LOCAL) {
         emitIndex(decrement ? OP_DEC_LOCAL : OP_INC_LOCAL, index, line);
         emitByte(1);
     }  else {
@@ -348,16 +377,10 @@ static void postIncrementVariable(const int index, const bool isLocal, const boo
     emitByte(OP_POP);
 }
 
-static void errorIfImmutable(const Token* name, const int localIndex) {
-    if (current->locals[localIndex].immutable) {
-        errorAt(name, "Can not assign value to a constant variable.");
-    }
-}
-
 static void namedVariable(const Token name, const bool canAssign) {
 #define SELF_ASSIGN(op) \
     do { \
-        errorIfImmutable(&name, arg); \
+        errorIfImmutable(&name, kind, arg); \
         advance(); \
         expression(); \
         emitIndex(getOp, arg, name.line); \
@@ -366,20 +389,23 @@ static void namedVariable(const Token name, const bool canAssign) {
     } while(false);
 
     uint8_t getOp, setOp;
+    BindingKind kind;
     int arg = resolveLocal(current, &name);
     if (arg != -1) {
         getOp = OP_GET_LOCAL;
         setOp = OP_SET_LOCAL;
+        kind = BINDING_LOCAL;
     } else {
         arg = identifierConstant(&name, false, false);
         getOp = OP_GET_GLOBAL;
         setOp = OP_SET_GLOBAL;
+        kind = BINDING_GLOBAL;
     }
 
     if (canAssign) {
         switch (parser.current.type) {
             case TOKEN_EQUAL: {
-                errorIfImmutable(&name, arg);
+                errorIfImmutable(&name, kind, arg);
                 advance();
                 expression();
                 emitIndex(setOp, arg, name.line);
@@ -398,7 +424,7 @@ static void namedVariable(const Token name, const bool canAssign) {
                 return;
             }
             case TOKEN_SLASH_EQUAL: {
-                SELF_ASSIGN(OP_SUBTRACT)
+                SELF_ASSIGN(OP_DIVIDE)
                 return;
             }
             default: break;
@@ -408,10 +434,9 @@ static void namedVariable(const Token name, const bool canAssign) {
     emitIndex(getOp, arg, name.line);
 
     if (match(TOKEN_PLUS_PLUS) || match(TOKEN_MINUS_MINUS)) {
-        errorIfImmutable(&name, arg);
-        const bool isLocal = getOp == OP_GET_LOCAL;
+        errorIfImmutable(&name, kind, arg);
         const bool decrement = parser.previous.type == TOKEN_MINUS_MINUS;
-        postIncrementVariable(arg, isLocal, decrement, name.line);
+        postIncrementVariable(arg, kind, decrement, name.line);
     }
 #undef SELF_ASSIGN
 }
@@ -422,18 +447,21 @@ static void variable(const bool canAssign) {
 
 static void preIncrementVariable(const bool _) {
     int8_t opLocal, opGlobal;
+    BindingKind kind;
     if (parser.previous.type == TOKEN_MINUS_MINUS) {
         opLocal = OP_DEC_LOCAL;
         opGlobal = OP_SUBTRACT;
+        kind = BINDING_LOCAL;
     } else {
         opLocal = OP_INC_LOCAL;
         opGlobal = OP_ADD;
+        kind = BINDING_GLOBAL;
     }
 
     consume(TOKEN_IDENTIFIER, "Expected variable name.");
     const Token name = parser.previous;
     int arg = resolveLocal(current, &name);
-    errorIfImmutable(&name, arg);
+    errorIfImmutable(&name, kind, arg);
 
     if (arg != -1) {
         emitIndex(opLocal, arg, name.line);

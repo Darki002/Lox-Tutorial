@@ -31,15 +31,20 @@ static void runtimeError(const char* format, ...) {
 void initVM() {
     resetStack();
     vm.objects = NULL;
-    initTable(&vm.globalNames);
-    initValueArray(&vm.globalValues);
+    initTable(&vm.globals.globalNames);
+    vm.globals.count = 0;
+    vm.globals.capacity = 0;
+    vm.globals.values = NULL;
     initTable(&vm.strings);
 }
 
 void freeVM() {
     freeObjects();
-    initTable(&vm.globalNames);
-    freeValueArray(&vm.globalValues);
+    freeTable(&vm.globals.globalNames);
+    FREE_ARRAY(Value, vm.globals.values, vm.globals.capacity);
+    vm.globals.count = 0;
+    vm.globals.capacity = 0;
+    vm.globals.values = NULL;
     freeTable(&vm.strings);
 }
 
@@ -179,7 +184,7 @@ static InterpretResult run() {
             }
             case OP_GET_GLOBAL: {
                 const int index = READ_INDEX();
-                const Value value = vm.globalValues.values[index];
+                const Value value = vm.globals.values[index].value;
                 if (IS_UNDEFINED(value)) {
                     runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -189,16 +194,16 @@ static InterpretResult run() {
             }
             case OP_DEFINE_GLOBAL: {
                 const int index = READ_INDEX();
-                vm.globalValues.values[index] = pop();
+                vm.globals.values[index].value = pop();
                 break;
             }
             case OP_SET_GLOBAL: {
                 const int index = READ_INDEX();
-                if (IS_UNDEFINED(vm.globalValues.values[index])) {
+                if (IS_UNDEFINED(vm.globals.values[index].value)) {
                     runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                vm.globalValues.values[index] = peek(0);
+                vm.globals.values[index].value = peek(0);
                 break;
             }
             case OP_EQUAL: {
