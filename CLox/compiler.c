@@ -42,8 +42,8 @@ typedef struct {
 } ParseRule;
 
 typedef struct {
-    Token name;
     int depth;
+    bool immutable;
 } Local;
 
 typedef struct {
@@ -205,7 +205,7 @@ static void emitIndex(const OpCode code, const int index, const int line) {
     }
 }
 
-static int identifierConstant(const Token* name, const bool isAssignment) {
+static int identifierConstant(const Token* name, const bool isAssignment, const bool immutable) { // TODO globals immutable
     const Value string = OBJ_VAL(copyString(name->start, name->length));
 
     Value index;
@@ -239,36 +239,36 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
     return -1;
 }
 
-static void addLocal(const Token name, const Value key) {
+static void addLocal(const Value name, const bool immutable) {
     Local local;
-    local.name = name;
     local.depth = -1;
+    local.immutable = immutable;
     writeLocalsArray(current, local);
-    tableSet(currentLocalMap(), key, NUMBER_VAL(current->localCount - 1));
+    tableSet(currentLocalMap(), name, NUMBER_VAL(current->localCount - 1));
 }
 
-static void declareVariable() {
+static void declareVariable(const bool immutable) {
     if (current->scopeDepth == 0) return;
 
     const Token* name = &parser.previous;
-    const Value string = OBJ_VAL(copyString(name->start, name->length));
+    const Value nameStr = OBJ_VAL(copyString(name->start, name->length));
 
     Value v;
-    if (tableGet(currentLocalMap(), string, &v)) {
+    if (tableGet(currentLocalMap(), nameStr, &v)) {
         error("Already a variable with this name in this scope.");
         return;
     }
 
-    addLocal(*name, string);
+    addLocal(nameStr, immutable);
 }
 
-static int parseVariable(const char* errorMessage) {
+static int parseVariable(const char* errorMessage, const bool immutable) {
     consume(TOKEN_IDENTIFIER, errorMessage);
 
-    declareVariable();
+    declareVariable(immutable);
     if (current->scopeDepth > 0) return 0;
 
-    return identifierConstant(&parser.previous, true);
+    return identifierConstant(&parser.previous, true, immutable);
 }
 
 static void makeInitialized() {
@@ -348,9 +348,16 @@ static void postIncrementVariable(const int index, const bool isLocal, const boo
     emitByte(OP_POP);
 }
 
+static void errorIfImmutable(const Token* name, const int localIndex) {
+    if (current->locals[localIndex].immutable) {
+        errorAt(name, "Can not assign value to a constant variable.");
+    }
+}
+
 static void namedVariable(const Token name, const bool canAssign) {
 #define SELF_ASSIGN(op) \
     do { \
+        errorIfImmutable(&name, arg); \
         advance(); \
         expression(); \
         emitIndex(getOp, arg, name.line); \
@@ -364,7 +371,7 @@ static void namedVariable(const Token name, const bool canAssign) {
         getOp = OP_GET_LOCAL;
         setOp = OP_SET_LOCAL;
     } else {
-        arg = identifierConstant(&name, false);
+        arg = identifierConstant(&name, false, false);
         getOp = OP_GET_GLOBAL;
         setOp = OP_SET_GLOBAL;
     }
@@ -372,6 +379,7 @@ static void namedVariable(const Token name, const bool canAssign) {
     if (canAssign) {
         switch (parser.current.type) {
             case TOKEN_EQUAL: {
+                errorIfImmutable(&name, arg);
                 advance();
                 expression();
                 emitIndex(setOp, arg, name.line);
@@ -400,6 +408,7 @@ static void namedVariable(const Token name, const bool canAssign) {
     emitIndex(getOp, arg, name.line);
 
     if (match(TOKEN_PLUS_PLUS) || match(TOKEN_MINUS_MINUS)) {
+        errorIfImmutable(&name, arg);
         const bool isLocal = getOp == OP_GET_LOCAL;
         const bool decrement = parser.previous.type == TOKEN_MINUS_MINUS;
         postIncrementVariable(arg, isLocal, decrement, name.line);
@@ -424,12 +433,13 @@ static void preIncrementVariable(const bool _) {
     consume(TOKEN_IDENTIFIER, "Expected variable name.");
     const Token name = parser.previous;
     int arg = resolveLocal(current, &name);
+    errorIfImmutable(&name, arg);
 
     if (arg != -1) {
         emitIndex(opLocal, arg, name.line);
         emitByte(1);
     } else {
-        arg = identifierConstant(&name, false);
+        arg = identifierConstant(&name, false, false);
         emitIndex(OP_GET_GLOBAL, arg, name.line);
         emitBytes(OP_CONSTANT_1, opGlobal);
         emitIndex(OP_SET_GLOBAL, arg, name.line);
@@ -545,7 +555,7 @@ static void block() {
 }
 
 static void varDeclaration() {
-    const int index = parseVariable("Expect variable name.");
+    const int index = parseVariable("Expect variable name.", false);
     const int line = parser.previous.line;
 
     if (match(TOKEN_EQUAL)) {
@@ -557,8 +567,8 @@ static void varDeclaration() {
     defineVariable(index, line);
 }
 
-static void constDeclaration() { // TODO: set immutable
-    const int index = parseVariable("Expect variable name.");
+static void constDeclaration() {
+    const int index = parseVariable("Expect variable name.", true);
     const int line = parser.previous.line;
 
     if (match(TOKEN_EQUAL)) {
