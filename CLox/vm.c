@@ -75,6 +75,10 @@ static bool isFalsey(const Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
+static bool isTruthy(const Value value) {
+    return !IS_NIL(value) && IS_BOOL(value) && AS_BOOL(value);
+}
+
 static void concatenate() {
     const ObjString* b = AS_STRING(pop());
     const ObjString* a = AS_STRING(peek(0));
@@ -100,8 +104,8 @@ static void concatenate() {
 
 static InterpretResult run() {
 #define READ_U8() (*vm.ip++)
-#define READ_U16() (uint16_t)(READ_U8() | (READ_U8() << 8))
-#define READ_U24() (int)(READ_U8() | (READ_U8() << 8) | (READ_U8() << 16))
+#define READ_U16() (uint16_t)((READ_U8() << 8) | READ_U8())
+#define READ_U24() (int)((READ_U8() << 16) | (READ_U8() << 8) | READ_U8())
 #define READ_INDEX() (wideInstruction ? READ_U24() : READ_U8())
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_INDEX()])
 #define BINARY_OP(valueType, op) \
@@ -246,6 +250,11 @@ static InterpretResult run() {
                 break;;
             }
             case OP_JUMP: vm.ip += READ_U16(); break;
+            case OP_JUMP_IF_TRUE: {
+                const uint16_t offset = READ_U16();
+                if (isTruthy(peek(0))) vm.ip += offset;
+                break;
+            }
             case OP_JUMP_IF_FALSE: {
                 const uint16_t offset = READ_U16();
                 if (isFalsey(peek(0))) vm.ip += offset;

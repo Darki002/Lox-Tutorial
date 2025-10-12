@@ -173,6 +173,7 @@ static void patchJump(const int offset) {
 
     currentChunk()->code[offset] = (jump >> 8) & 0xff;
     currentChunk()->code[offset + 1] = jump & 0xff;
+    if (true) {}
 }
 
 static void initCompiler(Compiler* compiler) {
@@ -343,13 +344,11 @@ static void and_(bool _) {
 }
 
 static void or_(bool _) {
-    const int elseJump = emitJump(OP_JUMP_IF_FALSE);
-    const int endJump = emitJump(OP_JUMP);
+    const int endJump = emitJump(OP_JUMP_IF_TRUE);
 
-    patchJump(elseJump);
     emitByte(OP_POP);
-
     parsePrecedence(PREC_OR);
+
     patchJump(endJump);
 }
 

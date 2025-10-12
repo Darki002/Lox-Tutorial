@@ -61,9 +61,9 @@ bool writeIndexBytes(const OpCode code, Chunk* chunk, const int index) {
     if (index < 0xFFFFFF) {
         writeByte(chunk, OP_WIDE);
         writeByte(chunk, code);
-        writeByte(chunk, index & 0xff);
-        writeByte(chunk, (index >> 8) & 0xff);
         writeByte(chunk, (index >> 16) & 0xff);
+        writeByte(chunk, (index >> 8) & 0xff);
+        writeByte(chunk, index & 0xff);
         return true;
     }
 
@@ -79,9 +79,9 @@ bool writeIndex(const OpCode code, Chunk* chunk, const int index, const int line
     if (index < 0xFFFFFF) {
         writeChunk(chunk, OP_WIDE, line);
         writeChunk(chunk, code, line);
-        writeChunk(chunk, index & 0xff, line);
-        writeChunk(chunk, (index >> 8) & 0xff, line);
         writeChunk(chunk, (index >> 16) & 0xff, line);
+        writeChunk(chunk, (index >> 8) & 0xff, line);
+        writeChunk(chunk, index & 0xff, line);
         return true;
     }
 
