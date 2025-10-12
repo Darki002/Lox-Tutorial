@@ -648,10 +648,17 @@ static void ifStatement() {
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect '(' after condition.");
 
-    int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    const int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
     statement();
 
+    const int elseJump = emitJump(OP_JUMP);
+
     patchJump(thenJump);
+    emitByte(OP_POP);
+
+    if (match(TOKEN_ELSE)) statement();
+    patchJump(elseJump);
 }
 
 static void synchronize() {

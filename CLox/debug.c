@@ -56,6 +56,12 @@ static int incrementInstructionU24(const char * name, const Chunk * chunk, const
     return offset + 5;
 }
 
+static int jumpInstruction(const char* name, const int sign, const Chunk* chunk, const int offset) {
+    const uint16_t jump = disassembleU16Constant(chunk, offset);
+    printf("%-16s %4d -> %d\n", name, offset, offset + 3 + sign * jump);
+    return offset + 3;
+}
+
 int disassembleInstruction(const Chunk* chunk, int offset) {
 #define constInstruction(nameU8, nameU24, chunk, offset) wideInstruction \
         ? constantInstructionU24(nameU24, chunk, offset) \
@@ -86,8 +92,6 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
     }
 
     switch (instruction) {
-        case OP_RETURN:
-            return simpleInstruction("OP_RETURN", offset);
         case OP_WIDE:
             return simpleInstruction("OP_WIDE", offset);
         case OP_CONSTANT:
@@ -144,8 +148,14 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_NOT", offset);
         case OP_NEGATE:
             return simpleInstruction("OP_NEGATE", offset);
+        case OP_JUMP:
+            return jumpInstruction("OP_JUMP", 1, chunk, offset);
+        case OP_JUMP_IF_FALSE:
+            return jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
         case OP_PRINT:
             return simpleInstruction("OP_PRINT", offset);
+        case OP_RETURN:
+            return simpleInstruction("OP_RETURN", offset);
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;

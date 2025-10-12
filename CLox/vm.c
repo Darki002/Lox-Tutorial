@@ -245,6 +245,7 @@ static InterpretResult run() {
                 printf("\n");
                 break;;
             }
+            case OP_JUMP: vm.ip += READ_U16(); break;
             case OP_JUMP_IF_FALSE: {
                 const uint16_t offset = READ_U16();
                 if (isFalsey(peek(0))) vm.ip += offset;
