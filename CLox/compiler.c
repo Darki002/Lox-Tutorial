@@ -221,7 +221,9 @@ static void endScope() {
     current->scopeDepth--;
     const int popCount = current->localMap[current->scopeDepth + 1].count;
     current->localCount -= popCount;
-    writeIndexBytes(OP_POPN, currentChunk(), popCount);
+    if (popCount > 0) {
+        writeIndexBytes(OP_POPN, currentChunk(), popCount);
+    }
 }
 
 static void expression();
