@@ -4,6 +4,9 @@
 
 #include "common.h"
 #include "vm.h"
+
+#include <math.h>
+
 #include "debug.h"
 #include "compiler.h"
 #include "memory.h"
@@ -111,11 +114,11 @@ static InterpretResult run() {
 #define BINARY_OP(valueType, op) \
     do { \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
-            runtimeError("Operarands must be numbers."); \
+            runtimeError("Operands must be numbers."); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
-        double b = AS_NUMBER(pop()); \
-        double a = AS_NUMBER(peek(0)); \
+        const double b = AS_NUMBER(pop()); \
+        const double a = AS_NUMBER(peek(0)); \
         replace(valueType(a op b));\
     } while(false);
 
@@ -231,6 +234,17 @@ static InterpretResult run() {
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
+            case OP_MOD: {
+                if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    runtimeError("Operands must be numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                const double b = AS_NUMBER(pop());
+                const double a = AS_NUMBER(peek(0));
+                const double result = fmod(a, b);
+                replace(NUMBER_VAL(result));
+                break;
+            }
             case OP_NOT: {
                 replace(BOOL_VAL(isFalsey(peek(0))));
                 break;
@@ -247,7 +261,7 @@ static InterpretResult run() {
             case OP_PRINT: {
                 printValue(pop());
                 printf("\n");
-                break;;
+                break;
             }
             case OP_JUMP: vm.ip += READ_U16(); break;
             case OP_JUMP_IF_TRUE: {
