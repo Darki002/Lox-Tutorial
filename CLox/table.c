@@ -138,6 +138,6 @@ ObjString* tableFindString(const Table* table, const char* chars, const int leng
             return AS_STRING(entry->key);
         }
 
-        index = (index + 1) & table->capacity;
+        index = (index + 1) % table->capacity;
     }
 }
