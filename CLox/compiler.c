@@ -83,7 +83,7 @@ static Chunk* currentChunk() {
 }
 
 static Table* currentLocalMap() {
-    return &current->localMap[current->scopeDepth];
+    return current->scopeDepth > 0 ? &current->localMap[current->scopeDepth - 1] : NULL;
 }
 
 static LoopContext* currentLoop() {
@@ -328,7 +328,7 @@ static int identifierConstant(const Token* name, const bool isAssignment, const 
 static int resolveLocal(const Compiler* compiler, const Token* name) {
     const Value string = OBJ_VAL(copyString(name->start, name->length));
 
-    for (int i = compiler->scopeDepth; i >= 0; i--) {
+    for (int i = compiler->scopeDepth; i > 0; i--) {
         Value slot;
         if (tableGet(&compiler->localMap[i], string, &slot)) {
             if (AS_NUMBER(slot) == -1) {
@@ -842,9 +842,14 @@ static void switchStatement() {
         caseExit = emitJump(OP_JUMP_IF_NOT_EQUAL);
         emitByte(OP_POP);
 
-        while (!check(TOKEN_CASE) && !check(TOKEN_DEFAULT) && !check(TOKEN_RIGHT_BRACE)) {
+        while (!check(TOKEN_CASE) && !check(TOKEN_DEFAULT) && !check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
             statement();
         }
+    }
+
+    if (match(TOKEN_EOF)) {
+        error("Expect closing '}' after switch body.");
+        return;
     }
 
     if (caseExit != -1) {
@@ -853,8 +858,13 @@ static void switchStatement() {
     }
 
     if (match(TOKEN_DEFAULT)) {
-        while (!check(TOKEN_RIGHT_BRACE)) {
+        consume(TOKEN_COLON, "Expect ':' after 'default'.");
+        while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
             statement();
+        }
+        if (match(TOKEN_EOF)) {
+            error("Expect closing '}' after switch body.");
+            return;
         }
     }
 
