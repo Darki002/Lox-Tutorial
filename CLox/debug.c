@@ -156,6 +156,8 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return jumpInstruction("OP_JUMP_IF_TRUE", 1, chunk, offset);
         case OP_JUMP_IF_FALSE:
             return jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
+        case OP_JUMP_IF_NOT_EQUAL:
+            return jumpInstruction("OP_JUMP_IF_NOT_EQUAL", 1, chunk, offset);
         case OP_LOOP:
             return jumpInstruction("OP_LOOP", -1, chunk, offset);
         case OP_PRINT:

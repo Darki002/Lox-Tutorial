@@ -33,6 +33,11 @@ typedef enum {
     PREC_PRIMARY
 } Precedence;
 
+typedef enum {
+    FLOW_LOOP,
+    FLOW_SWITCH
+} FlowKind;
+
 typedef void (*ParseFn)(bool canAssign);
 
 typedef struct {
@@ -47,6 +52,7 @@ typedef struct BreakPatch {
 } BreakPatch;
 
 typedef struct {
+    FlowKind kind;
     int innermostLoopStart;
     int innermostScopeDepth;
     BreakPatch* breakPatchHead;
@@ -704,9 +710,10 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
-static void enterLoop(const int loopStart) {
+static void enterLoop(const FlowKind kind) {
     LoopContext ctx;
-    ctx.innermostLoopStart = loopStart;
+    ctx.kind = kind;
+    ctx.innermostLoopStart = currentChunk()->count;
     ctx.innermostScopeDepth = current->scopeDepth;
     ctx.breakPatchHead = NULL;
     loopStack[++loopTop] = ctx;
@@ -735,7 +742,7 @@ static void forStatement() {
         expressionStatement();
     }
 
-    enterLoop(currentChunk()->count);
+    enterLoop(FLOW_LOOP);
     LoopContext* ctx = currentLoop();
 
     int exitJump = -1;
@@ -796,7 +803,7 @@ static void ifStatement() {
 }
 
 static void whileStatement() {
-    enterLoop(currentChunk()->count);
+    enterLoop(FLOW_LOOP);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
     expression();
@@ -820,24 +827,30 @@ static void switchStatement() {
 
     consume(TOKEN_LEFT_BRACE, "Expect '{' for switch body.");
 
-    enterLoop(-1);
+    beginScope();
+    enterLoop(FLOW_SWITCH);
 
     int caseExit = -1;
     while (match(TOKEN_CASE)) {
-        consume(TOKEN_COLON, "Expect ':' after condition.");
-
         if (caseExit != -1) {
             patchJump(caseExit);
             emitByte(OP_POP);
         }
 
         expression();
-        caseExit = emitJump(OP_JUMP_IF_EQUAL);
+        consume(TOKEN_COLON, "Expect ':' after condition.");
+
+        caseExit = emitJump(OP_JUMP_IF_NOT_EQUAL);
         emitByte(OP_POP);
 
         while (!check(TOKEN_CASE) && !check(TOKEN_DEFAULT) && !check(TOKEN_RIGHT_BRACE)) {
             statement();
         }
+    }
+
+    if (caseExit != -1) {
+        patchJump(caseExit);
+        emitByte(OP_POP);
     }
 
     if (match(TOKEN_DEFAULT)) {
@@ -848,11 +861,13 @@ static void switchStatement() {
 
     consume(TOKEN_RIGHT_BRACE, "Expect closing '}' after switch body.");
     exitLoop();
+    emitByte(OP_POP);
+    endScope();
 }
 
 static void continueStatement() {
     const LoopContext* ctx = currentLoop();
-    if (loopTop == -1 || ctx == NULL || ctx->innermostLoopStart == -1) {
+    if (loopTop == -1 || ctx == NULL || ctx->kind != FLOW_LOOP) {
         error("Can't use 'continue' outside of a loop.");
         return;
     }
@@ -866,7 +881,7 @@ static void continueStatement() {
 static void breakStatement() {
     LoopContext* ctx = currentLoop();
     if (loopTop == -1 || ctx == NULL) {
-        error("Can't use 'break' outside of a loop.");
+        error("Can't use 'break' outside of a loop or switch.");
         return;
     }
 

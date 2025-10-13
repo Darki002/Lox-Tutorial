@@ -1,0 +1,12 @@
+const ka = 1;
+
+switch (ka) {
+    case 1: print "One"; break;
+    case 2: print "Two"; break;
+    case 3: print "Two"; print "And One"; break;
+    case 4: {
+        print "Two";
+        print "And Two";
+        break;
+    }
+}
