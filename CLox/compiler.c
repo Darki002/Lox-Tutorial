@@ -41,6 +41,17 @@ typedef struct {
     Precedence precedence;
 } ParseRule;
 
+typedef struct BreakPatch {
+    int jumpOffset;
+    struct BreakPatch* next;
+} BreakPatch;
+
+typedef struct {
+    int innermostLoopStart;
+    int innermostLoopScopeDepth;
+    BreakPatch* breakPatchHead;
+} LoopContext;
+
 typedef struct {
     int depth;
     bool immutable;
@@ -58,8 +69,8 @@ Parser parser;
 Compiler* current = NULL;
 Chunk* compilingChunk;
 
-int innermostLoopStart = -1;
-int innermostLoopScopeDepth = -1;
+static int loopTop = -1;
+static LoopContext loopStack[LOOP_STACK_MAX];
 
 static Chunk* currentChunk() {
     return compilingChunk;
@@ -67,6 +78,10 @@ static Chunk* currentChunk() {
 
 static Table* currentLocalMap() {
     return &current->localMap[current->scopeDepth];
+}
+
+static LoopContext* currentLoop() {
+    return loopTop >= 0 ? &loopStack[loopTop] : NULL;
 }
 
 static void errorAt(const Token* token, const char* message) {
@@ -94,19 +109,22 @@ static void errorAtCurrent(const char* message) {
     errorAt(&parser.current, message);
 }
 
-static void errorIfImmutable(const Token* name, const BindingKind kind, const int index) {
+static bool errorIfImmutable(const Token* name, const BindingKind kind, const int index) {
     switch (kind) {
         case BINDING_LOCAL:
             if (current->locals[index].immutable) {
                 errorAt(name, "Can not assign value to a constant variable.");
+                return true;
             }
             break;
         case BINDING_GLOBAL:
             if (vm.globals.values[index].immutable) {
                 errorAt(name, "Can not assign value to a constant variable.");
+                return true;
             }
             break;
     }
+    return false;
 }
 
 static void advance() {
@@ -167,6 +185,19 @@ static int emitJump(const uint8_t instruction) {
 
 static void emitReturn() {
     emitByte(OP_RETURN);
+}
+
+static void emitPopTo(const int targetDepth) {
+    for (int i = current->scopeDepth; i > targetDepth; i--) {
+        const int popCount = current->localMap[i].count;
+        current->localCount -= popCount;
+
+        if (popCount == 1) {
+            emitByte(OP_POP);
+        } else if (popCount > 1) {
+            writeIndexBytes(OP_POPN, currentChunk(), popCount);
+        }
+    }
 }
 
 static void emitConstant(const Value value) {
@@ -432,7 +463,7 @@ static void postIncrementVariable(const int index, const BindingKind kind, const
 static void namedVariable(const Token name, const bool canAssign) {
 #define SELF_ASSIGN(op) \
     do { \
-        errorIfImmutable(&name, kind, arg); \
+        if (errorIfImmutable(&name, kind, arg)) return; \
         advance(); \
         expression(); \
         emitIndex(getOp, arg, name.line); \
@@ -457,7 +488,7 @@ static void namedVariable(const Token name, const bool canAssign) {
     if (canAssign) {
         switch (parser.current.type) {
             case TOKEN_EQUAL: {
-                errorIfImmutable(&name, kind, arg);
+                if (errorIfImmutable(&name, kind, arg)) return;
                 advance();
                 expression();
                 emitIndex(setOp, arg, name.line);
@@ -486,7 +517,7 @@ static void namedVariable(const Token name, const bool canAssign) {
     emitIndex(getOp, arg, name.line);
 
     if (match(TOKEN_PLUS_PLUS) || match(TOKEN_MINUS_MINUS)) {
-        errorIfImmutable(&name, kind, arg);
+        if (errorIfImmutable(&name, kind, arg)) return;
         const bool decrement = parser.previous.type == TOKEN_MINUS_MINUS;
         postIncrementVariable(arg, kind, decrement, name.line);
     }
@@ -513,7 +544,7 @@ static void preIncrementVariable(const bool _) {
     consume(TOKEN_IDENTIFIER, "Expected variable name.");
     const Token name = parser.previous;
     int arg = resolveLocal(current, &name);
-    errorIfImmutable(&name, kind, arg);
+    if (errorIfImmutable(&name, kind, arg)) return;
 
     if (arg != -1) {
         emitIndex(opLocal, arg, name.line);
@@ -669,6 +700,26 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
+static void enterLoop() {
+    LoopContext ctx;
+    ctx.innermostLoopStart = currentChunk()->count;
+    ctx.innermostLoopScopeDepth = current->scopeDepth;
+    ctx.breakPatchHead = NULL;
+    loopStack[++loopTop] = ctx;
+}
+
+static void exitLoop() {
+    const LoopContext* ctx = &loopStack[loopTop--];
+
+    BreakPatch* patch = ctx->breakPatchHead;
+    while (patch != NULL) {
+        patchJump(patch->jumpOffset);
+        BreakPatch* old = patch;
+        patch = patch->next;
+        free(old);
+    }
+}
+
 static void forStatement() {
     beginScope();
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
@@ -680,11 +731,8 @@ static void forStatement() {
         expressionStatement();
     }
 
-    const int surroundingLoopStart = innermostLoopStart;
-    const int surroundingLoopScopeDepth = innermostLoopScopeDepth;
-
-    innermostLoopStart = currentChunk()->count;
-    innermostLoopScopeDepth = current->scopeDepth;
+    enterLoop();
+    LoopContext* ctx = currentLoop();
 
     int exitJump = -1;
     if (!match(TOKEN_SEMICOLON)) {
@@ -702,22 +750,20 @@ static void forStatement() {
         emitByte(OP_POP);
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
 
-        emitLoop(innermostLoopStart);
-        innermostLoopStart = incrementStart;
+        emitLoop(ctx->innermostLoopStart);
+        ctx->innermostLoopStart = incrementStart;
         patchJump(bodyJump);
     }
 
     statement();
-    emitLoop(innermostLoopStart);
+    emitLoop(ctx->innermostLoopStart);
 
     if (exitJump != -1) {
         patchJump(exitJump);
         emitByte(OP_POP);
     }
 
-    innermostLoopStart = surroundingLoopStart;
-    innermostLoopScopeDepth = surroundingLoopScopeDepth;
-
+    exitLoop();
     endScope();
 }
 
@@ -746,11 +792,7 @@ static void ifStatement() {
 }
 
 static void whileStatement() {
-    const int surroundingLoopStart = innermostLoopStart;
-    const int surroundingLoopScopeDepth = innermostLoopScopeDepth;
-
-    innermostLoopStart = currentChunk()->count;
-    innermostLoopScopeDepth = current->scopeDepth;
+    enterLoop();
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
     expression();
@@ -759,35 +801,41 @@ static void whileStatement() {
     const int loopExit = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
     statement();
-    emitLoop(innermostLoopStart);
+    emitLoop(currentLoop()->innermostLoopStart);
 
     patchJump(loopExit);
     emitByte(OP_POP);
 
-    innermostLoopStart = surroundingLoopStart;
-    innermostLoopScopeDepth = surroundingLoopScopeDepth;
+    exitLoop();
 }
 
 static void continueStatement() {
-    if (innermostLoopStart == -1) {
+    if (loopTop == -1) {
         error("Can't use 'continue' outside of a loop.");
     }
 
     consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
 
-    for (int i = current->scopeDepth; i > innermostLoopScopeDepth; i--) {
-        const int popCount = current->localMap[i].count;
-        current->localCount -= popCount;
-        if (popCount > 0) {
-            if (popCount > UINT24_MAX) {
-                error("Too many stack pops.");
-                return;
-            }
-            writeIndexBytes(OP_POPN, currentChunk(), popCount);
-        }
+    const LoopContext* ctx = currentLoop();
+    emitPopTo(ctx->innermostLoopScopeDepth);
+    emitLoop(ctx->innermostLoopStart);
+}
+
+static void breakStatement() {
+    if (loopTop == -1) {
+        error("Can't use 'break' outside of a loop.");
     }
 
-    emitLoop(innermostLoopStart);
+    consume(TOKEN_SEMICOLON, "Expect ';' after 'break'.");
+
+    LoopContext* ctx = currentLoop();
+    emitPopTo(ctx->innermostLoopScopeDepth);
+
+    const int offset = emitJump(OP_JUMP);
+    BreakPatch* patch = malloc(sizeof(BreakPatch));
+    patch->jumpOffset = offset;
+    patch->next = ctx->breakPatchHead;
+    ctx->breakPatchHead = patch;
 }
 
 static void synchronize() {
@@ -822,8 +870,10 @@ static void statement() {
         ifStatement();
     } else if (match(TOKEN_WHILE)) {
         whileStatement();
-    } else if (match(TOKEN_CONTINUE)) { //TODO break stmt
+    } else if (match(TOKEN_CONTINUE)) {
         continueStatement();
+    } else if (match(TOKEN_BREAK)) {
+        breakStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         beginScope();
         block();
