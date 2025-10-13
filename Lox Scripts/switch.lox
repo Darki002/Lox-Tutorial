@@ -1,4 +1,4 @@
-const ka = 1;
+const ka = 5;
 
 switch (ka) {
     case 1: print "One"; break;
@@ -9,4 +9,5 @@ switch (ka) {
         print "And Two";
         break;
     }
+    default: print "idk"; break;
 }
