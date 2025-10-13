@@ -775,7 +775,7 @@ static void continueStatement() {
 
     consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
 
-    for (int i = current->scopeDepth; i > innermostLoopScopeDepth; i--) { // TODO: test this shit xD
+    for (int i = current->scopeDepth; i > innermostLoopScopeDepth; i--) {
         const int popCount = current->localMap[i].count;
         current->localCount -= popCount;
         if (popCount > 0) {

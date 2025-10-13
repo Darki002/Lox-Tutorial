@@ -23,8 +23,7 @@ static char* readFile(const char* path) {
         exit(74);
     }
 
-    const size_t bytesRead = fread(buffer, sizeof(buffer), fileSize, file);
-
+    const size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
     if (bytesRead < fileSize) {
         fprintf(stderr, "Could not read file \"%s\".\n", path);
         exit(74);
