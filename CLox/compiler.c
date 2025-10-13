@@ -198,9 +198,8 @@ static void popN(const int n) {
 }
 
 static void emitPopTo(const int targetDepth) {
-    for (int i = current->scopeDepth; i > targetDepth; i--) {
-        const int popCount = current->localMap[i].count;
-        current->localCount -= popCount;
+    for (int depth = current->scopeDepth; depth > targetDepth; depth--) {
+        const int popCount = current->localMap[depth].count;
 
         if (popCount == 1) {
             emitByte(OP_POP);
