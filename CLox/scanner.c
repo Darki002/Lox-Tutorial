@@ -230,6 +230,7 @@ Token scanToken() {
         case ';': return makeToken(TOKEN_SEMICOLON);
         case ',': return makeToken(TOKEN_COMMA);
         case '.': return makeToken(TOKEN_DOT);
+        case ':': return makeToken(TOKEN_COLON);
         case '-': {
             if (match('-')) {
                 return makeToken(TOKEN_MINUS_MINUS);

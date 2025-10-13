@@ -48,7 +48,7 @@ typedef struct BreakPatch {
 
 typedef struct {
     int innermostLoopStart;
-    int innermostLoopScopeDepth;
+    int innermostScopeDepth;
     BreakPatch* breakPatchHead;
 } LoopContext;
 
@@ -187,6 +187,10 @@ static void emitReturn() {
     emitByte(OP_RETURN);
 }
 
+static void popN(const int n) {
+    writeIndexBytes(OP_POPN, currentChunk(), n);
+}
+
 static void emitPopTo(const int targetDepth) {
     for (int i = current->scopeDepth; i > targetDepth; i--) {
         const int popCount = current->localMap[i].count;
@@ -195,7 +199,7 @@ static void emitPopTo(const int targetDepth) {
         if (popCount == 1) {
             emitByte(OP_POP);
         } else if (popCount > 1) {
-            writeIndexBytes(OP_POPN, currentChunk(), popCount);
+            popN(popCount);
         }
     }
 }
@@ -284,7 +288,7 @@ static void endScope() {
     const int popCount = current->localMap[current->scopeDepth + 1].count;
     current->localCount -= popCount;
     if (popCount > 0) {
-        writeIndexBytes(OP_POPN, currentChunk(), popCount);
+        popN(popCount);
     }
 }
 
@@ -700,10 +704,10 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
-static void enterLoop() {
+static void enterLoop(const int loopStart) {
     LoopContext ctx;
-    ctx.innermostLoopStart = currentChunk()->count;
-    ctx.innermostLoopScopeDepth = current->scopeDepth;
+    ctx.innermostLoopStart = loopStart;
+    ctx.innermostScopeDepth = current->scopeDepth;
     ctx.breakPatchHead = NULL;
     loopStack[++loopTop] = ctx;
 }
@@ -731,7 +735,7 @@ static void forStatement() {
         expressionStatement();
     }
 
-    enterLoop();
+    enterLoop(currentChunk()->count);
     LoopContext* ctx = currentLoop();
 
     int exitJump = -1;
@@ -792,7 +796,7 @@ static void ifStatement() {
 }
 
 static void whileStatement() {
-    enterLoop();
+    enterLoop(currentChunk()->count);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
     expression();
@@ -809,27 +813,66 @@ static void whileStatement() {
     exitLoop();
 }
 
+static void switchStatement() {
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'switch'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    consume(TOKEN_LEFT_BRACE, "Expect '{' for switch body.");
+
+    enterLoop(-1);
+
+    int caseExit = -1;
+    while (match(TOKEN_CASE)) {
+        consume(TOKEN_COLON, "Expect ':' after condition.");
+
+        if (caseExit != -1) {
+            patchJump(caseExit);
+            emitByte(OP_POP);
+        }
+
+        expression();
+        caseExit = emitJump(OP_JUMP_IF_EQUAL);
+        emitByte(OP_POP);
+
+        while (!check(TOKEN_CASE) && !check(TOKEN_DEFAULT) && !check(TOKEN_RIGHT_BRACE)) {
+            statement();
+        }
+    }
+
+    if (match(TOKEN_DEFAULT)) {
+        while (!check(TOKEN_RIGHT_BRACE)) {
+            statement();
+        }
+    }
+
+    consume(TOKEN_RIGHT_BRACE, "Expect closing '}' after switch body.");
+    exitLoop();
+}
+
 static void continueStatement() {
-    if (loopTop == -1) {
+    const LoopContext* ctx = currentLoop();
+    if (loopTop == -1 || ctx == NULL || ctx->innermostLoopStart == -1) {
         error("Can't use 'continue' outside of a loop.");
+        return;
     }
 
     consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
 
-    const LoopContext* ctx = currentLoop();
-    emitPopTo(ctx->innermostLoopScopeDepth);
+    emitPopTo(ctx->innermostScopeDepth);
     emitLoop(ctx->innermostLoopStart);
 }
 
 static void breakStatement() {
-    if (loopTop == -1) {
+    LoopContext* ctx = currentLoop();
+    if (loopTop == -1 || ctx == NULL) {
         error("Can't use 'break' outside of a loop.");
+        return;
     }
 
     consume(TOKEN_SEMICOLON, "Expect ';' after 'break'.");
 
-    LoopContext* ctx = currentLoop();
-    emitPopTo(ctx->innermostLoopScopeDepth);
+    emitPopTo(ctx->innermostScopeDepth);
 
     const int offset = emitJump(OP_JUMP);
     BreakPatch* patch = malloc(sizeof(BreakPatch));
@@ -870,6 +913,8 @@ static void statement() {
         ifStatement();
     } else if (match(TOKEN_WHILE)) {
         whileStatement();
+    } else if (match(TOKEN_SWITCH)) {
+        switchStatement();
     } else if (match(TOKEN_CONTINUE)) {
         continueStatement();
     } else if (match(TOKEN_BREAK)) {
