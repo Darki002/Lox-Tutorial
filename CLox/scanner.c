@@ -134,7 +134,7 @@ static TokenType identifierType() {
                 if (scanner.start[1] == 'o') {
                     return TOKEN_DO;
                 }
-                return checkKeyword(1, 5, "efault", TOKEN_DEFAULT);
+                return checkKeyword(1, 6, "efault", TOKEN_DEFAULT);
             }
         case 'e': return checkKeyword(1, 3, "lse", TOKEN_ELSE);
         case 'i': return checkKeyword(1, 1, "f", TOKEN_IF);
