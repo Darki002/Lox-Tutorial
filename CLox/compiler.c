@@ -35,6 +35,7 @@ typedef enum {
 
 typedef enum {
     FLOW_LOOP,
+    FLOW_IF,
     FLOW_SWITCH
 } FlowKind;
 
@@ -49,13 +50,13 @@ typedef struct {
 typedef struct BreakPatch {
     int jumpOffset;
     struct BreakPatch* next;
-} BreakPatch;
+} JumpPatch;
 
 typedef struct {
     FlowKind kind;
     int innermostLoopStart;
     int innermostScopeDepth;
-    BreakPatch* breakPatchHead;
+    JumpPatch* breakPatchHead;
 } LoopContext;
 
 typedef struct {
@@ -709,7 +710,7 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
-static void enterLoop(const FlowKind kind) {
+static void enterControlFlow(const FlowKind kind) {
     LoopContext ctx;
     ctx.kind = kind;
     ctx.innermostLoopStart = currentChunk()->count;
@@ -718,13 +719,13 @@ static void enterLoop(const FlowKind kind) {
     loopStack[++loopTop] = ctx;
 }
 
-static void exitLoop() {
+static void exitControlFlow() {
     const LoopContext* ctx = &loopStack[loopTop--];
 
-    BreakPatch* patch = ctx->breakPatchHead;
+    JumpPatch* patch = ctx->breakPatchHead;
     while (patch != NULL) {
         patchJump(patch->jumpOffset);
-        BreakPatch* old = patch;
+        JumpPatch* old = patch;
         patch = patch->next;
         free(old);
     }
@@ -741,7 +742,7 @@ static void forStatement() {
         expressionStatement();
     }
 
-    enterLoop(FLOW_LOOP);
+    enterControlFlow(FLOW_LOOP);
     LoopContext* ctx = currentLoop();
 
     int exitJump = -1;
@@ -773,7 +774,7 @@ static void forStatement() {
         emitByte(OP_POP);
     }
 
-    exitLoop();
+    exitControlFlow();
     endScope();
 }
 
@@ -784,25 +785,51 @@ static void printStatement() {
 }
 
 static void ifStatement() {
+    enterControlFlow(FLOW_IF);
+    LoopContext* ctx = currentLoop();
+
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect '(' after condition.");
 
-    const int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    int thenJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
     statement();
-
     const int elseJump = emitJump(OP_JUMP);
 
     patchJump(thenJump);
     emitByte(OP_POP);
 
-    if (match(TOKEN_ELSE)) statement();
+    while (match(TOKEN_ELSE)) {
+        if (match(TOKEN_IF)) {
+            consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+            expression();
+            consume(TOKEN_RIGHT_PAREN, "Expect '(' after condition.");
+
+            thenJump = emitJump(OP_JUMP_IF_FALSE);
+            emitByte(OP_POP);
+            statement();
+
+            const int offset = emitJump(OP_JUMP);
+            JumpPatch* patch = malloc(sizeof(JumpPatch));
+            patch->jumpOffset = offset;
+            patch->next = ctx->breakPatchHead;
+            ctx->breakPatchHead = patch;
+
+            patchJump(thenJump);
+            emitByte(OP_POP);
+        } else {
+            statement();
+            break;
+        }
+    }
+
     patchJump(elseJump);
+    exitControlFlow();
 }
 
 static void whileStatement() {
-    enterLoop(FLOW_LOOP);
+    enterControlFlow(FLOW_LOOP);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
     expression();
@@ -816,12 +843,12 @@ static void whileStatement() {
     patchJump(loopExit);
     emitByte(OP_POP);
 
-    exitLoop();
+    exitControlFlow();
 }
 
 static void doWhileStatement() {
     const int offset = emitJump(OP_JUMP);
-    enterLoop(FLOW_LOOP);
+    enterControlFlow(FLOW_LOOP);
 
     emitByte(OP_POP);
     patchJump(offset);
@@ -846,7 +873,7 @@ static void switchStatement() {
     consume(TOKEN_LEFT_BRACE, "Expect '{' for switch body.");
 
     beginScope();
-    enterLoop(FLOW_SWITCH);
+    enterControlFlow(FLOW_SWITCH);
 
     int caseExit = -1;
     while (match(TOKEN_CASE)) {
@@ -888,7 +915,7 @@ static void switchStatement() {
     }
 
     consume(TOKEN_RIGHT_BRACE, "Expect closing '}' after switch body.");
-    exitLoop();
+    exitControlFlow();
     emitByte(OP_POP);
     endScope();
 }
@@ -908,7 +935,7 @@ static void continueStatement() {
 
 static void breakStatement() {
     LoopContext* ctx = currentLoop();
-    if (loopTop == -1 || ctx == NULL) {
+    if (loopTop == -1 || ctx == NULL || ctx->kind != FLOW_LOOP || ctx->kind != FLOW_SWITCH) {
         error("Can't use 'break' outside of a loop or switch.");
         return;
     }
@@ -918,7 +945,7 @@ static void breakStatement() {
     emitPopTo(ctx->innermostScopeDepth);
 
     const int offset = emitJump(OP_JUMP);
-    BreakPatch* patch = malloc(sizeof(BreakPatch));
+    JumpPatch* patch = malloc(sizeof(JumpPatch));
     patch->jumpOffset = offset;
     patch->next = ctx->breakPatchHead;
     ctx->breakPatchHead = patch;
