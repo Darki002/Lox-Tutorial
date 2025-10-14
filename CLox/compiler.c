@@ -172,8 +172,8 @@ static void emitBytes(const uint8_t byte1, const uint8_t byte2) {
     emitByte(byte2);
 }
 
-static void emitLoop(const int loopStart) {
-    emitByte(OP_LOOP);
+static void emitLoop(const OpCode loopOp, const int loopStart) {
+    emitByte(loopOp);
 
     const int offset = currentChunk()->count - loopStart + 2;
     if (offset > UINT16_MAX) error("Loop body too large.");
@@ -760,13 +760,13 @@ static void forStatement() {
         emitByte(OP_POP);
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
 
-        emitLoop(ctx->innermostLoopStart);
+        emitLoop(OP_LOOP, ctx->innermostLoopStart);
         ctx->innermostLoopStart = incrementStart;
         patchJump(bodyJump);
     }
 
     statement();
-    emitLoop(ctx->innermostLoopStart);
+    emitLoop(OP_LOOP, ctx->innermostLoopStart);
 
     if (exitJump != -1) {
         patchJump(exitJump);
@@ -811,12 +811,30 @@ static void whileStatement() {
     const int loopExit = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
     statement();
-    emitLoop(currentLoop()->innermostLoopStart);
+    emitLoop(OP_LOOP, currentLoop()->innermostLoopStart);
 
     patchJump(loopExit);
     emitByte(OP_POP);
 
     exitLoop();
+}
+
+static void doWhileStatement() {
+    const int offset = emitJump(OP_JUMP);
+    enterLoop(FLOW_LOOP);
+
+    emitByte(OP_POP);
+    patchJump(offset);
+
+    statement();
+
+    consume(TOKEN_WHILE, "Expect 'while' after loop body.");
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    emitLoop(OP_LOOP_IF_FALSE, currentLoop()->innermostLoopStart);
+    emitByte(OP_POP);
 }
 
 static void switchStatement() {
@@ -884,7 +902,7 @@ static void continueStatement() {
     consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
 
     emitPopTo(ctx->innermostScopeDepth);
-    emitLoop(ctx->innermostLoopStart);
+    emitLoop(OP_LOOP, ctx->innermostLoopStart);
 }
 
 static void breakStatement() {
@@ -937,6 +955,8 @@ static void statement() {
         ifStatement();
     } else if (match(TOKEN_WHILE)) {
         whileStatement();
+    } else if (match(TOKEN_DO)) {
+        doWhileStatement();
     } else if (match(TOKEN_SWITCH)) {
         switchStatement();
     } else if (match(TOKEN_CONTINUE)) {

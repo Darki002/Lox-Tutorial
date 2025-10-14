@@ -280,6 +280,11 @@ static InterpretResult run() {
                 break;
             }
             case OP_LOOP: vm.ip -= READ_U16(); break;
+            case OP_LOOP_IF_FALSE: {
+                const uint16_t offset = READ_U16();
+                if (isFalsey(peek(0))) vm.ip -= offset;
+                break;
+            }
             case OP_RETURN:
                 return INTERPRET_OK;
         }
