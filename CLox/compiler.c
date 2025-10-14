@@ -328,7 +328,7 @@ static int identifierConstant(const Token* name, const bool isAssignment, const 
 static int resolveLocal(const Compiler* compiler, const Token* name) {
     const Value string = OBJ_VAL(copyString(name->start, name->length));
 
-    for (int i = compiler->scopeDepth; i > 0; i--) {
+    for (int i = compiler->scopeDepth - 1; i > 0; i--) {
         Value slot;
         if (tableGet(&compiler->localMap[i], string, &slot)) {
             if (AS_NUMBER(slot) == -1) {
@@ -832,6 +832,7 @@ static void doWhileStatement() {
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+    consume(TOKEN_SEMICOLON, "Expected ';' after 'do while' loop.");
 
     emitLoop(OP_LOOP_IF_FALSE, currentLoop()->innermostLoopStart);
     emitByte(OP_POP);
