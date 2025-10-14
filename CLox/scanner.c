@@ -141,7 +141,15 @@ static TokenType identifierType() {
         case 'n': return checkKeyword(1, 2, "il", TOKEN_NIL);
         case 'o': return checkKeyword(1, 1, "r", TOKEN_OR);
         case 'p': return checkKeyword(1, 4, "rint", TOKEN_PRINT);
-        case 'r': return checkKeyword(1, 5, "eturn", TOKEN_RETURN);
+        case 'r':
+            if (scanner.current - scanner.start > 1) {
+                if (scanner.start[1] == 'e') {
+                    switch (scanner.start[2]) {
+                        case 't': return checkKeyword(3, 3, "urn", TOKEN_RETURN);
+                        case 'p': return checkKeyword(3, 3, "eat", TOKEN_REPEAT);
+                    }
+                }
+            }
         case 's':
             if (scanner.current - scanner.start > 1) {
                 switch (scanner.start[1]) {

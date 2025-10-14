@@ -72,8 +72,8 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
         : indexInstructionU8(nameU8, chunk, offset);
 
 #define incrementInstruction(nameU8, nameU24, chunk, offset) wideInstruction \
-        ? incrementInstructionU8(nameU24, chunk, offset) \
-        : incrementInstructionU24(nameU8, chunk, offset);
+        ? incrementInstructionU24(nameU24, chunk, offset) \
+        : incrementInstructionU8(nameU8, chunk, offset);
 
     printf("%04d ", offset);
     const int line = getLine(chunk, offset);

@@ -865,6 +865,23 @@ static void doWhileStatement() {
     emitByte(OP_POP);
 }
 
+static void repeatStatement() {
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'repeat'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    enterControlFlow(FLOW_LOOP);
+    statement();
+
+    emitIndex(OP_DEC_LOCAL, current->localCount, parser.previous.line);
+    emitByte(1);
+    emitBytes(OP_CONSTANT_0, OP_GREATER);
+    emitLoop(OP_LOOP_IF_FALSE, currentLoop()->innermostLoopStart); // TODO: like a while loop, condition at start
+    emitByte(OP_POP);
+
+    exitControlFlow();
+}
+
 static void switchStatement() {
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'switch'.");
     expression();
@@ -985,6 +1002,8 @@ static void statement() {
         whileStatement();
     } else if (match(TOKEN_DO)) {
         doWhileStatement();
+    } else if (match(TOKEN_REPEAT)) {
+        repeatStatement();
     } else if (match(TOKEN_SWITCH)) {
         switchStatement();
     } else if (match(TOKEN_CONTINUE)) {
