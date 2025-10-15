@@ -871,12 +871,18 @@ static void repeatStatement() {
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
     enterControlFlow(FLOW_LOOP);
-    statement();
 
     emitIndex(OP_DEC_LOCAL, current->localCount, parser.previous.line);
     emitByte(1);
-    emitBytes(OP_CONSTANT_0, OP_GREATER);
-    emitLoop(OP_LOOP_IF_FALSE, currentLoop()->innermostLoopStart); // TODO: like a while loop, condition at start
+    emitByte(OP_CONSTANT_0);
+    emitBytes(OP_LESS, OP_NOT);
+    const int loopExit = emitJump(OP_JUMP_IF_FALSE);
+
+    emitByte(OP_POP);
+    statement();
+    emitLoop(OP_LOOP, currentLoop()->innermostLoopStart);
+
+    patchJump(loopExit);
     emitByte(OP_POP);
 
     exitControlFlow();

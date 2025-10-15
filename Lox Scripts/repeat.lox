@@ -1,1 +1,1 @@
-repeat(5) print "hoi";
+repeat(nil) print "hoi";

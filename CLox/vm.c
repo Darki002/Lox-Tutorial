@@ -175,7 +175,14 @@ static InterpretResult run() {
             case OP_INC_LOCAL: {
                 const int index = READ_INDEX();
                 const int8_t imm = READ_U8();
-                const Value newValue = NUMBER_VAL(AS_NUMBER(vm.stack[index]) + imm);
+
+                const Value value = vm.stack[index];
+                if (!IS_NUMBER(value)) {
+                    runtimeError("Operands must be a numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                const Value newValue = NUMBER_VAL(AS_NUMBER(value) + imm);
                 vm.stack[index] = newValue;
                 push(newValue);
                 break;
@@ -183,7 +190,14 @@ static InterpretResult run() {
             case OP_DEC_LOCAL: {
                 const int index = READ_INDEX();
                 const int8_t imm = READ_U8();
-                const Value newValue = NUMBER_VAL(AS_NUMBER(vm.stack[index]) - imm);
+
+                const Value value = vm.stack[index];
+                if (!IS_NUMBER(value)) {
+                    runtimeError("Operands must be a numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                const Value newValue = NUMBER_VAL(AS_NUMBER(value) - imm);
                 vm.stack[index] = newValue;
                 push(newValue);
                 break;
