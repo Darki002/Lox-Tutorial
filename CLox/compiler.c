@@ -64,7 +64,15 @@ typedef struct {
     bool immutable;
 } Local;
 
+typedef enum {
+    TYPE_FUNCTION,
+    TYPE_SCRIPT
+} FunctionType;
+
 typedef struct {
+    ObjFunction* function;
+    FunctionType type;
+
     Table localMap[STACK_MAX];
     int localCapacity;
     int localCount;
@@ -74,17 +82,16 @@ typedef struct {
 
 Parser parser;
 Compiler* current = NULL;
-Chunk* compilingChunk;
 
 static int loopTop = -1;
 static LoopContext loopStack[LOOP_STACK_MAX];
 
 static Chunk* currentChunk() {
-    return compilingChunk;
+    return &current->function->chunk;
 }
 
 static Table* currentLocalMap() {
-    return current->scopeDepth > 0 ? &current->localMap[current->scopeDepth - 1] : NULL;
+    return &current->localMap[current->scopeDepth];
 }
 
 static LoopContext* currentLoop() {
@@ -228,12 +235,22 @@ static void patchJump(const int offset) {
     if (true) {}
 }
 
-static void initCompiler(Compiler* compiler) {
-    compiler->localCapacity = 0;
+static void initCompiler(Compiler* compiler, const FunctionType type) {
+    compiler->function = NULL;
+    compiler->type = type;
+
+    compiler->localCapacity = 1;
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
-    compiler->locals = NULL;
+    compiler->locals = GROW_ARRAY(Local, compiler->locals, 0, compiler->localCapacity);
+    initTable(&compiler->localMap[0]);
+
+    compiler->function = newFunction();
     current = compiler;
+
+    Local* local = &current->locals[current->localCount++];
+    local->depth = 0;
+    local->immutable = true;
 }
 
 static int writeGlobalArray(const Value name, const bool immutable) {
@@ -270,14 +287,19 @@ static void writeLocalsArray(Compiler* compiler, const Local local) {
     compiler->localCount++;
 }
 
-static void endCompiler() {
+static ObjFunction* endCompiler() {
     emitReturn();
+    ObjFunction* function = current->function;
 
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
-        disassembleChunk(currentChunk(), "code");
+        disassembleChunk(currentChunk(), function->name != NULL
+            ? function->name->chars
+            : "<script>");
     }
 #endif //DEBUG_PRINT_CODE
+
+    return function;
 }
 
 static void beginScope() {
@@ -1037,11 +1059,10 @@ static void declaration() {
     if (parser.panicMode) synchronize();
 }
 
-bool compile(const char* source, Chunk* chunk) {
+ObjFunction* compile(const char* source) {
     initScanner(source);
     Compiler compiler;
-    initCompiler(&compiler);
-    compilingChunk = chunk;
+    initCompiler(&compiler, TYPE_SCRIPT);
 
     parser.hadError = false;
     parser.panicMode = false;
@@ -1052,6 +1073,6 @@ bool compile(const char* source, Chunk* chunk) {
         declaration();
     }
 
-    endCompiler();
-    return !parser.hadError;
+    ObjFunction* function = endCompiler();
+    return parser.hadError ? NULL : function;
 }

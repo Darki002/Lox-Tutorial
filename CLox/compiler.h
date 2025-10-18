@@ -1,11 +1,12 @@
 #ifndef clox_compiler_h
 #define clox_compiler_h
-#include "chunk.h"
+
+#include "object.h"
 
 #define LOOP_STACK_MAX 256
 
 typedef enum { BINDING_LOCAL, BINDING_GLOBAL } BindingKind;
 
-bool compile(const char* source, Chunk* chunk);
+ObjFunction* compile(const char* source);
 
 #endif //clox_compiler_h
