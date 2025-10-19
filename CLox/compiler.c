@@ -403,6 +403,23 @@ static void defineVariable(const int index, const int line) {
     emitIndex(OP_DEFINE_GLOBAL, index, line);
 }
 
+static uint8_t argumentList() {
+    uint8_t argCount = 0;
+
+    if (check(TOKEN_RIGHT_PAREN)) {
+        do {
+            expression();
+            if (argCount == 255) {
+                error("Can't have more than 255 arguments.");
+            }
+            argCount++;
+        } while (match(TOKEN_COMMA));
+    }
+
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+    return argCount;
+}
+
 static void and_(bool _) {
     const int endJump = emitJump(OP_JUMP_IF_FALSE);
 
@@ -440,6 +457,11 @@ static void binary(bool _) {
         case TOKEN_PERCENT: emitByte(OP_MOD); break;
         default: return; // Unreachable
     }
+}
+
+static void call(bool _) {
+    const uint8_t argCount = argumentList();
+    emitBytes(OP_CALL, argCount);
 }
 
 static void literal(bool _) {
@@ -609,7 +631,7 @@ static void unary(bool _) {
 }
 
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN]  =   {grouping, NULL,   PREC_NONE},
+    [TOKEN_LEFT_PAREN]  =   {grouping, call,   PREC_NONE},
     [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
     [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
     [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},

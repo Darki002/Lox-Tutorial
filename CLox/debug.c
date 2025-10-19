@@ -164,6 +164,8 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return jumpInstruction("OP_LOOP_IF_FALSE", -1, chunk, offset);
         case OP_PRINT:
             return simpleInstruction("OP_PRINT", offset);
+        case OP_CALL:
+            return indexInstructionU8("OP_RETURN", chunk, offset);
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
         default:

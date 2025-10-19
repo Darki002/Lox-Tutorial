@@ -76,6 +76,27 @@ void replace(const Value value) {
     *(vm.stackTop - 1) = value;
 }
 
+static bool call(ObjFunction* function, const uint8_t argCount) {
+    CallFrame* frame = &vm.frames[vm.frameCount++];
+    frame->function = function;
+    frame->ip = function->chunk.code;
+    frame->slots = vm.stackTop - argCount - 1;
+    return true;
+}
+
+static bool callValue(const Value callee, const uint8_t argCount) {
+    if (IS_OBJ(callee)) {
+        switch (OBJ_TYPE(callee)) {
+            case OBJ_FUNCTION:
+                return call(AS_FUNCTION(callee), argCount);
+            default:
+                break;
+        }
+    }
+    runtimeError("Can only call functions and classes.");
+    return false;
+}
+
 static bool isFalsey(const Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -303,6 +324,14 @@ static InterpretResult run() {
                 if (isFalsey(peek(0))) frame->ip -= offset;
                 break;
             }
+            case OP_CALL: {
+                const uint8_t argCount = READ_U8();
+                if (!callValue(peek(argCount), argCount)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                frame = &vm.frames[vm.frameCount - 1];
+                break;
+            }
             case OP_RETURN:
                 return INTERPRET_OK;
         }
@@ -325,6 +354,8 @@ InterpretResult interpret(const char* source) {
     frame->function = function;
     frame->ip = function->chunk.code;
     frame->slots = vm.stack;
+
+    call(function, 0);
 
     return run();
 }
