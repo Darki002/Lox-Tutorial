@@ -338,7 +338,7 @@ static int identifierConstant(const Token* name, const bool isAssignment, const 
     return writeGlobalArray(nameStr, immutable);
 }
 
-static uint8_t resolveLocal(const Compiler* compiler, const Token* name) {
+static int resolveLocal(const Compiler* compiler, const Token* name) {
     const Value string = OBJ_VAL(copyString(name->start, name->length));
 
     for (int i = compiler->scopeDepth - 1; i > 0; i--) {
