@@ -406,7 +406,7 @@ static void defineVariable(const int index, const int line) {
 static uint8_t argumentList() {
     uint8_t argCount = 0;
 
-    if (check(TOKEN_RIGHT_PAREN)) {
+    if (!check(TOKEN_RIGHT_PAREN)) {
         do {
             expression();
             if (argCount == 255) {
@@ -631,7 +631,7 @@ static void unary(bool _) {
 }
 
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN]  =   {grouping, call,   PREC_NONE},
+    [TOKEN_LEFT_PAREN]  =   {grouping, call,   PREC_CALL},
     [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
     [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
     [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},

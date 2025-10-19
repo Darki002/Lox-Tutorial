@@ -3,3 +3,5 @@ fun test() {
 }
 
 print test;
+
+test();
