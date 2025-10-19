@@ -1,12 +1,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "common.h"
 #include "vm.h"
-
-#include <math.h>
-
 #include "debug.h"
 #include "compiler.h"
 #include "memory.h"
