@@ -16,6 +16,7 @@ VM vm;
 
 static void resetStack() {
     vm.stackTop = vm.stack;
+    vm.frameCount = 0;
 }
 
 static void runtimeError(const char* format, ...) {
@@ -25,8 +26,9 @@ static void runtimeError(const char* format, ...) {
     va_end(args);
     fputs("\n", stderr);
 
-    const size_t instruction = vm.ip - vm.chunk->code - 1;
-    const int line = getLine(vm.chunk, instruction);
+    const CallFrame* frame = &vm.frames[vm.frameCount - 1];
+    const size_t instruction = frame->ip - frame->function->chunk.code - 1;
+    const int line = getLine(&frame->function->chunk, instruction);
     fprintf(stderr, "[line %d] in script\n", line);
     resetStack();
 }
@@ -34,10 +36,12 @@ static void runtimeError(const char* format, ...) {
 void initVM() {
     resetStack();
     vm.objects = NULL;
+
     initTable(&vm.globals.globalNames);
     vm.globals.count = 0;
     vm.globals.capacity = 0;
     vm.globals.values = NULL;
+
     initTable(&vm.strings);
 }
 
@@ -106,11 +110,13 @@ static void concatenate() {
 }
 
 static InterpretResult run() {
-#define READ_U8() (*vm.ip++)
+    CallFrame* frame = &vm.frames[vm.frameCount - 1];
+
+#define READ_U8() (*frame->ip++)
 #define READ_U16() (uint16_t)((READ_U8() << 8) | READ_U8())
 #define READ_U24() (int)((READ_U8() << 16) | (READ_U8() << 8) | READ_U8())
 #define READ_INDEX() (wideInstruction ? READ_U24() : READ_U8())
-#define READ_CONSTANT() (vm.chunk->constants.values[READ_INDEX()])
+#define READ_CONSTANT() (frame->function->chunk.constants.values[READ_INDEX()])
 #define BINARY_OP(valueType, op) \
     do { \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -131,7 +137,7 @@ static InterpretResult run() {
             printf(" ]");
         }
         printf("\n");
-        disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
+        disassembleInstruction(&frame->function->chunk, (int)(frame->ip - frame->function->chunk.code));
 #endif //DEBUG_TRACE_EXECUTION
 
         uint8_t instruction  = READ_U8();
@@ -163,42 +169,42 @@ static InterpretResult run() {
             }
             case OP_DUP: push(peek(0)); break;
             case OP_GET_LOCAL: {
-                const int index = READ_INDEX();
-                push(vm.stack[index]);
+                const int slot = READ_INDEX();
+                push(frame->slots[slot]);
                 break;
             }
             case OP_SET_LOCAL: {
-                const int index = READ_INDEX();
-                vm.stack[index] = peek(0);
+                const int slot = READ_INDEX();
+                frame->slots[slot] = peek(0);
                 break;
             }
             case OP_INC_LOCAL: {
-                const int index = READ_INDEX();
+                const int slot = READ_INDEX();
                 const int8_t imm = READ_U8();
 
-                const Value value = vm.stack[index];
+                const Value value = frame->slots[slot];
                 if (!IS_NUMBER(value)) {
                     runtimeError("Operands must be a numbers.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
                 const Value newValue = NUMBER_VAL(AS_NUMBER(value) + imm);
-                vm.stack[index] = newValue;
+                frame->slots[slot] = newValue;
                 push(newValue);
                 break;
             }
             case OP_DEC_LOCAL: {
-                const int index = READ_INDEX();
+                const int slot = READ_INDEX();
                 const int8_t imm = READ_U8();
 
-                const Value value = vm.stack[index];
+                const Value value = frame->slots[slot];
                 if (!IS_NUMBER(value)) {
                     runtimeError("Operands must be a numbers.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
                 const Value newValue = NUMBER_VAL(AS_NUMBER(value) - imm);
-                vm.stack[index] = newValue;
+                frame->slots[slot] = newValue;
                 push(newValue);
                 break;
             }
@@ -277,26 +283,26 @@ static InterpretResult run() {
                 printf("\n");
                 break;
             }
-            case OP_JUMP: vm.ip += READ_U16(); break;
+            case OP_JUMP: frame->ip += READ_U16(); break;
             case OP_JUMP_IF_TRUE: {
                 const uint16_t offset = READ_U16();
-                if (isTruthy(peek(0))) vm.ip += offset;
+                if (isTruthy(peek(0))) frame->ip += offset;
                 break;
             }
             case OP_JUMP_IF_FALSE: {
                 const uint16_t offset = READ_U16();
-                if (isFalsey(peek(0))) vm.ip += offset;
+                if (isFalsey(peek(0))) frame->ip += offset;
                 break;
             }
             case OP_JUMP_IF_NOT_EQUAL: {
                 const uint16_t offset = READ_U16();
-                if (!valuesEqual(peek(0), peek(1))) vm.ip += offset;
+                if (!valuesEqual(peek(0), peek(1))) frame->ip += offset;
                 break;
             }
-            case OP_LOOP: vm.ip -= READ_U16(); break;
+            case OP_LOOP: frame->ip -= READ_U16(); break;
             case OP_LOOP_IF_FALSE: {
                 const uint16_t offset = READ_U16();
-                if (isFalsey(peek(0))) vm.ip -= offset;
+                if (isFalsey(peek(0))) frame->ip -= offset;
                 break;
             }
             case OP_RETURN:
@@ -313,18 +319,14 @@ static InterpretResult run() {
 }
 
 InterpretResult interpret(const char* source) {
-    Chunk chunk;
-    initChunk(&chunk);
+    ObjFunction* function = compile(source);
+    if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
-    if (!compile(source, &chunk)) {
-        freeChunk(&chunk);
-        return INTERPRET_COMPILE_ERROR;
-    }
+    push(OBJ_VAL(function));
+    CallFrame* frame = &vm.frames[vm.frameCount++];
+    frame->function = function;
+    frame->ip = function->chunk.code;
+    frame->slots = vm.stack;
 
-    vm.chunk = &chunk;
-    vm.ip = vm.chunk->code;
-
-    const InterpretResult result = run();
-    freeChunk(&chunk);
-    return result;
+    return run();
 }

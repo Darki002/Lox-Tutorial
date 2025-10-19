@@ -57,7 +57,7 @@ typedef struct {
     int innermostLoopStart;
     int innermostScopeDepth;
     JumpPatch* breakPatchHead;
-} LoopContext;
+} ControlFlowContext;
 
 typedef struct {
     int depth;
@@ -74,17 +74,17 @@ typedef struct {
     FunctionType type;
 
     Table localMap[STACK_MAX];
+    Local locals[STACK_MAX];
     int localCapacity;
     int localCount;
     int scopeDepth;
-    Local* locals;
+
+    int controlFlowTop;
+    ControlFlowContext controlFlowStack[STACK_MAX];
 } Compiler;
 
 Parser parser;
 Compiler* current = NULL;
-
-static int loopTop = -1;
-static LoopContext loopStack[LOOP_STACK_MAX];
 
 static Chunk* currentChunk() {
     return &current->function->chunk;
@@ -94,8 +94,8 @@ static Table* currentLocalMap() {
     return &current->localMap[current->scopeDepth];
 }
 
-static LoopContext* currentLoop() {
-    return loopTop >= 0 ? &loopStack[loopTop] : NULL;
+static ControlFlowContext* currentLoop() {
+    return current->controlFlowTop >= 0 ? &current->controlFlowStack[current->controlFlowTop] : NULL;
 }
 
 static void errorAt(const Token* token, const char* message) {
@@ -242,8 +242,9 @@ static void initCompiler(Compiler* compiler, const FunctionType type) {
     compiler->localCapacity = 1;
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
-    compiler->locals = GROW_ARRAY(Local, compiler->locals, 0, compiler->localCapacity);
     initTable(&compiler->localMap[0]);
+
+    compiler->controlFlowTop = -1;
 
     compiler->function = newFunction();
     current = compiler;
@@ -268,23 +269,6 @@ static int writeGlobalArray(const Value name, const bool immutable) {
 
     tableSet(&vm.globals.globalNames, name, NUMBER_VAL((double)newIndex));
     return newIndex;
-}
-
-static void writeLocalsArray(Compiler* compiler, const Local local) {
-    if (compiler->localCount + 1 > UINT24_MAX) {
-        error("Too many local variables in function");
-        return;
-    }
-
-    if (compiler->localCapacity < compiler->localCount + 1) {
-        const int oldCapacity = compiler->localCapacity;
-        const int newCapacity = GROW_CAPACITY(oldCapacity);
-        compiler->localCapacity = newCapacity < UINT24_MAX ? newCapacity : UINT24_MAX;
-        compiler->locals = GROW_ARRAY(Local, compiler->locals, oldCapacity, compiler->localCapacity);
-    }
-
-    compiler->locals[compiler->localCount] = local;
-    compiler->localCount++;
 }
 
 static ObjFunction* endCompiler() {
@@ -348,7 +332,7 @@ static int identifierConstant(const Token* name, const bool isAssignment, const 
     return writeGlobalArray(nameStr, immutable);
 }
 
-static int resolveLocal(const Compiler* compiler, const Token* name) {
+static uint8_t resolveLocal(const Compiler* compiler, const Token* name) {
     const Value string = OBJ_VAL(copyString(name->start, name->length));
 
     for (int i = compiler->scopeDepth - 1; i > 0; i--) {
@@ -365,10 +349,14 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
 }
 
 static void addLocal(const Value name, const bool immutable) {
-    Local local;
+    if (current->localCount + 1 > UINT8_COUNT) {
+        error("Too many local variables in function");
+        return;
+    }
+
+    Local local = current->locals[current->localCount++];
     local.depth = -1;
     local.immutable = immutable;
-    writeLocalsArray(current, local);
     tableSet(currentLocalMap(), name, NUMBER_VAL(current->localCount - 1));
 }
 
@@ -733,16 +721,16 @@ static void expressionStatement() {
 }
 
 static void enterControlFlow(const FlowKind kind) {
-    LoopContext ctx;
+    ControlFlowContext ctx;
     ctx.kind = kind;
     ctx.innermostLoopStart = currentChunk()->count;
     ctx.innermostScopeDepth = current->scopeDepth;
     ctx.breakPatchHead = NULL;
-    loopStack[++loopTop] = ctx;
+    current->controlFlowStack[++current->controlFlowTop] = ctx;
 }
 
 static void exitControlFlow() {
-    const LoopContext* ctx = &loopStack[loopTop--];
+    const ControlFlowContext* ctx = &current->controlFlowStack[current->controlFlowTop--];
 
     JumpPatch* patch = ctx->breakPatchHead;
     while (patch != NULL) {
@@ -765,7 +753,7 @@ static void forStatement() {
     }
 
     enterControlFlow(FLOW_LOOP);
-    LoopContext* ctx = currentLoop();
+    ControlFlowContext* ctx = currentLoop();
 
     int exitJump = -1;
     if (!match(TOKEN_SEMICOLON)) {
@@ -808,7 +796,7 @@ static void printStatement() {
 
 static void ifStatement() {
     enterControlFlow(FLOW_IF);
-    LoopContext* ctx = currentLoop();
+    ControlFlowContext* ctx = currentLoop();
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
     expression();
@@ -966,8 +954,8 @@ static void switchStatement() {
 }
 
 static void continueStatement() {
-    const LoopContext* ctx = currentLoop();
-    if (loopTop == -1 || ctx == NULL || ctx->kind != FLOW_LOOP) {
+    const ControlFlowContext* ctx = currentLoop();
+    if (current->controlFlowTop == -1 || ctx == NULL || ctx->kind != FLOW_LOOP) {
         error("Can't use 'continue' outside of a loop.");
         return;
     }
@@ -979,8 +967,8 @@ static void continueStatement() {
 }
 
 static void breakStatement() {
-    LoopContext* ctx = currentLoop();
-    if (loopTop == -1 || ctx == NULL || ctx->kind != FLOW_LOOP || ctx->kind != FLOW_SWITCH) {
+    ControlFlowContext* ctx = currentLoop();
+    if (current->controlFlowTop == -1 || ctx == NULL || ctx->kind != FLOW_LOOP || ctx->kind != FLOW_SWITCH) {
         error("Can't use 'break' outside of a loop or switch.");
         return;
     }
