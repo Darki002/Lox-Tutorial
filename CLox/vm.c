@@ -77,6 +77,16 @@ void replace(const Value value) {
 }
 
 static bool call(ObjFunction* function, const uint8_t argCount) {
+    if (argCount != function->arity) {
+        runtimeError("Expected %d arguments but got %d", function->arity, argCount);
+        return false;
+    }
+
+    if (vm.frameCount == FRAMES_MAX) {
+        runtimeError("Stack overflow.");
+        return false;
+    }
+
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->function = function;
     frame->ip = function->chunk.code;
