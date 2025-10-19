@@ -69,7 +69,8 @@ typedef enum {
     TYPE_SCRIPT
 } FunctionType;
 
-typedef struct {
+typedef struct Compiler {
+    struct Compiler* enclosing;
     ObjFunction* function;
     FunctionType type;
 
@@ -236,6 +237,7 @@ static void patchJump(const int offset) {
 }
 
 static void initCompiler(Compiler* compiler, const FunctionType type) {
+    compiler->enclosing = current;
     compiler->function = NULL;
     compiler->type = type;
 
@@ -248,6 +250,9 @@ static void initCompiler(Compiler* compiler, const FunctionType type) {
 
     compiler->function = newFunction();
     current = compiler;
+    if (type != TYPE_SCRIPT) {
+        current->function->name = copyString(parser.previous.start, parser.previous.length);
+    }
 
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
@@ -283,6 +288,7 @@ static ObjFunction* endCompiler() {
     }
 #endif //DEBUG_PRINT_CODE
 
+    current = current->enclosing;
     return function;
 }
 
@@ -385,6 +391,7 @@ static int parseVariable(const char* errorMessage, const bool immutable) {
 }
 
 static void makeInitialized() {
+    if (current->scopeDepth == 0) return;
     current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
@@ -684,6 +691,39 @@ static void block() {
     }
 
     consume(TOKEN_RIGHT_BRACE, "Expected '}' after block.");
+}
+
+static void function(const FunctionType type) {
+    Compiler compiler;
+    initCompiler(&compiler, type);
+    beginScope();
+
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            current->function->arity++;
+            if (current->function->arity > 255) {
+                errorAtCurrent("Can't have more then 255 parameters.");
+            }
+
+            const int constant = parseVariable("Expect parameter name.", true);
+            defineVariable(constant, parser.previous.line);
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+    block();
+
+    ObjFunction* function = endCompiler();
+    emitConstant(OBJ_VAL(function));
+}
+
+static void funDeclaration() {
+    const int index = parseVariable("Expect function name.", true);
+    const Token* name = &parser.previous;
+    makeInitialized();
+    function(TYPE_FUNCTION);
+    defineVariable(index, name->line);
 }
 
 static void varDeclaration() {
@@ -1036,7 +1076,9 @@ static void statement() {
 }
 
 static void declaration() {
-    if (match(TOKEN_VAR)) {
+    if (match(TOKEN_FUN)) {
+        funDeclaration();
+    } else if (match(TOKEN_VAR)) {
         varDeclaration();
     } else if (match(TOKEN_CONST)) {
         constDeclaration();
