@@ -310,7 +310,9 @@ static void endScope() {
     }
 
     const int popCount = oldCount - current->localCount;
-    if (popCount > 0) {
+    if (popCount == 1) {
+        emitByte(OP_POP);
+    } else if (popCount > 1) {
         popN(popCount);
     }
 }
@@ -368,10 +370,10 @@ static void addLocal(const Token name, const bool immutable) {
         return;
     }
 
-    Local local = current->locals[current->localCount++];
-    local.name = name;
-    local.depth = -1;
-    local.immutable = immutable;
+    Local* local = &current->locals[current->localCount++];
+    local->name = name;
+    local->depth = -1;
+    local->immutable = immutable;
 }
 
 static void declareVariable(const bool immutable) {

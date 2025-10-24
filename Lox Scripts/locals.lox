@@ -1,0 +1,10 @@
+{
+    var ka = 10;
+    if (ka > 9) {
+        var i = ka + 10;
+        print i;
+    } else {
+        var ka2 = ka + 10;
+        print ka2;
+    }
+}
