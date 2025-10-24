@@ -24,10 +24,20 @@ static void runtimeError(const char* format, ...) {
     va_end(args);
     fputs("\n", stderr);
 
-    const CallFrame* frame = &vm.frames[vm.frameCount - 1];
-    const size_t instruction = frame->ip - frame->function->chunk.code - 1;
-    const int line = getLine(&frame->function->chunk, instruction);
-    fprintf(stderr, "[line %d] in script\n", line);
+    for (int i = vm.frameCount - 1; i >= 0; i--) {
+        const CallFrame* frame = &vm.frames[i];
+        const ObjFunction* function = frame->function;
+        const size_t instruction = frame->ip - function->chunk.code - 1;
+        const int line = getLine(&frame->function->chunk, instruction);
+
+        fprintf(stderr, "[line %d] in ", line);
+        if (function->name == NULL) {
+            fprintf(stderr, "script\n");
+        } else {
+            fprintf(stderr, "%s()\n", function->name->chars);
+        }
+    }
+
     resetStack();
 }
 
