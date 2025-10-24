@@ -198,7 +198,7 @@ static int emitJump(const uint8_t instruction) {
 }
 
 static void emitReturn() {
-    emitByte(OP_RETURN);
+    emitBytes(OP_NIL, OP_RETURN);
 }
 
 static void popN(const int n) {
