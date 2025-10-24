@@ -2,6 +2,7 @@
 #include "scanner.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "memory.h"
 #include "object.h"
@@ -60,6 +61,7 @@ typedef struct {
 } ControlFlowContext;
 
 typedef struct {
+    Token name;
     int depth;
     bool immutable;
 } Local;
@@ -76,7 +78,6 @@ typedef struct Compiler {
     FunctionType type;
     int anonymousFunctionCount;
 
-    Table localMap[STACK_MAX];
     Local locals[STACK_MAX];
     int localCapacity;
     int localCount;
@@ -91,10 +92,6 @@ Compiler* current = NULL;
 
 static Chunk* currentChunk() {
     return &current->function->chunk;
-}
-
-static Table* currentLocalMap() {
-    return &current->localMap[current->scopeDepth];
 }
 
 static ControlFlowContext* currentLoop() {
@@ -209,9 +206,10 @@ static void popN(const int n) {
 }
 
 static void emitPopTo(const int targetDepth) {
-    for (int depth = current->scopeDepth; depth > targetDepth; depth--) {
-        const int popCount = current->localMap[depth].count;
-
+    int depth = targetDepth;
+    for (int i = current->localCount; i >= 0; i++) {
+        current->locals[i]; // TODO: pop until depth
+        const int popCount = current->localCount;
         if (popCount == 1) {
             emitByte(OP_POP);
         } else if (popCount > 1) {
@@ -247,7 +245,6 @@ static void initCompiler(Compiler* compiler, const FunctionType type, ObjString*
     compiler->localCapacity = 1;
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
-    initTable(&compiler->localMap[0]);
 
     compiler->controlFlowTop = -1;
 
@@ -299,7 +296,6 @@ static void beginScope() {
     }
 
     current->scopeDepth++;
-    initTable(currentLocalMap());
 }
 
 static void endScope() {
@@ -340,47 +336,48 @@ static int identifierConstant(const Token* name, const bool isAssignment, const 
     return writeGlobalArray(nameStr, immutable);
 }
 
-static int resolveLocal(const Compiler* compiler, const Token* name) {
-    const Value string = OBJ_VAL(copyString(name->start, name->length));
+static bool identifiersEqual(const Token* a, const Token* b) {
+    if (a->length != b->length) return false;
+    return memcmp(a->start, b->start, a->length) == 0;
+}
 
+static int resolveLocal(const Compiler* compiler, const Token* name) {
     for (int i = compiler->scopeDepth - 1; i > 0; i--) {
-        Value slot;
-        if (tableGet(&compiler->localMap[i], string, &slot)) { // TODO: go back to array with linear search
-            if (AS_NUMBER(slot) == -1) {
+        const Local* local = &compiler->locals[i];
+        if (identifiersEqual(name, &local->name)) {
+            if (local->depth == -1) {
                 error("Can't read local variable in it's own initializer.");
-                return -1;
             }
-            return AS_NUMBER(slot);
+            return i;
         }
     }
     return -1;
 }
 
-static void addLocal(const Value name, const bool immutable) {
+static void addLocal(const Token* name, const bool immutable) {
     if (current->localCount + 1 > UINT8_COUNT) {
         error("Too many local variables in function");
         return;
     }
 
     Local local = current->locals[current->localCount++];
+    local.name = *name;
     local.depth = -1;
     local.immutable = immutable;
-    tableSet(currentLocalMap(), name, NUMBER_VAL(current->localCount - 1));
 }
 
 static void declareVariable(const bool immutable) {
     if (current->scopeDepth == 0) return;
 
     const Token* name = &parser.previous;
-    const Value nameStr = OBJ_VAL(copyString(name->start, name->length));
 
     Value v;
-    if (tableGet(currentLocalMap(), nameStr, &v)) {
+    if (current->locals.contains(name)) {
         error("Already a variable with this name in this scope.");
         return;
     }
 
-    addLocal(nameStr, immutable);
+    addLocal(name, immutable);
 }
 
 static int parseVariable(const char* errorMessage, const bool immutable) {
