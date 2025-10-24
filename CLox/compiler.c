@@ -1087,6 +1087,20 @@ static void breakStatement() {
     ctx->breakPatchHead = patch;
 }
 
+static void returnStatement() {
+    if (current->type == TYPE_SCRIPT) {
+        error("Can't return from top-level code.");
+    }
+
+    if (match(TOKEN_SEMICOLON)) {
+        emitReturn();
+    } else {
+        expression();
+        consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+        emitByte(OP_RETURN);
+    }
+}
+
 static void synchronize() {
     parser.panicMode = false;
 
@@ -1129,6 +1143,8 @@ static void statement() {
         continueStatement();
     } else if (match(TOKEN_BREAK)) {
         breakStatement();
+    } else if (match(TOKEN_RETURN)) {
+      returnStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         beginScope();
         block();
