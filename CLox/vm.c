@@ -344,6 +344,8 @@ static InterpretResult run() {
             }
             case OP_RETURN:
                 return INTERPRET_OK;
+            default:
+                break; // Unreachable
         }
     }
 
