@@ -94,7 +94,7 @@ static Chunk* currentChunk() {
     return &current->function->chunk;
 }
 
-static ControlFlowContext* currentLoop() {
+static ControlFlowContext* currentControlFlow() {
     return current->controlFlowTop >= 0 ? &current->controlFlowStack[current->controlFlowTop] : NULL;
 }
 
@@ -206,15 +206,18 @@ static void popN(const int n) {
 }
 
 static void emitPopTo(const int targetDepth) {
-    int depth = targetDepth;
-    for (int i = current->localCount; i >= 0; i++) {
-        current->locals[i]; // TODO: pop until depth
-        const int popCount = current->localCount;
-        if (popCount == 1) {
-            emitByte(OP_POP);
-        } else if (popCount > 1) {
-            popN(popCount);
+    int popCount = 0;
+    for (int i = current->localCount - 1; i >= 0; i--) {
+        if (current->locals[i].depth <= targetDepth) {
+            break;
         }
+        popCount++;
+    }
+
+    if (popCount == 1) {
+        emitByte(OP_POP);
+    } else if (popCount > 1) {
+        popN(popCount);
     }
 }
 
@@ -233,7 +236,6 @@ static void patchJump(const int offset) {
 
     currentChunk()->code[offset] = (jump >> 8) & 0xff;
     currentChunk()->code[offset + 1] = jump & 0xff;
-    if (true) {}
 }
 
 static void initCompiler(Compiler* compiler, const FunctionType type, ObjString* name) {
@@ -300,8 +302,14 @@ static void beginScope() {
 
 static void endScope() {
     current->scopeDepth--;
-    const int popCount = current->localMap[current->scopeDepth + 1].count;
-    current->localCount -= popCount;
+
+    const int oldCount = current->localCount;
+
+    while (current->localCount > 0 && current->locals[current->localCount - 1].depth > current->scopeDepth) {
+        current->localCount--;
+    }
+
+    const int popCount = oldCount - current->localCount;
     if (popCount > 0) {
         popN(popCount);
     }
@@ -342,7 +350,7 @@ static bool identifiersEqual(const Token* a, const Token* b) {
 }
 
 static int resolveLocal(const Compiler* compiler, const Token* name) {
-    for (int i = compiler->scopeDepth - 1; i > 0; i--) {
+    for (int i = compiler->localCount - 1; i >= 0; i--) {
         const Local* local = &compiler->locals[i];
         if (identifiersEqual(name, &local->name)) {
             if (local->depth == -1) {
@@ -354,14 +362,14 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
     return -1;
 }
 
-static void addLocal(const Token* name, const bool immutable) {
+static void addLocal(const Token name, const bool immutable) {
     if (current->localCount + 1 > UINT8_COUNT) {
         error("Too many local variables in function");
         return;
     }
 
     Local local = current->locals[current->localCount++];
-    local.name = *name;
+    local.name = name;
     local.depth = -1;
     local.immutable = immutable;
 }
@@ -371,13 +379,18 @@ static void declareVariable(const bool immutable) {
 
     const Token* name = &parser.previous;
 
-    Value v;
-    if (current->locals.contains(name)) {
-        error("Already a variable with this name in this scope.");
-        return;
+    for (int i = current->localCount - 1; i >= 0; i--) {
+        const Local* local = &current->locals[i];
+        if (local->depth != -1 && local->depth < current->scopeDepth) {
+            break;
+        }
+
+        if (identifiersEqual(name, &local->name)) {
+            error("Already a variable with this name in this scope.");
+        }
     }
 
-    addLocal(name, immutable);
+    addLocal(*name, immutable);
 }
 
 static int parseVariable(const char* errorMessage, const bool immutable) {
@@ -829,7 +842,7 @@ static void forStatement() {
     }
 
     enterControlFlow(FLOW_LOOP);
-    ControlFlowContext* ctx = currentLoop();
+    ControlFlowContext* ctx = currentControlFlow();
 
     int exitJump = -1;
     if (!match(TOKEN_SEMICOLON)) {
@@ -872,7 +885,7 @@ static void printStatement() {
 
 static void ifStatement() {
     enterControlFlow(FLOW_IF);
-    ControlFlowContext* ctx = currentLoop();
+    ControlFlowContext* ctx = currentControlFlow();
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
     expression();
@@ -924,7 +937,7 @@ static void whileStatement() {
     const int loopExit = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
     statement();
-    emitLoop(OP_LOOP, currentLoop()->innermostLoopStart);
+    emitLoop(OP_LOOP, currentControlFlow()->innermostLoopStart);
 
     patchJump(loopExit);
     emitByte(OP_POP);
@@ -947,7 +960,7 @@ static void doWhileStatement() {
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
     consume(TOKEN_SEMICOLON, "Expected ';' after 'do while' loop.");
 
-    emitLoop(OP_LOOP_IF_FALSE, currentLoop()->innermostLoopStart);
+    emitLoop(OP_LOOP_IF_FALSE, currentControlFlow()->innermostLoopStart);
     emitByte(OP_POP);
 }
 
@@ -966,7 +979,7 @@ static void repeatStatement() {
 
     emitByte(OP_POP);
     statement();
-    emitLoop(OP_LOOP, currentLoop()->innermostLoopStart);
+    emitLoop(OP_LOOP, currentControlFlow()->innermostLoopStart);
 
     patchJump(loopExit);
     emitByte(OP_POP);
@@ -1029,9 +1042,18 @@ static void switchStatement() {
     endScope();
 }
 
+static ControlFlowContext* searchControlFlow(const FlowKind type) {
+    for (int i = current->controlFlowTop; i >= 0; i--) {
+        if (current->controlFlowStack[i].kind == type) {
+            return &current->controlFlowStack[i];
+        }
+    }
+    return NULL;
+}
+
 static void continueStatement() {
-    const ControlFlowContext* ctx = currentLoop();
-    if (current->controlFlowTop == -1 || ctx == NULL || ctx->kind != FLOW_LOOP) {
+    const ControlFlowContext* ctx = searchControlFlow(FLOW_LOOP);
+    if (ctx == NULL) {
         error("Can't use 'continue' outside of a loop.");
         return;
     }
@@ -1043,10 +1065,13 @@ static void continueStatement() {
 }
 
 static void breakStatement() {
-    ControlFlowContext* ctx = currentLoop();
-    if (current->controlFlowTop == -1 || ctx == NULL || ctx->kind != FLOW_LOOP || ctx->kind != FLOW_SWITCH) {
-        error("Can't use 'break' outside of a loop or switch.");
-        return;
+    ControlFlowContext* ctx = searchControlFlow(FLOW_LOOP);
+    if (ctx == NULL) {
+        ctx = searchControlFlow(FLOW_SWITCH);
+        if (ctx == NULL) {
+            error("Can't use 'break' outside of a loop or switch.");
+            return;
+        }
     }
 
     consume(TOKEN_SEMICOLON, "Expect ';' after 'break'.");
