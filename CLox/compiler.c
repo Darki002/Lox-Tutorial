@@ -66,6 +66,7 @@ typedef struct {
 
 typedef enum {
     TYPE_FUNCTION,
+    TYPE_ANONYMOUS_FUNCTION,
     TYPE_SCRIPT
 } FunctionType;
 
@@ -73,6 +74,7 @@ typedef struct Compiler {
     struct Compiler* enclosing;
     ObjFunction* function;
     FunctionType type;
+    int anonymousFunctionCount;
 
     Table localMap[STACK_MAX];
     Local locals[STACK_MAX];
@@ -236,10 +238,11 @@ static void patchJump(const int offset) {
     if (true) {}
 }
 
-static void initCompiler(Compiler* compiler, const FunctionType type) {
+static void initCompiler(Compiler* compiler, const FunctionType type, ObjString* name) {
     compiler->enclosing = current;
     compiler->function = NULL;
     compiler->type = type;
+    compiler->anonymousFunctionCount = 0;
 
     compiler->localCapacity = 1;
     compiler->localCount = 0;
@@ -250,9 +253,7 @@ static void initCompiler(Compiler* compiler, const FunctionType type) {
 
     compiler->function = newFunction();
     current = compiler;
-    if (type != TYPE_SCRIPT) {
-        current->function->name = copyString(parser.previous.start, parser.previous.length);
-    }
+    current->function->name = name;
 
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
@@ -313,6 +314,7 @@ static void endScope() {
 static void expression();
 static void statement();
 static void declaration();
+static void function(FunctionType type, ObjString* name);
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
@@ -343,7 +345,7 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
 
     for (int i = compiler->scopeDepth - 1; i > 0; i--) {
         Value slot;
-        if (tableGet(&compiler->localMap[i], string, &slot)) {
+        if (tableGet(&compiler->localMap[i], string, &slot)) { // TODO: go back to array with linear search
             if (AS_NUMBER(slot) == -1) {
                 error("Can't read local variable in it's own initializer.");
                 return -1;
@@ -457,6 +459,20 @@ static void binary(bool _) {
         case TOKEN_PERCENT: emitByte(OP_MOD); break;
         default: return; // Unreachable
     }
+}
+
+static ObjString* makeAnonymousName(const int id, const int line) {
+    char buf[64];
+    int n = snprintf(buf, sizeof(buf), "anonymous#%d@%d", id, line);
+    if (n < 0) n = 0;
+    if (n >= (int)sizeof(buf)) n = (int)sizeof(buf) - 1;
+    return copyString(buf, n);
+}
+
+static void anonymousFunction(bool _) {
+    const int line = parser.previous.line;
+    ObjString* debugName = makeAnonymousName(++current->anonymousFunctionCount, line);
+    function(TYPE_ANONYMOUS_FUNCTION, debugName);
 }
 
 static void call(bool _) {
@@ -662,7 +678,7 @@ ParseRule rules[] = {
     [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
     [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
     [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_FUN]           = {anonymousFunction, NULL, PREC_NONE},
     [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
     [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
     [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
@@ -715,9 +731,9 @@ static void block() {
     consume(TOKEN_RIGHT_BRACE, "Expected '}' after block.");
 }
 
-static void function(const FunctionType type) {
+static void function(const FunctionType type, ObjString* name) {
     Compiler compiler;
-    initCompiler(&compiler, type);
+    initCompiler(&compiler, type, name);
     beginScope();
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
@@ -744,7 +760,8 @@ static void funDeclaration() {
     const int index = parseVariable("Expect function name.", true);
     const Token* name = &parser.previous;
     makeInitialized();
-    function(TYPE_FUNCTION);
+    ObjString* nameObj = copyString(name->start, name->length);
+    function(TYPE_FUNCTION, nameObj);
     defineVariable(index, name->line);
 }
 
@@ -1114,7 +1131,7 @@ static void declaration() {
 ObjFunction* compile(const char* source) {
     initScanner(source);
     Compiler compiler;
-    initCompiler(&compiler, TYPE_SCRIPT);
+    initCompiler(&compiler, TYPE_SCRIPT, NULL);
 
     parser.hadError = false;
     parser.panicMode = false;
