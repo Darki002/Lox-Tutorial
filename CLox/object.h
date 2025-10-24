@@ -39,6 +39,8 @@ typedef struct {
     ObjString* name;
 } ObjFunction;
 
+typedef Value (*nativeFn) (int argCount, Value* args);
+
 ObjFunction* newFunction();
 ObjString* allocateString(int length);
 uint32_t hashString(const char* key, int length);
