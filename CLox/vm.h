@@ -50,6 +50,7 @@ void initVM();
 InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();
+Value popn(int n);
 void freeVM();
 
 #endif //clox_vm_h

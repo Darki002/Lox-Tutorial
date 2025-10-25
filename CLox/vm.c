@@ -5,12 +5,19 @@
 
 #include "common.h"
 #include "vm.h"
+
+#include <time.h>
+
 #include "debug.h"
 #include "compiler.h"
 #include "memory.h"
 #include "object.h"
 
 VM vm;
+
+static Value clockNative(int argCount, Value* args) {
+    return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+}
 
 static void resetStack() {
     vm.stackTop = vm.stack;
@@ -41,6 +48,14 @@ static void runtimeError(const char* format, ...) {
     resetStack();
 }
 
+static void defineNative(const char* name, const NativeFn function) {
+    push(OBJ_VAL(copyString(name, (int)strlen(name))));
+    push(OBJ_VAL(newNative(function)));
+    // TODO: add to globals `vm.stack[1]`
+    tableSet(&vm.globals.globalNames, OBJ_VAL(AS_STRING(vm.stack[0])), NUMBER_VAL(0)); // TODO: add real index
+    popn(2);
+}
+
 void initVM() {
     resetStack();
     vm.objects = NULL;
@@ -51,6 +66,8 @@ void initVM() {
     vm.globals.values = NULL;
 
     initTable(&vm.strings);
+
+    defineNative("clock", clockNative);
 }
 
 void freeVM() {
@@ -109,6 +126,13 @@ static bool callValue(const Value callee, const uint8_t argCount) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_FUNCTION:
                 return call(AS_FUNCTION(callee), argCount);
+            case OBJ_NATIVE: {
+                const NativeFn native = AS_NATIVE(callee);
+                const Value result = native(argCount, vm.stackTop - argCount);
+                vm.stackTop -= argCount + 1;
+                push(result);
+                return true;
+            }
             default:
                 break;
         }
@@ -119,10 +143,6 @@ static bool callValue(const Value callee, const uint8_t argCount) {
 
 static bool isFalsey(const Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
-}
-
-static bool isTruthy(const Value value) {
-    return !IS_NIL(value) && IS_BOOL(value) && AS_BOOL(value);
 }
 
 static void concatenate() {
@@ -325,7 +345,7 @@ static InterpretResult run() {
             case OP_JUMP: frame->ip += READ_U16(); break;
             case OP_JUMP_IF_TRUE: {
                 const uint16_t offset = READ_U16();
-                if (isTruthy(peek(0))) frame->ip += offset;
+                if (!isFalsey(peek(0))) frame->ip += offset;
                 break;
             }
             case OP_JUMP_IF_FALSE: {
