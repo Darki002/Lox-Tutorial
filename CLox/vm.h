@@ -2,6 +2,7 @@
 #define clox_vm_h
 
 #include "common.h"
+#include "global.h"
 #include "table.h"
 #include "value.h"
 #include "object.h"
@@ -16,24 +17,12 @@ typedef struct {
 } CallFrame;
 
 typedef struct {
-    Value value;
-    bool immutable;
-} Global;
-
-typedef struct {
-    Table globalNames;
-    int capacity;
-    int count;
-    Global* values;
-} GlobalArray;
-
-typedef struct {
     CallFrame frames[FRAMES_MAX];
     int frameCount;
 
     Value stack[STACK_MAX];
     Value* stackTop;
-    GlobalArray globals;
+    Globals globals;
     Table strings;
     Obj* objects;
 } VM;

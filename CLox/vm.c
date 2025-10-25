@@ -51,8 +51,7 @@ static void runtimeError(const char* format, ...) {
 static void defineNative(const char* name, const NativeFn function) {
     push(OBJ_VAL(copyString(name, (int)strlen(name))));
     push(OBJ_VAL(newNative(function)));
-    // TODO: add to globals `vm.stack[1]`
-    tableSet(&vm.globals.globalNames, OBJ_VAL(AS_STRING(vm.stack[0])), NUMBER_VAL(0)); // TODO: add real index
+    defineGlobal(AS_STRING(vm.stack[0]), vm.stack[1], true);
     popn(2);
 }
 

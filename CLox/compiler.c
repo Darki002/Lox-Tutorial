@@ -259,23 +259,6 @@ static void initCompiler(Compiler* compiler, const FunctionType type, ObjString*
     local->immutable = true;
 }
 
-static int writeGlobalArray(const Value name, const bool immutable) {
-    const int newIndex = vm.globals.count;
-
-    if (vm.globals.capacity < vm.globals.count + 1) {
-        const int oldCapacity = vm.globals.capacity;
-        vm.globals.capacity = GROW_CAPACITY(oldCapacity);
-        vm.globals.values = GROW_ARRAY(Global, vm.globals.values, oldCapacity, vm.globals.capacity);
-    }
-
-    const Global global = { .value = UNDEFINED_VAL, .immutable = immutable };
-    vm.globals.values[vm.globals.count] = global;
-    vm.globals.count++;
-
-    tableSet(&vm.globals.globalNames, name, NUMBER_VAL((double)newIndex));
-    return newIndex;
-}
-
 static ObjFunction* endCompiler() {
     emitReturn();
     ObjFunction* function = current->function;
@@ -332,10 +315,10 @@ static void emitIndex(const OpCode code, const int index, const int line) {
 }
 
 static int identifierConstant(const Token* name, const bool isAssignment, const bool immutable) {
-    const Value nameStr = OBJ_VAL(copyString(name->start, name->length));
+    const ObjString* nameStr = copyString(name->start, name->length);
 
     Value index;
-    if (tableGet(&vm.globals.globalNames, nameStr, &index)) {
+    if (tableGet(&vm.globals.globalNames, OBJ_VAL(nameStr), &index)) {
         return (int)AS_NUMBER(index);
     }
 
@@ -343,7 +326,7 @@ static int identifierConstant(const Token* name, const bool isAssignment, const 
         errorAt(name, "Use of undeclared variable.");
     }
 
-    return writeGlobalArray(nameStr, immutable);
+    return declareGlobal(nameStr, immutable);
 }
 
 static bool identifiersEqual(const Token* a, const Token* b) {
