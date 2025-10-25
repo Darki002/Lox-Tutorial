@@ -362,8 +362,8 @@ static InterpretResult run() {
                 frame = &vm.frames[vm.frameCount - 1];
                 break;
             }
-            case OP_RETURN:
-                Value result = pop();
+            case OP_RETURN: {
+                const Value result = pop();
                 vm.frameCount--;
                 if (vm.frameCount == 0) {
                     pop();
@@ -373,6 +373,8 @@ static InterpretResult run() {
                 vm.stackTop = frame->slots;
                 push(result);
                 frame = &vm.frames[vm.frameCount - 1];
+                break;
+            }
             default:
                 break; // Unreachable
         }
