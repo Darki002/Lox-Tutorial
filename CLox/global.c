@@ -1,7 +1,5 @@
 ﻿#include "global.h"
 
-#include "vm.h"
-
 int declareGlobal(const ObjString* name, const bool immutable) {
     const int newIndex = vm.globals.count;
 

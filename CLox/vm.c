@@ -268,8 +268,8 @@ static InterpretResult run() {
             }
             case OP_GET_GLOBAL: {
                 const int index = READ_INDEX();
-                const Value value = vm.globals.values[index].value;
-                if (IS_UNDEFINED(value)) {
+                Value value;
+                if (!getGlobal(index, &value)) {
                     runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -278,16 +278,15 @@ static InterpretResult run() {
             }
             case OP_DEFINE_GLOBAL: {
                 const int index = READ_INDEX();
-                vm.globals.values[index].value = pop();
+                SET_GLOBAL(index, pop());
                 break;
             }
             case OP_SET_GLOBAL: {
                 const int index = READ_INDEX();
-                if (IS_UNDEFINED(vm.globals.values[index].value)) {
+                if (!setGlobal(index, peek(0))) {
                     runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                vm.globals.values[index].value = peek(0);
                 break;
             }
             case OP_EQUAL: {
