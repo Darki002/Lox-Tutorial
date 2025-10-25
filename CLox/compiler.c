@@ -132,7 +132,7 @@ static bool errorIfImmutable(const Token* name, const BindingKind kind, const in
             }
             break;
         case BINDING_GLOBAL:
-            if (vm.globals.values[index].immutable) {
+            if (IS_IMMUTABLE_GLOBAL(index)) {
                 errorAt(name, "Can not assign value to a constant variable.");
                 return true;
             }
@@ -317,16 +317,16 @@ static void emitIndex(const OpCode code, const int index, const int line) {
 static int identifierConstant(const Token* name, const bool isAssignment, const bool immutable) {
     const ObjString* nameStr = copyString(name->start, name->length);
 
-    Value index;
-    if (tableGet(&vm.globals.globalNames, OBJ_VAL(nameStr), &index)) {
-        return (int)AS_NUMBER(index);
+    int index;
+    if (lookUpGlobal(&vm.globals, nameStr, &index)) {
+        return index;
     }
 
     if (!isAssignment) {
         errorAt(name, "Use of undeclared variable.");
     }
 
-    return declareGlobal(nameStr, immutable);
+    return declareGlobal(&vm.globals, nameStr, immutable);
 }
 
 static bool identifiersEqual(const Token* a, const Token* b) {

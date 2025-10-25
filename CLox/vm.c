@@ -51,7 +51,7 @@ static void runtimeError(const char* format, ...) {
 static void defineNative(const char* name, const NativeFn function) {
     push(OBJ_VAL(copyString(name, (int)strlen(name))));
     push(OBJ_VAL(newNative(function)));
-    defineGlobal(AS_STRING(vm.stack[0]), vm.stack[1], true);
+    defineGlobal(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1], true);
     popn(2);
 }
 
@@ -269,7 +269,7 @@ static InterpretResult run() {
             case OP_GET_GLOBAL: {
                 const int index = READ_INDEX();
                 Value value;
-                if (!getGlobal(index, &value)) {
+                if (!getGlobal(vm.globals, index, &value)) {
                     runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -283,7 +283,7 @@ static InterpretResult run() {
             }
             case OP_SET_GLOBAL: {
                 const int index = READ_INDEX();
-                if (!setGlobal(index, peek(0))) {
+                if (!setGlobal(vm.globals, index, peek(0))) {
                     runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
                 }

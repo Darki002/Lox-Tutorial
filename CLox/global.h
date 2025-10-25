@@ -4,9 +4,10 @@
 #include "common.h"
 #include "memory.h"
 #include "table.h"
-#include "vm.h"
 
 #define SET_GLOBAL(index, v) (vm.globals.values[index].value = v)
+
+#define IS_IMMUTABLE_GLOBAL(index)  (vm.globals.values[index].immutable)
 
 typedef struct {
     Value value;
@@ -20,17 +21,18 @@ typedef struct {
     Global* values;
 } Globals;
 
-int declareGlobal(const ObjString* name, bool immutable);
-void defineGlobal(const ObjString* name, Value value, bool immutable);
+int declareGlobal(Globals* globals, const ObjString* name, bool immutable);
+void defineGlobal(Globals* globals, const ObjString* name, Value value, bool immutable);
+bool lookUpGlobal(const Globals* globals, const ObjString* name, int* out);
 
-static inline bool getGlobal(int index, Value* value) {
-    value = &vm.globals.values[index].value;
-    return !IS_UNDEFINED(*value);
+static inline bool getGlobal(const Globals globals, const int index, Value* out) {
+    *out = globals.values[index].value;
+    return !IS_UNDEFINED(*out);
 }
 
-static inline bool setGlobal(int index, Value value) {
-    if (IS_UNDEFINED(vm.globals.values[index].value)) return false;
-    vm.globals.values[index].value = value;
+static inline bool setGlobal(const Globals globals, const int index, const Value value) {
+    if (IS_UNDEFINED(globals.values[index].value)) return false;
+    globals.values[index].value = value;
     return true;
 }
 
