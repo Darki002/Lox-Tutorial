@@ -59,11 +59,7 @@ void initVM() {
     resetStack();
     vm.objects = NULL;
 
-    initTable(&vm.globals.globalNames);
-    vm.globals.count = 0;
-    vm.globals.capacity = 0;
-    vm.globals.values = NULL;
-
+    initGlobals(&vm.globals);
     initTable(&vm.strings);
 
     defineNative("clock", clockNative);
@@ -71,11 +67,7 @@ void initVM() {
 
 void freeVM() {
     freeObjects();
-    freeTable(&vm.globals.globalNames);
-    FREE_ARRAY(Value, vm.globals.values, vm.globals.capacity);
-    vm.globals.count = 0;
-    vm.globals.capacity = 0;
-    vm.globals.values = NULL;
+    freeGlobals(&vm.globals);
     freeTable(&vm.strings);
 }
 

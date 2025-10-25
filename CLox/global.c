@@ -1,5 +1,20 @@
 ﻿#include "global.h"
 
+void initGlobals(Globals* globals) {
+    initTable(&globals->globalNames);
+    globals->count = 0;
+    globals->capacity = 0;
+    globals->values = NULL;
+}
+
+void freeGlobals(Globals* globals) {
+    freeTable(&globals->globalNames);
+    FREE_ARRAY(Value, globals->values, globals->capacity);
+    globals->count = 0;
+    globals->capacity = 0;
+    globals->values = NULL;
+}
+
 int declareGlobal(Globals* globals, const ObjString* name, const bool immutable) {
     const int newIndex = globals->count;
 

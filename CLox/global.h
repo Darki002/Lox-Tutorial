@@ -21,6 +21,9 @@ typedef struct {
     Global* values;
 } Globals;
 
+void initGlobals(Globals* globals);
+void freeGlobals(Globals* globals);
+
 int declareGlobal(Globals* globals, const ObjString* name, bool immutable);
 void defineGlobal(Globals* globals, const ObjString* name, Value value, bool immutable);
 bool lookUpGlobal(const Globals* globals, const ObjString* name, int* out);
