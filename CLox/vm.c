@@ -69,7 +69,7 @@ static bool errNative(const int argCount, Value* args) {
             return false;
         }
         default: {
-            args[-1] = OBJ_VAL(copyString("Unexpected amount of arguments.", 31));
+            args[-1] = OBJ_VAL(copyString("Unexpected amount of arguments for 'err'.", 41));
             return false;
         }
     }
