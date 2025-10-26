@@ -244,6 +244,7 @@ static InterpretResult run() {
 
                 const Value value = frame->slots[slot];
                 if (!IS_NUMBER(value)) {
+                    frame->ip = ip;
                     runtimeError("Operands must be a numbers.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -259,6 +260,7 @@ static InterpretResult run() {
 
                 const Value value = frame->slots[slot];
                 if (!IS_NUMBER(value)) {
+                    frame->ip = ip;
                     runtimeError("Operands must be a numbers.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -272,6 +274,7 @@ static InterpretResult run() {
                 const int index = READ_INDEX();
                 Value value;
                 if (!getGlobal(vm.globals, index, &value)) {
+                    frame->ip = ip;
                     runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -286,6 +289,7 @@ static InterpretResult run() {
             case OP_SET_GLOBAL: {
                 const int index = READ_INDEX();
                 if (!setGlobal(vm.globals, index, peek(0))) {
+                    frame->ip = ip;
                     runtimeError("Undefined variable.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -305,6 +309,7 @@ static InterpretResult run() {
                 } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
                     BINARY_OP(NUMBER_VAL, +);
                 } else {
+                    frame->ip = ip;
                     runtimeError("Operands must be two numbers or two strings.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -315,6 +320,7 @@ static InterpretResult run() {
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
             case OP_MOD: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    frame->ip = ip;
                     runtimeError("Operands must be numbers.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -330,6 +336,7 @@ static InterpretResult run() {
             }
             case OP_NEGATE: {
                 if (!IS_NUMBER(peek(0))) {
+                    frame->ip = ip;
                     runtimeError("Operand must be a number.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -342,7 +349,11 @@ static InterpretResult run() {
                 printf("\n");
                 break;
             }
-            case OP_JUMP: ip += READ_U16(); break;
+            case OP_JUMP: {
+                const uint16_t offset = READ_U16();
+                ip += offset;
+                break;
+            }
             case OP_JUMP_IF_TRUE: {
                 const uint16_t offset = READ_U16();
                 if (!isFalsey(peek(0))) ip += offset;
@@ -358,7 +369,11 @@ static InterpretResult run() {
                 if (!valuesEqual(peek(0), peek(1))) ip += offset;
                 break;
             }
-            case OP_LOOP: ip -= READ_U16(); break;
+            case OP_LOOP: {
+                const uint16_t offset = READ_U16();
+                ip -= offset;
+                break;
+            }
             case OP_LOOP_IF_FALSE: {
                 const uint16_t offset = READ_U16();
                 if (isFalsey(peek(0))) ip -= offset;
@@ -366,10 +381,10 @@ static InterpretResult run() {
             }
             case OP_CALL: {
                 const uint8_t argCount = READ_U8();
+                frame->ip = ip;
                 if (!callValue(peek(argCount), argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                frame->ip = ip;
                 frame = &vm.frames[vm.frameCount - 1];
                 ip = frame->ip;
                 break;
