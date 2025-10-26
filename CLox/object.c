@@ -61,6 +61,24 @@ ObjString* copyString(const char* chars, const int length) {
     return string;
 }
 
+ObjString* concatenateStrings(const char* aChars, const int aLength, const char* bChars, const int bLength) {
+    const int length = aLength + bLength;
+    ObjString* result = allocateString(length);
+    memcpy(result->chars, aChars, aLength);
+    memcpy(result->chars + aLength, bChars, bLength);
+    result->chars[length] = '\0';
+    result->hash = hashString(result->chars, length);
+
+    ObjString* interned = tableFindString(&vm.strings, result->chars, length, result->hash);
+
+    if (interned != NULL) {
+        reallocate(result, sizeof(ObjString) + result->length + 1, 0);
+        result = interned;
+    }
+
+    return result;
+}
+
 static void printFunction(const ObjFunction* function) {
     if (function->name == NULL) {
         printf("<script>");
@@ -68,6 +86,36 @@ static void printFunction(const ObjFunction* function) {
     }
 
     printf("<fn %s>", function->name->chars);
+}
+
+static ObjString* functionToString(const ObjFunction* function) {
+    if (function->name == NULL) {
+        return copyString("<script>", 8);
+    }
+
+    const int len = 5 + function->name->length;
+    char str[len];
+    char *p = str;
+
+    memcpy(p, "<fn ", 4);
+    p += 4;
+
+    memcpy(p, function->name->chars, function->name->length);
+    p += function->name->length;
+    *p = '>';
+
+    return copyString(str, len);
+}
+
+ObjString* objectToString(const Value value) {
+    switch (OBJ_TYPE(value)) {
+        case OBJ_FUNCTION:
+            return functionToString(AS_FUNCTION(value));
+        case OBJ_NATIVE:
+            return copyString("<native fn>", 11);
+        case OBJ_STRING:
+            return AS_STRING(value);
+    }
 }
 
 void printObject(const Value value) {

@@ -53,6 +53,8 @@ ObjNative* newNative(NativeFn function);
 ObjString* allocateString(int length);
 uint32_t hashString(const char* key, int length);
 ObjString* copyString(const char* chars, int length);
+ObjString* concatenateStrings(const char* aChars, int aLength, const char* bChars, int bLength);
+ObjString* objectToString(Value value);
 void printObject(Value value);
 
 static inline bool isObjType(const Value value, const ObjType type) {

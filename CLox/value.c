@@ -38,13 +38,30 @@ bool valuesEqual(const Value a, const Value b) {
     }
 }
 
+ObjString* valueToString(const Value value) {
+    switch (value.type) {
+        case VAL_BOOL:
+            return  AS_BOOL(value)
+                ? copyString( "true", 4)
+                : copyString( "false", 5);
+        case VAL_NIL: copyString( "nil", 3);
+        case VAL_NUMBER: {
+            char buffer[64];
+            snprintf(buffer, sizeof(buffer), "%.17g", AS_NUMBER(value));
+            return copyString(buffer, (int)strlen(buffer));
+        }
+        case VAL_OBJ: return objectToString(value);
+        case VAL_UNDEFINED: return  copyString( "undefined", 9);
+    }
+}
+
 void printValue(const Value value) {
     switch (value.type) {
         case VAL_BOOL:
             printf(AS_BOOL(value) ? "true" : "false");
             break;
         case VAL_NIL: printf("nil"); break;
-        case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
+        case VAL_NUMBER: printf("%.17g", AS_NUMBER(value)); break;
         case VAL_OBJ: printObject(value); break;
         case VAL_UNDEFINED: printf("undefined"); break;
     }

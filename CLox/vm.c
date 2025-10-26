@@ -15,6 +15,16 @@
 
 VM vm;
 
+static bool strNative(const int argCount, Value* args) {
+    if (argCount != 1) {
+        args[-1] = OBJ_VAL(copyString("Unexpected amount of arguments for 'str'.", 41));
+        return false;
+    }
+
+    args[-1] = OBJ_VAL(valueToString(args[0]));
+    return true;
+}
+
 static bool clockNative(int _, Value* args) {
     args[-1] = NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
     return true;
@@ -121,6 +131,7 @@ void initVM() {
     defineNative("clock", clockNative);
     defineNative("read", readNative);
     defineNative("err", errNative);
+    defineNative("str", strNative);
 }
 
 void freeVM() {
@@ -200,19 +211,7 @@ static void concatenate() {
     const ObjString* b = AS_STRING(pop());
     const ObjString* a = AS_STRING(peek(0));
 
-    const int length = a->length + b->length;
-    ObjString* result = allocateString(length);
-    memcpy(result->chars, a->chars, a->length);
-    memcpy(result->chars + a->length, b->chars, b->length);
-    result->chars[length] = '\0';
-    result->hash = hashString(result->chars, length);
-
-    ObjString* interned = tableFindString(&vm.strings, result->chars, length, result->hash);
-
-    if (interned != NULL) {
-        reallocate(result, sizeof(ObjString) + result->length + 1, 0);
-        result = interned;
-    }
+    const ObjString* result = concatenateStrings(a->chars, a->length, b->chars, b->length);
 
     const Value resultVal = OBJ_VAL(result);
     tableSet(&vm.strings, resultVal, NIL_VAL);
