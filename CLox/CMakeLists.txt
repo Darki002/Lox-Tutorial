@@ -25,6 +25,8 @@ add_executable(CLox clox.c
         table.h
         global.c
         global.h
+        fileUtils.c
+        fileUtils.h
 )
 add_executable(Benchmark benchmark/benchmark.c
         common.h

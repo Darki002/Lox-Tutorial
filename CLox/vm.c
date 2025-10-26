@@ -2,21 +2,33 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "common.h"
 #include "vm.h"
-
-#include <time.h>
-
 #include "debug.h"
 #include "compiler.h"
 #include "memory.h"
 #include "object.h"
+#include "fileUtils.h"
 
 VM vm;
 
 static bool clockNative(int _, Value* args) {
     args[-1] = NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+    return true;
+}
+
+static bool readNative(int _, Value* args) {
+    const ObjString* result = readLine(stdin);
+
+    if (result == NULL) {
+        args[-1] = OBJ_VAL(copyString("Error during reading from stdin.", 32));
+        return false;
+    }
+
+    args[-1] = OBJ_VAL(result);
     return true;
 }
 
@@ -69,6 +81,7 @@ void initVM() {
     initTable(&vm.strings);
 
     defineNative("clock", clockNative);
+    defineNative("read", readNative);
     defineNative("err", errNative);
 }
 
