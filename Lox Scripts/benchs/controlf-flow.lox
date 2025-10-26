@@ -1,0 +1,16 @@
+var i = 0;
+
+var start = clock();
+
+while (true) {
+    if (i % 2 == 0) {
+        i++;
+        continue;
+    }
+    print i++;
+
+    if (i > 10) break;
+}
+
+var after = clock();
+print after - before;

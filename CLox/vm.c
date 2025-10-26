@@ -170,8 +170,9 @@ static void concatenate() {
 
 static InterpretResult run() {
     CallFrame* frame = &vm.frames[vm.frameCount - 1];
+    register uint8_t* ip = frame->ip;
 
-#define READ_U8() (*frame->ip++)
+#define READ_U8() (*ip++)
 #define READ_U16() (uint16_t)((READ_U8() << 8) | READ_U8())
 #define READ_U24() (int)((READ_U8() << 16) | (READ_U8() << 8) | READ_U8())
 #define READ_INDEX() (wideInstruction ? READ_U24() : READ_U8())
@@ -196,7 +197,7 @@ static InterpretResult run() {
             printf(" ]");
         }
         printf("\n");
-        disassembleInstruction(&frame->function->chunk, (int)(frame->ip - frame->function->chunk.code));
+        disassembleInstruction(&frame->function->chunk, (int)(ip - frame->function->chunk.code));
 #endif //DEBUG_TRACE_EXECUTION
 
         uint8_t instruction  = READ_U8();
@@ -341,26 +342,26 @@ static InterpretResult run() {
                 printf("\n");
                 break;
             }
-            case OP_JUMP: frame->ip += READ_U16(); break;
+            case OP_JUMP: ip += READ_U16(); break;
             case OP_JUMP_IF_TRUE: {
                 const uint16_t offset = READ_U16();
-                if (!isFalsey(peek(0))) frame->ip += offset;
+                if (!isFalsey(peek(0))) ip += offset;
                 break;
             }
             case OP_JUMP_IF_FALSE: {
                 const uint16_t offset = READ_U16();
-                if (isFalsey(peek(0))) frame->ip += offset;
+                if (isFalsey(peek(0))) ip += offset;
                 break;
             }
             case OP_JUMP_IF_NOT_EQUAL: {
                 const uint16_t offset = READ_U16();
-                if (!valuesEqual(peek(0), peek(1))) frame->ip += offset;
+                if (!valuesEqual(peek(0), peek(1))) ip += offset;
                 break;
             }
-            case OP_LOOP: frame->ip -= READ_U16(); break;
+            case OP_LOOP: ip -= READ_U16(); break;
             case OP_LOOP_IF_FALSE: {
                 const uint16_t offset = READ_U16();
-                if (isFalsey(peek(0))) frame->ip -= offset;
+                if (isFalsey(peek(0))) ip -= offset;
                 break;
             }
             case OP_CALL: {
@@ -368,7 +369,9 @@ static InterpretResult run() {
                 if (!callValue(peek(argCount), argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                frame->ip = ip;
                 frame = &vm.frames[vm.frameCount - 1];
+                ip = frame->ip;
                 break;
             }
             case OP_RETURN: {
@@ -382,6 +385,7 @@ static InterpretResult run() {
                 vm.stackTop = frame->slots;
                 push(result);
                 frame = &vm.frames[vm.frameCount - 1];
+                ip = frame->ip;
                 break;
             }
             default:

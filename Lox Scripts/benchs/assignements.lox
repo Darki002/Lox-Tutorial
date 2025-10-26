@@ -1,0 +1,25 @@
+var before = clock();
+
+const i = 10;
+
+var ka = i + 2;
+ka++;
+ka--;
+
+var idk = 2;
+idk += 1;
+idk += 2;
+idk += 3;
+idk += 4;
+idk += 4;
+idk += 6;
+idk += 234;
+idk += 234978;
+idk += 0921;
+
+const i2 = 327489;
+
+idk = ka + idk - i2;
+
+var after = clock();
+print after - before;
