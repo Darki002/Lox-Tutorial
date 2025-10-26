@@ -173,8 +173,8 @@ static InterpretResult run() {
     register uint8_t* ip = frame->ip;
 
 #define READ_U8() (*ip++)
-#define READ_U16() (uint16_t)((READ_U8() << 8) | READ_U8())
-#define READ_U24() (int)((READ_U8() << 16) | (READ_U8() << 8) | READ_U8())
+#define READ_U16() (ip += 2, (uint16_t)((ip[-2] << 8) | ip[-1]))
+#define READ_U24() (ip += 3, (int)((ip[-3] << 16) | (uint16_t)((ip[-2] << 8) | ip[-1])))
 #define READ_INDEX() (wideInstruction ? READ_U24() : READ_U8())
 #define READ_CONSTANT() (frame->function->chunk.constants.values[READ_INDEX()])
 #define BINARY_OP(valueType, op) \
