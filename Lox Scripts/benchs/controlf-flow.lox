@@ -13,4 +13,4 @@ while (true) {
 }
 
 var after = clock();
-print after - before;
+print after - start;
