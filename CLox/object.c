@@ -88,36 +88,6 @@ static void printFunction(const ObjFunction* function) {
     printf("<fn %s>", function->name->chars);
 }
 
-static ObjString* functionToString(const ObjFunction* function) {
-    if (function->name == NULL) {
-        return copyString("<script>", 8);
-    }
-
-    const int len = 5 + function->name->length;
-    char str[len];
-    char *p = str;
-
-    memcpy(p, "<fn ", 4);
-    p += 4;
-
-    memcpy(p, function->name->chars, function->name->length);
-    p += function->name->length;
-    *p = '>';
-
-    return copyString(str, len);
-}
-
-ObjString* objectToString(const Value value) {
-    switch (OBJ_TYPE(value)) {
-        case OBJ_FUNCTION:
-            return functionToString(AS_FUNCTION(value));
-        case OBJ_NATIVE:
-            return copyString("<native fn>", 11);
-        case OBJ_STRING:
-            return AS_STRING(value);
-    }
-}
-
 void printObject(const Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_FUNCTION:

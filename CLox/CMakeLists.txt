@@ -25,8 +25,18 @@ add_executable(CLox clox.c
         table.h
         global.c
         global.h
-        vmUtils/fileUtils.c
-        vmUtils/fileUtils.h
+        utils/io.c
+        utils/io.h
+        utils/coerce.c
+        utils/coerce.h
+        stdlib/time.c
+        stdlib/time.h
+        stdlib/nativeIo.c
+        stdlib/nativeIo.h
+        stdlib/nativeErr.c
+        stdlib/nativeErr.h
+        stdlib/cast.c
+        stdlib/cast.h
 )
 add_executable(Benchmark benchmark/benchmark.c
         common.h
@@ -59,4 +69,6 @@ add_executable(Benchmark benchmark/benchmark.c
         benchmark/hashtable/find.h
         benchmark/hashtable/delete.c
         benchmark/hashtable/delete.h
+        stdlib/cast.c
+        stdlib/cast.h
 )

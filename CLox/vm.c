@@ -3,150 +3,20 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
-#include <time.h>
 
 #include "common.h"
 #include "vm.h"
+
 #include "debug.h"
 #include "compiler.h"
 #include "memory.h"
 #include "object.h"
-#include "vmUtils/fileUtils.h"
+#include "stdlib/cast.h"
+#include "stdlib/time.h"
+#include "stdlib/nativeIo.h"
+#include "stdlib/nativeErr.h"
 
 VM vm;
-
-static bool strNative(const int argCount, Value* args) {
-    if (argCount != 1) {
-        args[-1] = OBJ_VAL(copyString("Unexpected amount of arguments for 'str'.", 41));
-        return false;
-    }
-
-    args[-1] = OBJ_VAL(valueToString(args[0]));
-    return true;
-}<
-
-static bool numberNative(const int argCount, Value* args) {
-    if (argCount != 1) {
-        args[-1] = OBJ_VAL(copyString("Unexpected amount of arguments for 'str'.", 41));
-        return false;
-    }
-
-    const Value value = args[0];
-    if (IS_NUMBER(value)) {
-        args[-1] = value;
-        return true;
-    }
-    if (IS_NIL(value)) {
-        args[-1] = OBJ_VAL(copyString("TypeError: Can not convert nil to number.", 41));
-        return false;
-    }
-    if (IS_BOOL(value)) {
-        args[-1] = NUMBER_VAL(AS_BOOL(value) ? 1 : 0);
-        return true;
-    }
-    if (IS_STRING(value)) {
-        args[-1] = OBJ_VAL(valueToString(args[0])); // TODO: convert str to number
-        return true;
-    }
-
-    args[-1] = OBJ_VAL(copyString("TypeError: Can not convert value to number.", 43));
-    return false;
-}
-
-static bool boolNative(const int argCount, Value* args) {
-    if (argCount != 1) {
-        args[-1] = OBJ_VAL(copyString("Unexpected amount of arguments for 'str'.", 41));
-        return false;
-    }
-
-    const Value value = args[0];
-    switch (value.type) {
-        case VAL_BOOL: {
-            args[-1] = value;
-            return true;
-        }
-        case VAL_NIL: {
-            args[-1] = BOOL_VAL(false);
-            return true;
-        }
-        case VAL_NUMBER: {
-            args[-1] = BOOL_VAL(AS_NUMBER(value) != 0);
-            return true;
-        }
-        case VAL_OBJ: {
-            if (!IS_STRING(value)) {
-                args[-1] = OBJ_VAL(copyString("TypeError: Can not convert value to bool.", 41));
-                return false;
-            }
-            // TODO: convert to bool if possible
-            return true;
-        }
-        default: {
-            args[-1] = OBJ_VAL(copyString("TypeError: Can not convert value to bool.", 41));
-            return false;
-        }
-    }
-}
-
-static bool clockNative(int _, Value* args) {
-    args[-1] = NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
-    return true;
-}
-
-static bool readNative(const int argCount, Value* args) {
-    if (argCount > 1) {
-        args[-1] = OBJ_VAL(copyString("Too many arguments.", 19));
-        return false;
-    }
-    if (argCount == 1) {
-        if (!IS_STRING(args[0])) {
-            args[-1] = OBJ_VAL(copyString("Expected a string as argument.", 30));
-            return false;
-        }
-        const int len = AS_STRING(args[0])->length;
-        printf("%.*s", len, AS_CSTRING(args[0]));
-    }
-
-    const ObjString* result = readLine(stdin);
-
-    if (result == NULL) {
-        args[-1] = OBJ_VAL(copyString("Error during reading from stdin.", 32));
-        return false;
-    }
-
-    args[-1] = OBJ_VAL(result);
-    return true;
-}
-
-static bool errNative(const int argCount, Value* args) {
-    switch (argCount) {
-        case 0: {
-            args[-1] = OBJ_VAL(copyString("Error!", 6));
-            return false;
-        }
-        case 1: {
-            if (!IS_STRING(args[0])) {
-                args[-1] = OBJ_VAL(copyString("Expected a string as argument.", 30));
-                return false;
-            }
-
-            const ObjString* message = AS_STRING(args[0]);
-            const int len = 7 + message->length;
-
-            ObjString* errMessage = allocateString(len);
-            memcpy(errMessage->chars, "Error: ", 7);
-            memcpy(errMessage->chars + 7, message->chars, message->length);
-            errMessage->chars[len] = '\0';
-
-            args[-1] = OBJ_VAL(errMessage);
-            return false;
-        }
-        default: {
-            args[-1] = OBJ_VAL(copyString("Unexpected amount of arguments for 'err'.", 41));
-            return false;
-        }
-    }
-}
 
 static void resetStack() {
     vm.stackTop = vm.stack;
@@ -195,6 +65,8 @@ void initVM() {
     defineNative("read", readNative);
     defineNative("err", errNative);
     defineNative("str", strNative);
+    defineNative("number", numberNative);
+    defineNative("bool", boolNative);
 }
 
 void freeVM() {
@@ -268,6 +140,12 @@ static bool callValue(const Value callee, const uint8_t argCount) {
 
 static bool isFalsey(const Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+bool isTruthy(Value v) {
+    if (IS_NIL(v)) return false;
+    if (IS_BOOL(v)) return AS_BOOL(v);
+    return true;
 }
 
 static void concatenate() {
@@ -469,7 +347,7 @@ static InterpretResult run() {
             }
             case OP_JUMP_IF_TRUE: {
                 const uint16_t offset = READ_U16();
-                if (!isFalsey(peek(0))) ip += offset;
+                if (isTruthy(peek(0))) ip += offset;
                 break;
             }
             case OP_JUMP_IF_FALSE: {

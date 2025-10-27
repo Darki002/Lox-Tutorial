@@ -1,6 +1,6 @@
 ﻿#include <stdlib.h>
 
-#include "../fileUtils.h"
+#include "io.h"
 #include "../object.h"
 
 ObjString* readLine(FILE* in) {
