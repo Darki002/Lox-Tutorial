@@ -66,6 +66,7 @@ void initVM() {
     defineNative("err", errNative);
     defineNative("str", strNative);
     defineNative("number", numberNative);
+    defineNative("tryNumber", tryNumberNative);
     defineNative("bool", boolNative);
 }
 
