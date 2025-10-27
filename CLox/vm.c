@@ -25,6 +25,69 @@ static bool strNative(const int argCount, Value* args) {
     return true;
 }
 
+static bool numberNative(const int argCount, Value* args) {
+    if (argCount != 1) {
+        args[-1] = OBJ_VAL(copyString("Unexpected amount of arguments for 'str'.", 41));
+        return false;
+    }
+
+    const Value value = args[0];
+    if (IS_NUMBER(value)) {
+        args[-1] = value;
+        return true;
+    }
+    if (IS_NIL(value)) {
+        args[-1] = OBJ_VAL(copyString("TypeError: Can not convert nil to number.", 41));
+        return false;
+    }
+    if (IS_BOOL(value)) {
+        args[-1] = NUMBER_VAL(AS_BOOL(value) ? 1 : 0);
+        return true;
+    }
+    if (IS_STRING(value)) {
+        args[-1] = OBJ_VAL(valueToString(args[0])); // TODO: convert str to number
+        return true;
+    }
+
+    args[-1] = OBJ_VAL(copyString("TypeError: Can not convert value to number.", 43));
+    return false;
+}
+
+static bool boolNative(const int argCount, Value* args) {
+    if (argCount != 1) {
+        args[-1] = OBJ_VAL(copyString("Unexpected amount of arguments for 'str'.", 41));
+        return false;
+    }
+
+    const Value value = args[0];
+    switch (value.type) {
+        case VAL_BOOL: {
+            args[-1] = value;
+            return true;
+        }
+        case VAL_NIL: {
+            args[-1] = BOOL_VAL(false);
+            return true;
+        }
+        case VAL_NUMBER: {
+            args[-1] = BOOL_VAL(AS_NUMBER(value) != 0);
+            return true;
+        }
+        case VAL_OBJ: {
+            if (!IS_STRING(value)) {
+                args[-1] = OBJ_VAL(copyString("TypeError: Can not convert value to bool.", 41));
+                return false;
+            }
+            // TODO: convert to bool if possible
+            return true;
+        }
+        default: {
+            args[-1] = OBJ_VAL(copyString("TypeError: Can not convert value to bool.", 41));
+            return false;
+        }
+    }
+}
+
 static bool clockNative(int _, Value* args) {
     args[-1] = NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
     return true;
