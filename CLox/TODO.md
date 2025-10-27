@@ -1,8 +1,2 @@
 ﻿- while never | a never-brunch that is executed when the loop is run 0 times
-- number()
-- bool()
-
-# TODO:
-
-Are Asser Op codes something you could do?
-- If yes, use it for the repeat statement
+- join(str...) - joins strings to one string in one call. Used for string interpolation. But expose as native function as well
