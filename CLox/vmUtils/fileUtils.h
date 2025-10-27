@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-#include "common.h"
-#include "value.h"
+#include "../common.h"
+#include "../value.h"
 
 ObjString* readLine(FILE* in);
 

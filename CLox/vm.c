@@ -11,7 +11,7 @@
 #include "compiler.h"
 #include "memory.h"
 #include "object.h"
-#include "fileUtils.h"
+#include "vmUtils/fileUtils.h"
 
 VM vm;
 
@@ -23,7 +23,7 @@ static bool strNative(const int argCount, Value* args) {
 
     args[-1] = OBJ_VAL(valueToString(args[0]));
     return true;
-}
+}<
 
 static bool numberNative(const int argCount, Value* args) {
     if (argCount != 1) {

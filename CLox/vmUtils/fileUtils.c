@@ -1,7 +1,7 @@
 ﻿#include <stdlib.h>
 
-#include "fileUtils.h"
-#include "object.h"
+#include "../fileUtils.h"
+#include "../object.h"
 
 ObjString* readLine(FILE* in) {
     int bufferSize = 128;
