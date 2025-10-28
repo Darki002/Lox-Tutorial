@@ -226,6 +226,18 @@ static void emitConstant(const Value value) {
     if (!result) error("Too many constants in one chunk.");
 }
 
+static void emitClosure(const ObjFunction* closure) {
+    const bool result = writeConstantCode(OP_CLOSURE, currentChunk(), OBJ_VAL(closure), parser.previous.line);
+    if (!result) error("Too many constants in one chunk.");
+}
+
+static void emitIndex(const OpCode code, const int index, const int line) {
+    const bool result = writeIndex(code, currentChunk(), index, line);
+    if (!result) {
+        error("Too many identifier in one chunk.");
+    }
+}
+
 static void patchJump(const int offset) {
     // -2 to adjust for the bytecode for the jump offset itself.
     const int jump = currentChunk()->count - offset - 2;
@@ -306,13 +318,6 @@ static void declaration();
 static void function(FunctionType type, ObjString* name);
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
-
-static void emitIndex(const OpCode code, const int index, const int line) {
-    const bool result = writeIndex(code, currentChunk(), index, line);
-    if (!result) {
-        error("Too many identifier in one chunk.");
-    }
-}
 
 static int identifierConstant(const Token* name, const bool isAssignment, const bool immutable) {
     const ObjString* nameStr = copyString(name->start, name->length);
@@ -747,8 +752,8 @@ static void function(const FunctionType type, ObjString* name) {
     consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
     block();
 
-    ObjFunction* function = endCompiler();
-    emitConstant(OBJ_VAL(function));
+    const ObjFunction* function = endCompiler();
+    emitClosure(function);
 }
 
 static void funDeclaration() {

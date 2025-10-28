@@ -42,6 +42,7 @@ typedef enum {
     OP_LOOP,
     OP_LOOP_IF_FALSE,
     OP_CALL,
+    OP_CLOSURE,
     OP_RETURN,
 } OpCode;
 

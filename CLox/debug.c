@@ -166,6 +166,8 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_PRINT", offset);
         case OP_CALL:
             return indexInstructionU8("OP_CALL", chunk, offset);
+        case OP_CLOSURE:
+            return constInstruction("OP_CLOSURE", "OP_CLOSURE.W", chunk, offset);
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
         default:

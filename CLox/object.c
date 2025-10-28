@@ -18,7 +18,7 @@ static Obj* allocateObject(const size_t size, const ObjType type) {
     return obj;
 }
 
-ObjClosure* newClosure(ObjFunction* function) {
+ObjClosure* makeClosure(ObjFunction* function) {
     ObjClosure* closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
     closure->function = function;
     return closure;
