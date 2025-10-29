@@ -66,6 +66,11 @@ typedef struct {
     bool immutable;
 } Local;
 
+typedef struct {
+    int index;
+    bool isLocal;
+} Upvalue;
+
 typedef enum {
     TYPE_FUNCTION,
     TYPE_ANONYMOUS_FUNCTION,
@@ -81,6 +86,7 @@ typedef struct Compiler {
     Local locals[STACK_MAX];
     int localCapacity;
     int localCount;
+    Upvalue upvalues[UINT8_COUNT];
     int scopeDepth;
 
     int controlFlowTop;
@@ -131,6 +137,19 @@ static bool errorIfImmutable(const Token* name, const BindingKind kind, const in
                 return true;
             }
             break;
+        case BINDING_UPVALUE: { // TODO: test this shit xD
+            const Compiler* compiler = current;
+            const Upvalue* upvalue = &compiler->upvalues[index];
+            while (!upvalue->isLocal) {
+                upvalue = &compiler->upvalues[upvalue->index];
+                compiler = compiler->enclosing;
+            }
+
+            if (compiler->locals[upvalue->index].immutable) {
+                errorAt(name, "Can not assign value to a constant variable.");
+                return true;
+            }
+        }
         case BINDING_GLOBAL:
             if (IS_IMMUTABLE_GLOBAL(index)) {
                 errorAt(name, "Can not assign value to a constant variable.");
@@ -352,6 +371,42 @@ static int resolveLocal(const Compiler* compiler, const Token* name) {
     return -1;
 }
 
+static uint8_t addUpvalue(Compiler* compiler, const int index, const bool isLocal) {
+    const int upvalueCount = compiler->function->upvalueCount;
+
+    for (int i = 0; i < upvalueCount; ++i) {
+        const Upvalue* upvalue = &compiler->upvalues[i];
+        if (upvalue->index == index && upvalue->isLocal == isLocal) {
+            return i;
+        }
+    }
+
+    if (upvalueCount == UINT8_COUNT) {
+        error("Too many closure variables in function.");
+        return 0;
+    }
+
+    compiler->upvalues[upvalueCount].isLocal = isLocal;
+    compiler->upvalues[upvalueCount].index = index;
+    return compiler->function->upvalueCount++;
+}
+
+static int resolveUpvalue(Compiler* compiler, const Token* name) {
+    if (compiler->enclosing == NULL) return -1;
+
+    const int local = resolveLocal(compiler->enclosing, name);
+    if (local != -1) {
+        return addUpvalue(compiler, local, true);
+    }
+
+    const int upvalue = resolveUpvalue(compiler->enclosing, name);
+    if (upvalue != -1) {
+        return addUpvalue(compiler, (uint8_t)upvalue, false);
+    }
+
+    return -1;
+}
+
 static void addLocal(const Token name, const bool immutable) {
     if (current->localCount + 1 > UINT8_COUNT) {
         error("Too many local variables in function");
@@ -543,6 +598,10 @@ static void namedVariable(const Token name, const bool canAssign) {
         getOp = OP_GET_LOCAL;
         setOp = OP_SET_LOCAL;
         kind = BINDING_LOCAL;
+    } else if ((arg = resolveUpvalue(current, &name)) != -1) {
+        getOp = OP_GET_UPVALUE;
+        setOp = OP_SET_UPVALUE;
+        kind = BINDING_UPVALUE;
     } else {
         arg = identifierConstant(&name, false, false);
         getOp = OP_GET_GLOBAL;
@@ -754,6 +813,11 @@ static void function(const FunctionType type, ObjString* name) {
 
     const ObjFunction* function = endCompiler();
     emitClosure(function);
+
+    for (int i = 0; i < function->upvalueCount; ++i) {
+        emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
+        emitByte(compiler.upvalues[i].index);
+    }
 }
 
 static void funDeclaration() {

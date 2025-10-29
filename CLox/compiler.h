@@ -3,7 +3,7 @@
 
 #include "object.h"
 
-typedef enum { BINDING_LOCAL, BINDING_GLOBAL } BindingKind;
+typedef enum { BINDING_LOCAL, BINDING_UPVALUE, BINDING_GLOBAL } BindingKind;
 
 ObjFunction* compile(const char* source);
 

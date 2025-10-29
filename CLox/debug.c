@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "debug.h"
+#include "object.h"
 
 void disassembleChunk(const Chunk* chunk, const char* name) {
     printf("== %s ==\n", name);
@@ -130,6 +131,10 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return indexInstruction("OP_DEFINE_GLOBAL", "OP_DEFINE_GLOBAL.W", chunk, offset);
         case OP_SET_GLOBAL:
             return indexInstruction("OP_SET_GLOBAL", "OP_SET_GLOBAL.W", chunk, offset);
+        case OP_GET_UPVALUE:
+            return indexInstructionU8("OP_GET_UPVALUE", chunk, offset);
+        case OP_SET_UPVALUE:
+            return indexInstructionU8("OP_SET_UPVALUE", chunk, offset);
         case OP_EQUAL:
             return simpleInstruction("OP_EQUAL", offset);
         case OP_GREATER:
@@ -166,8 +171,19 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_PRINT", offset);
         case OP_CALL:
             return indexInstructionU8("OP_CALL", chunk, offset);
-        case OP_CLOSURE:
-            return constInstruction("OP_CLOSURE", "OP_CLOSURE.W", chunk, offset);
+        case OP_CLOSURE: {
+            const int constant = wideInstruction ? disassembleU24Constant(chunk, offset) : chunk->code[offset + 1];
+            offset += wideInstruction ? 4 : 2;
+            printf("%-16s %4d \n", wideInstruction ? "OP_CLOSURE.W" : "OP_CLOSURE", constant);
+
+            const ObjFunction* function = AS_FUNCTION(chunk->constants.values[constant]);
+            for (int i = 0; i < function->upvalueCount; ++i) {
+                const int isLocal = chunk->code[offset++];
+                const int index = chunk->code[offset++];
+                printf("%04d      |                     %s %d\n",
+                    offset - 2, isLocal ? "local" : "upvalue", index);
+            }
+        }
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
         default:
