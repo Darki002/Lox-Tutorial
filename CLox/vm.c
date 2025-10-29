@@ -143,7 +143,7 @@ static bool isFalsey(const Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-bool isTruthy(Value v) {
+bool isTruthy(const Value v) {
     if (IS_NIL(v)) return false;
     if (IS_BOOL(v)) return AS_BOOL(v);
     return true;
