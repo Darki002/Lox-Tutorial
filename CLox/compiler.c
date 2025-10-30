@@ -90,7 +90,7 @@ typedef struct Compiler {
     int scopeDepth;
 
     int controlFlowTop;
-    ControlFlowContext controlFlowStack[UINT8_COUNT];
+    ControlFlowContext controlFlowStack[MAX_LOOP_DEPTH];
 } Compiler;
 
 Parser parser;
@@ -864,12 +864,16 @@ static void expressionStatement() {
 }
 
 static void enterControlFlow(const FlowKind kind) {
-    ControlFlowContext ctx;
-    ctx.kind = kind;
-    ctx.innermostLoopStart = currentChunk()->count;
-    ctx.innermostScopeDepth = current->scopeDepth;
-    ctx.breakPatchHead = NULL;
-    current->controlFlowStack[++current->controlFlowTop] = ctx;
+    if (current->controlFlowTop + 1 == MAX_LOOP_DEPTH) {
+        error("Too many nested Loops.");
+        return;
+    }
+
+    ControlFlowContext* ctx = &current->controlFlowStack[++current->controlFlowTop];
+    ctx->kind = kind;
+    ctx->innermostLoopStart = currentChunk()->count;
+    ctx->innermostScopeDepth = current->scopeDepth;
+    ctx->breakPatchHead = NULL;
 }
 
 static void exitControlFlow() {
