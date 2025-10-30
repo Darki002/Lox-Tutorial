@@ -64,6 +64,7 @@ typedef struct {
     Token name;
     int depth;
     bool immutable;
+    bool isCaptured;
 } Local;
 
 typedef struct {
@@ -220,8 +221,16 @@ static void emitReturn() {
     emitBytes(OP_NIL, OP_RETURN);
 }
 
-static void popN(const int n) {
+static void emitPopN(const int n) {
     writeIndexBytes(OP_POPN, currentChunk(), n);
+}
+
+static void emitPop(const int popCount) {
+    if (popCount == 1) {
+        emitByte(OP_POP);
+    } else if (popCount > 1) {
+        emitPopN(popCount);
+    }
 }
 
 static void emitPopTo(const int targetDepth) {
@@ -232,12 +241,7 @@ static void emitPopTo(const int targetDepth) {
         }
         popCount++;
     }
-
-    if (popCount == 1) {
-        emitByte(OP_POP);
-    } else if (popCount > 1) {
-        popN(popCount);
-    }
+    emitPop(popCount);
 }
 
 static void emitConstant(const Value value) {
@@ -288,6 +292,7 @@ static void initCompiler(Compiler* compiler, const FunctionType type, ObjString*
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
     local->immutable = true;
+    local->isCaptured = false;
 }
 
 static ObjFunction* endCompiler() {
@@ -317,17 +322,22 @@ static void beginScope() {
 static void endScope() {
     current->scopeDepth--;
 
-    const int oldCount = current->localCount;
+    int popCount = 0;
 
     while (current->localCount > 0 && current->locals[current->localCount - 1].depth > current->scopeDepth) {
-        current->localCount--;
+        if (current->locals[--current->localCount].isCaptured) {
+            if (popCount > 0) {
+                emitPop(popCount);
+                popCount = 0;
+            }
+            emitByte(OP_CLOSE_UPVALUE);
+        } else {
+            popCount++;
+        }
     }
-
-    const int popCount = oldCount - current->localCount;
-    if (popCount == 1) {
-        emitByte(OP_POP);
-    } else if (popCount > 1) {
-        popN(popCount);
+    if (popCount > 0) {
+        emitPop(popCount);
+        popCount = 0;
     }
 }
 
@@ -396,6 +406,7 @@ static int resolveUpvalue(Compiler* compiler, const Token* name) {
 
     const int local = resolveLocal(compiler->enclosing, name);
     if (local != -1) {
+        compiler->enclosing->locals[local].isCaptured = true;
         return addUpvalue(compiler, local, true);
     }
 
@@ -417,6 +428,7 @@ static void addLocal(const Token name, const bool immutable) {
     local->name = name;
     local->depth = -1;
     local->immutable = immutable;
+    local->isCaptured = false;
 }
 
 static void declareVariable(const bool immutable) {
