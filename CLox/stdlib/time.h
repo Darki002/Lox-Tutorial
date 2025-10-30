@@ -5,5 +5,6 @@
 #include "../value.h"
 
 bool clockNative(int _, Value* args);
+bool sleepNative(int argCount, Value* args);
 
 #endif //CLOX_TIME_H

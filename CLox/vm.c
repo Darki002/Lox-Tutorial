@@ -68,6 +68,7 @@ void initVM() {
     defineNative("number", numberNative);
     defineNative("tryNumber", tryNumberNative);
     defineNative("bool", boolNative);
+    defineNative("sleep", sleepNative);
 }
 
 void freeVM() {
