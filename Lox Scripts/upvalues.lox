@@ -6,3 +6,17 @@ fun outer() {
   inner();
 }
 outer();
+
+
+fun outer2(a) {
+  var x = a;
+  fun inner() {
+    print x;
+  }
+
+  return inner;
+}
+
+var closure = outer2(11);
+outer2(12);
+closure();
