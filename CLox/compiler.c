@@ -90,7 +90,7 @@ typedef struct Compiler {
     int scopeDepth;
 
     int controlFlowTop;
-    ControlFlowContext controlFlowStack[STACK_MAX];
+    ControlFlowContext controlFlowStack[UINT8_COUNT];
 } Compiler;
 
 Parser parser;
@@ -803,7 +803,7 @@ static void function(const FunctionType type, ObjString* name) {
                 errorAtCurrent("Can't have more then 255 parameters.");
             }
 
-            const int constant = parseVariable("Expect parameter name.", true);
+            const int constant = parseVariable("Expect parameter name.", false);
             defineVariable(constant, parser.previous.line);
         } while (match(TOKEN_COMMA));
     }
