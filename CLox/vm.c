@@ -101,7 +101,7 @@ void replace(const Value value) {
     *(vm.stackTop - 1) = value;
 }
 
-static bool call(ObjClosure* closure, const uint8_t argCount) {
+static bool call(ObjClosure* closure, ObjFunction* function, const uint8_t argCount) {
     if (argCount != closure->function->arity) {
         runtimeError("Expected %d arguments but got %d", closure->function->arity, argCount);
         return false;
@@ -114,6 +114,7 @@ static bool call(ObjClosure* closure, const uint8_t argCount) {
 
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->closure = closure;
+    frame->function = function;
     frame->ip = closure->function->chunk.code;
     frame->slots = vm.stackTop - argCount - 1;
     return true;
@@ -123,7 +124,9 @@ static bool callValue(const Value callee, const uint8_t argCount) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_CLOSURE:
-                return call(AS_CLOSURE(callee), argCount);
+                return call(AS_CLOSURE(callee), AS_CLOSURE(callee)->function, argCount);
+            case OBJ_FUNCTION:
+                return call(NULL, AS_FUNCTION(callee), argCount);
             case OBJ_NATIVE: {
                 const NativeFn native = AS_NATIVE(callee);
                 if (native(argCount, vm.stackTop - argCount)) {
@@ -201,7 +204,7 @@ static InterpretResult run() {
 #define READ_U16() (ip += 2, (uint16_t)((ip[-2] << 8) | ip[-1]))
 #define READ_U24() (ip += 3, (int)((ip[-3] << 16) | (uint16_t)((ip[-2] << 8) | ip[-1])))
 #define READ_INDEX() (wideInstruction ? READ_U24() : READ_U8())
-#define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_INDEX()])
+#define READ_CONSTANT() (frame->function->chunk.constants.values[READ_INDEX()])
 #define BINARY_OP(valueType, op) \
     do { \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -222,7 +225,7 @@ static InterpretResult run() {
             printf(" ]");
         }
         printf("\n");
-        disassembleInstruction(&frame->closure->function->chunk, (int)(ip - frame->closure->function->chunk.code));
+        disassembleInstruction(&frame->function->chunk, (int)(ip - frame->function->chunk.code));
 #endif //DEBUG_TRACE_EXECUTION
 
         uint8_t instruction  = READ_U8();
@@ -480,7 +483,7 @@ InterpretResult interpret(const char* source) {
     ObjClosure* closure = newClosure(function);
     pop();
     push(OBJ_VAL(closure));
-    call(closure, 0);
+    call(closure, closure->function, 0);
 
     return run();
 }

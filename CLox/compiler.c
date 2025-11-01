@@ -823,8 +823,13 @@ static void function(const FunctionType type, ObjString* name) {
     block();
 
     const ObjFunction* function = endCompiler();
-    emitClosure(function);
 
+    if (function->upvalueCount == 0) {
+        emitConstant(OBJ_VAL(function));
+        return;
+    }
+
+    emitClosure(function);
     for (int i = 0; i < function->upvalueCount; ++i) {
         emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
         emitByte(compiler.upvalues[i].index);
