@@ -2,11 +2,11 @@
 
 ## Upvalues
 
-
+0.37799999999999989
 
 ## no Upvalues
 
-
+0.17099999999999999
 
 # Only closures if needed
 
