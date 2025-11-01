@@ -17,3 +17,8 @@
 ## no Upvalues
 
 0.20899999999999999
+
+# Result
+
+Remove the change, since it gives only a little when stress testing closures. But for thing like the
+fib script, it slows down.
