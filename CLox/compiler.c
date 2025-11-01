@@ -337,7 +337,6 @@ static void endScope() {
     }
     if (popCount > 0) {
         emitPop(popCount);
-        popCount = 0;
     }
 }
 
