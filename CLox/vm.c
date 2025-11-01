@@ -102,8 +102,8 @@ void replace(const Value value) {
 }
 
 static bool call(ObjClosure* closure, ObjFunction* function, const uint8_t argCount) {
-    if (argCount != closure->function->arity) {
-        runtimeError("Expected %d arguments but got %d", closure->function->arity, argCount);
+    if (argCount != function->arity) {
+        runtimeError("Expected %d arguments but got %d", function->arity, argCount);
         return false;
     }
 
@@ -115,7 +115,7 @@ static bool call(ObjClosure* closure, ObjFunction* function, const uint8_t argCo
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->closure = closure;
     frame->function = function;
-    frame->ip = closure->function->chunk.code;
+    frame->ip = function->chunk.code;
     frame->slots = vm.stackTop - argCount - 1;
     return true;
 }
