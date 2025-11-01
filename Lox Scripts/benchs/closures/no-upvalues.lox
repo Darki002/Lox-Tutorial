@@ -1,0 +1,16 @@
+{
+    var start = clock();
+
+    fun test() {
+        fun inner(){
+            var ka = 10;
+            print ka;
+        }
+        return inner;
+    }
+
+    var inner = test();
+    inner();
+
+    print clock() - start;
+}
