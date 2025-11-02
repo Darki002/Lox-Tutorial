@@ -902,10 +902,16 @@ static void exitControlFlow() {
 static void forStatement() {
     beginScope();
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+
+    int loopVar = -1;
+    Token loopVarName;
+
     if (match(TOKEN_SEMICOLON)) {
         // No Initializer.
     } else if (match(TOKEN_VAR)) {
+        loopVarName = parser.current;
         varDeclaration();
+        loopVar = current->localCount - 1;
     } else {
         expressionStatement();
     }
@@ -934,7 +940,24 @@ static void forStatement() {
         patchJump(bodyJump);
     }
 
+    int innerVar = -1;
+    if (loopVar != -1) {
+        beginScope();
+        emitIndex(OP_GET_LOCAL, loopVar, loopVarName.line);
+        addLocal(loopVarName, false);
+        makeInitialized();
+        innerVar = current->localCount - 1;
+    }
+
     statement();
+
+    if (loopVar != -1) {
+        emitIndex(OP_GET_LOCAL, innerVar, loopVarName.line);
+        emitIndex(OP_SET_LOCAL, innerVar, loopVarName.line);
+        emitByte(OP_POP);
+        endScope();
+    }
+
     emitLoop(OP_LOOP, ctx->innermostLoopStart);
 
     if (exitJump != -1) {
