@@ -1,0 +1,14 @@
+fun vector(x, y) {
+    return fun (message) {
+        if(message == "x") return x;
+        if(message == "y") return y;
+        if(message == "add") return fun (a) { vector(a("x") + x, a("y") + y) };
+    };
+}
+
+var vec1 = vector(5, 2);
+var vec2 = vector(1, 7);
+
+var vec3 = vec1("add")(vec2);
+print vec3("x");
+print vec3("y");
