@@ -3,9 +3,6 @@
 #include <time.h>
 #include "benchmark_config.h"
 
-#define _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_WARNINGS
-
 typedef void (*bench_func)();
 
 int main() {
