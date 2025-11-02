@@ -1,10 +1,21 @@
 {
   "version": 6,
+
   "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
     {
       "name": "default",
       "displayName": "Default Debug",
-      "generator": "Ninja",
+      "inherits": "base",
       "binaryDir": "build/default-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
@@ -13,22 +24,19 @@
     {
       "name": "profile-debug",
       "displayName": "Profiling Debug (Symbols, no sanitize)",
-      "generator": "Ninja",
+      "inherits": "base",
       "binaryDir": "build/profile-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "clang-cl",
-        "CMAKE_CXX_COMPILER": "clang-cl",
         "CMAKE_C_FLAGS_DEBUG": "-g -O0 -fno-omit-frame-pointer",
         "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -fno-omit-frame-pointer",
-        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "/DEBUG",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "/DEBUG"
       }
     },
     {
       "name": "release",
       "displayName": "Release",
-      "generator": "Ninja",
+      "inherits": "base",
       "binaryDir": "build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
@@ -37,8 +45,8 @@
   ],
 
   "buildPresets": [
-    { "name": "default-debug", "configurePreset": "default" },
-    { "name": "profile-debug", "configurePreset": "profile-debug" },
-    { "name": "release", "configurePreset": "release" }
+    { "name": "default-debug", "configurePreset": "default", "targets": ["CLox"] },
+    { "name": "profile-debug", "configurePreset": "profile-debug", "targets": ["CLox"] },
+    { "name": "release", "configurePreset": "release", "targets": ["CLox"] }
   ]
 }
