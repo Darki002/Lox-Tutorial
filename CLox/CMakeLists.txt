@@ -3,6 +3,12 @@ project(CLox C)
 
 set(CMAKE_C_STANDARD 99)
 
+if (MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Z7")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Z7")
+  set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /DEBUG")
+endif()
+
 add_executable(CLox clox.c
         common.h
         chunk.h
