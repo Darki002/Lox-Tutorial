@@ -59,6 +59,8 @@ static void repl() {
 
 int main(const int argc, const char* argv[]) {
     initVM();
+    runFile("C:/Developement/Lox-Tutorial/Lox Scripts/vectore-closure-object.lox");
+    return 0;
 
     if (argc == 1) {
         repl();

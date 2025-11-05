@@ -2,7 +2,7 @@ fun vector(x, y) {
     return fun (message) {
         if(message == "x") return x;
         if(message == "y") return y;
-        if(message == "add") return fun (a) { vector(a("x") + x, a("y") + y) };
+        if(message == "add") return fun (a) { return vector(a("x") + x, a("y") + y); };
     };
 }
 

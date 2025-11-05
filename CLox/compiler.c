@@ -84,7 +84,7 @@ typedef struct Compiler {
     FunctionType type;
     int anonymousFunctionCount;
 
-    Local locals[STACK_MAX];
+    Local locals[UINT8_COUNT];
     int localCapacity;
     int localCount;
     Upvalue upvalues[UINT8_COUNT];
