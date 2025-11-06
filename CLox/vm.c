@@ -279,7 +279,7 @@ static InterpretResult run()
             runtimeError("Operands must be numbers.");            \
             return INTERPRET_RUNTIME_ERROR;                       \
         }                                                         \
-        const uint64_t result = a op (int)b;                      \
+        const uint64_t result = a op(int) b;                      \
         replace(NUMBER_VAL((double)result));                      \
     } while (false);
 
@@ -494,7 +494,7 @@ static InterpretResult run()
             replace(NUMBER_VAL(result));
             break;
         }
-        case OP_SHIFT_RIGHT: // TODO: test and fix that shit
+        case OP_SHIFT_RIGHT:
             BIT_OP(>>);
             break;
         case OP_SHIFT_LEFT:
