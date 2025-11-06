@@ -29,6 +29,10 @@ typedef enum
     PREC_AND,
     PREC_EQUALITY,
     PREC_COMPARISON,
+    PREC_BIT_OR,
+    PREC_BIT_XOR,
+    PREC_BIT_AND,
+    PREC_SHIFT,
     PREC_TERM,
     PREC_FACTOR,
     PREC_UNARY,
@@ -628,11 +632,17 @@ static void binary(bool _)
     case TOKEN_GREATER:
         emitByte(OP_GREATER);
         break;
+    case TOKEN_GREATER_GREATER:
+        emitByte(OP_SHIFT_RIGHT);
+        break;
     case TOKEN_GREATER_EQUAL:
         emitBytes(OP_LESS, OP_NOT);
         break;
     case TOKEN_LESS:
         emitByte(OP_LESS);
+        break;
+    case TOKEN_LESS_LESS:
+        emitByte(OP_SHIFT_LEFT);
         break;
     case TOKEN_LESS_EQUAL:
         emitBytes(OP_GREATER, OP_NOT);
@@ -651,6 +661,15 @@ static void binary(bool _)
         break;
     case TOKEN_PERCENT:
         emitByte(OP_MOD);
+        break;
+    case TOKEN_AND_OPERATOR:
+        emitByte(OP_BIT_AND);
+        break;
+    case TOKEN_VERTICAL_BAR:
+        emitByte(OP_BIT_OR);
+        break;
+    case TOKEN_CARET:
+        emitByte(OP_BIT_XOR);
         break;
     default:
         return; // Unreachable
@@ -943,9 +962,14 @@ ParseRule rules[] = {
     [TOKEN_EQUAL] = {NULL, NULL, PREC_NONE},
     [TOKEN_EQUAL_EQUAL] = {NULL, binary, PREC_EQUALITY},
     [TOKEN_GREATER] = {NULL, binary, PREC_EQUALITY},
+    [TOKEN_GREATER_GREATER] = {NULL, binary, PREC_SHIFT},
     [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_EQUALITY},
     [TOKEN_LESS] = {NULL, binary, PREC_EQUALITY},
+    [TOKEN_LESS_LESS] = {NULL, binary, PREC_SHIFT},
     [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_EQUALITY},
+    [TOKEN_AND_OPERATOR] = {NULL, binary, PREC_BIT_AND},
+    [TOKEN_VERTICAL_BAR] = {NULL, binary, PREC_BIT_OR},
+    [TOKEN_CARET] = {NULL, binary, PREC_BIT_XOR},
     [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},
     [TOKEN_STRING] = {string, NULL, PREC_NONE},
     [TOKEN_INTERPOLATION] = {interpolation, NULL, PREC_NONE},

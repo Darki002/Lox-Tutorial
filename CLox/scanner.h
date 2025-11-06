@@ -17,7 +17,7 @@ typedef enum
   TOKEN_STAR,
   TOKEN_QUESTIONMARK,
   TOKEN_VERTICAL_BAR,
-  TOKEN_AND,
+  TOKEN_AND_OPERATOR,
   TOKEN_CARET,
   // One or two character tokens.
   TOKEN_MINUS,
