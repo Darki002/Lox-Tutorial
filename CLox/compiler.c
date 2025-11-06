@@ -883,15 +883,13 @@ static void preIncrementVariable(const bool _)
 static void interpolation(bool _) // TODO: test
 {
     emitIndex(OP_GET_GLOBAL, 8, parser.current.line); // TODO: Find index dynamic
-    emitBytes(OP_CALL, 0);
-    const int offset = currentChunk()->count - 1;
 
     int args = 0;
     do
     {
         string(false);
         expression();
-        args++;
+        args += 2;
     } while (match(TOKEN_INTERPOLATION));
 
     consume(TOKEN_STRING, "Expect end of string interpolation.");
@@ -903,7 +901,7 @@ static void interpolation(bool _) // TODO: test
         error("Too many expressions in string interpolation");
     }
 
-    currentChunk()->code[offset] = args;
+    emitBytes(OP_CALL, args);
 }
 
 static void unary(bool _)

@@ -43,6 +43,8 @@ add_executable(CLox clox.c
         stdlib/nativeErr.h
         stdlib/cast.c
         stdlib/cast.h
+        stdlib/joinStr.c
+        stdlib/joinStr.h
 )
 add_executable(Benchmark benchmark/benchmark.c
         common.h

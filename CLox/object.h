@@ -5,20 +5,21 @@
 #include "value.h"
 #include "chunk.h"
 
-#define OBJ_TYPE(value)    (AS_OBJ(value)->type)
+#define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
-#define IS_CLOSURE(value)  isObjType(value, OBJ_CLOSURE)
+#define IS_CLOSURE(value) isObjType(value, OBJ_CLOSURE)
 #define IS_FUNCTION(value) isObjType(value, OBJ_FUNCTION)
-#define IS_NATIVE(value)   isObjType(value, OBJ_NATIVE)
-#define IS_STRING(value)   isObjType(value, OBJ_STRING)
+#define IS_NATIVE(value) isObjType(value, OBJ_NATIVE)
+#define IS_STRING(value) isObjType(value, OBJ_STRING)
 
-#define AS_CLOSURE(value) ((ObjClosure*)AS_OBJ(value))
-#define AS_FUNCTION(value) ((ObjFunction*)AS_OBJ(value))
-#define AS_NATIVE(value)   (((ObjNative*)AS_OBJ(value))->function)
-#define AS_STRING(value)   ((ObjString*)AS_OBJ(value))
-#define AS_CSTRING(value)  (((ObjString*)AS_OBJ(value))->chars)
+#define AS_CLOSURE(value) ((ObjClosure *)AS_OBJ(value))
+#define AS_FUNCTION(value) ((ObjFunction *)AS_OBJ(value))
+#define AS_NATIVE(value) (((ObjNative *)AS_OBJ(value))->function)
+#define AS_STRING(value) ((ObjString *)AS_OBJ(value))
+#define AS_CSTRING(value) (((ObjString *)AS_OBJ(value))->chars)
 
-typedef enum {
+typedef enum
+{
     OBJ_CLOSURE,
     OBJ_FUNCTION,
     OBJ_NATIVE,
@@ -26,59 +27,67 @@ typedef enum {
     OBJ_UPVALUE
 } ObjType;
 
-struct Obj {
+struct Obj
+{
     ObjType type;
-    Obj* next;
+    Obj *next;
 };
 
-struct ObjString {
+struct ObjString
+{
     Obj obj;
     int length;
     uint32_t hash;
     char chars[];
 };
 
-typedef struct ObjUpvalue {
+typedef struct ObjUpvalue
+{
     Obj obj;
-    Value* location;
+    Value *location;
     Value closed;
-    struct ObjUpvalue* next;
+    struct ObjUpvalue *next;
 } ObjUpvalue;
 
-typedef struct {
+typedef struct
+{
     Obj obj;
     int arity;
     int upvalueCount;
     Chunk chunk;
-    ObjString* name;
+    ObjString *name;
 } ObjFunction;
 
-typedef struct {
+typedef struct
+{
     Obj obj;
-    ObjFunction* function;
-    ObjUpvalue** upvalues;
+    ObjFunction *function;
+    ObjUpvalue **upvalues;
     int upvalueCount;
 } ObjClosure;
 
-typedef bool (*NativeFn) (int argCount, Value* args);
+typedef bool (*NativeFn)(int argCount, Value *args);
 
-typedef struct {
+typedef struct
+{
     Obj obj;
     NativeFn function;
 } ObjNative;
 
-ObjClosure* newClosure(ObjFunction* function);
-ObjFunction* newFunction();
-ObjNative* newNative(NativeFn function);
-ObjString* allocateString(int length);
-uint32_t hashString(const char* key, int length);
-ObjString* copyString(const char* chars, int length);
-ObjString* concatenateStrings(const char* aChars, int aLength, const char* bChars, int bLength);
-ObjUpvalue* newUpvalue(Value* slot);
+ObjClosure *newClosure(ObjFunction *function);
+ObjFunction *newFunction();
+ObjNative *newNative(NativeFn function);
+ObjString *allocateString(int length);
+uint32_t hashString(const char *key, int length);
+ObjString *internString(ObjString *string);
+ObjString *copyString(const char *chars, int length);
+ObjString *concatenateStrings(const char *aChars, int aLength, const char *bChars, int bLength);
+ObjUpvalue *newUpvalue(Value *slot);
 void printObject(Value value);
 
-static inline bool isObjType(const Value value, const ObjType type) {
+static inline bool isObjType(const Value value, const ObjType type)
+{
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 
-#endif //clox_object_h
+#endif // clox_object_h
