@@ -11,4 +11,4 @@
 #define UINT24_MAX (16777215)
 #define UINT24_COUNT (UINT24_MAX + 1)
 
-#endif //clox_common_h
+#endif // clox_common_h

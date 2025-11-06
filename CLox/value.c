@@ -69,5 +69,8 @@ void printValue(const Value value)
     case VAL_UNDEFINED:
         printf("undefined");
         break;
+    case VAL_EMPTY:
+        printf("empty");
+        break;
     }
 }
