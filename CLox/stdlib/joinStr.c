@@ -1,5 +1,5 @@
 #include "joinStr.h"
-#include "object.h"
+#include "../object.h"
 #include "../utils/coerce.h"
 
 #include <string.h>

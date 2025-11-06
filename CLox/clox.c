@@ -5,12 +5,13 @@
 #include "common.h"
 #include "vm.h"
 
-
 // TODO: how to make tests for a language. Write it in the language its self, but how to automatically run the tests and validate them?
 
-static char* readFile(const char* path) {
-    FILE* file = fopen(path, "rb");
-    if (file == NULL) {
+static char *readFile(const char *path)
+{
+    FILE *file = fopen(path, "rb");
+    if (file == NULL)
+    {
         fprintf(stderr, "Could not open file \"%s\".\n", path);
         exit(74);
     }
@@ -19,14 +20,16 @@ static char* readFile(const char* path) {
     const size_t fileSize = ftell(file);
     rewind(file);
 
-    char* buffer = (char*)malloc(fileSize + 1);
-    if (buffer == NULL) {
+    char *buffer = (char *)malloc(fileSize + 1);
+    if (buffer == NULL)
+    {
         fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
         exit(74);
     }
 
     const size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
-    if (bytesRead < fileSize) {
+    if (bytesRead < fileSize)
+    {
         fprintf(stderr, "Could not read file \"%s\".\n", path);
         exit(74);
     }
@@ -36,21 +39,27 @@ static char* readFile(const char* path) {
     return buffer;
 }
 
-static void runFile(const char* path) {
-    char* source = readFile(path);
+static void runFile(const char *path)
+{
+    char *source = readFile(path);
     const InterpretResult result = interpret(source);
     free(source);
 
-    if (result == INTERPRET_COMPILE_ERROR) exit(65);
-    if (result == INTERPRET_RUNTIME_ERROR) exit(70);
+    if (result == INTERPRET_COMPILE_ERROR)
+        exit(65);
+    if (result == INTERPRET_RUNTIME_ERROR)
+        exit(70);
 }
 
-static void repl() {
+static void repl()
+{
     char line[1024];
-    for (;;) {
+    for (;;)
+    {
         printf(">  ");
 
-        if (!fgets(line, sizeof(line), stdin)) {
+        if (!fgets(line, sizeof(line), stdin))
+        {
             printf("\n");
             break;
         }
@@ -59,16 +68,24 @@ static void repl() {
     }
 }
 
-int main(const int argc, const char* argv[]) {
+int main(const int argc, const char *argv[])
+{
     initVM();
-    runFile("C:/Developement/Lox-Tutorial/Lox Scripts/vectore-closure-object.lox");
+    /*
+    runFile("C:/Development/Private/Lox-Tutorial/Lox Scripts/vectore-closure-object.lox");
     return 0;
+    */
 
-    if (argc == 1) {
+    if (argc == 1)
+    {
         repl();
-    } else if (argc == 2) {
+    }
+    else if (argc == 2)
+    {
         runFile(argv[1]);
-    } else {
+    }
+    else
+    {
         fprintf(stderr, "Usage: clos [path]\n");
         exit(64);
     }
