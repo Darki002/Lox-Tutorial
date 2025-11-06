@@ -371,7 +371,7 @@ Token scanToken()
     case '&':
         return makeToken(TOKEN_AND);
     case '^':
-        makeToken(TOKEN_CARET);
+        return makeToken(TOKEN_CARET);
     case '?':
         return makeToken(TOKEN_QUESTIONMARK);
     case '=':

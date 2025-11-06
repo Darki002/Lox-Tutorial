@@ -279,7 +279,7 @@ static InterpretResult run()
             runtimeError("Operands must be numbers.");            \
             return INTERPRET_RUNTIME_ERROR;                       \
         }                                                         \
-        const uint64_t result = a >> (int)b;                      \
+        const uint64_t result = a op (int)b;                      \
         replace(NUMBER_VAL((double)result));                      \
     } while (false);
 
