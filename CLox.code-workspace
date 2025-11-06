@@ -7,5 +7,11 @@
 			"path": "Lox Scripts"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"string.h": "c",
+			"cast.h": "c",
+			"corecrt.h": "c"
+		}
+	}
 }
