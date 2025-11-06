@@ -13,7 +13,10 @@
 			"cast.h": "c",
 			"corecrt.h": "c",
 			"joinstr.h": "c",
-			"object.h": "c"
+			"object.h": "c",
+			"xutility": "c",
+			"type_traits": "c",
+			"xtr1common": "c"
 		}
 	}
 }

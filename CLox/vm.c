@@ -230,6 +230,21 @@ static void concatenate()
     replace(resultVal);
 }
 
+static bool numberToI64(Value v, int64_t *out)
+{
+    if (!IS_NUMBER(v))
+        return false;
+    double d = AS_NUMBER(v);
+    double t = trunc(d);
+    if (d != t)
+        return false;
+    if (t < (double)INT64_MIN || t > (double)INT64_MAX)
+        return false;
+
+    *out = (int64_t)t;
+    return true;
+}
+
 static InterpretResult run()
 {
     CallFrame *frame = &vm.frames[vm.frameCount - 1];
@@ -245,6 +260,7 @@ static InterpretResult run()
     {                                                   \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) \
         {                                               \
+            frame->ip = ip;                             \
             runtimeError("Operands must be numbers.");  \
             return INTERPRET_RUNTIME_ERROR;             \
         }                                               \
@@ -252,6 +268,23 @@ static InterpretResult run()
         const double a = AS_NUMBER(peek(0));            \
         replace(valueType(a op b));                     \
     } while (false);
+
+#define BIT_OP(op)                                                \
+    do                                                            \
+    {                                                             \
+        int64_t a, b;                                             \
+        if (!numberToI64(pop(), &b) || !numberToI64(peek(0), &a)) \
+        {                                                         \
+            frame->ip = ip;                                       \
+            runtimeError("Operands must be numbers.");            \
+            return INTERPRET_RUNTIME_ERROR;                       \
+        }                                                         \
+        const uint64_t result = a >> (int)b;                      \
+        replace(NUMBER_VAL((double)result));                      \
+    } while (false);
+
+    while (false)
+        ;
 
     for (;;)
     {
@@ -461,6 +494,21 @@ static InterpretResult run()
             replace(NUMBER_VAL(result));
             break;
         }
+        case OP_SHIFT_RIGHT: // TODO: test and fix that shit
+            BIT_OP(>>);
+            break;
+        case OP_SHIFT_LEFT:
+            BIT_OP(<<);
+            break;
+        case OP_BIT_AND:
+            BIT_OP(&);
+            break;
+        case OP_BIT_OR:
+            BIT_OP(|);
+            break;
+        case OP_BIT_XOR:
+            BIT_OP(^);
+            break;
         case OP_NOT:
         {
             replace(BOOL_VAL(isFalsey(peek(0))));
