@@ -1,8 +1,10 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "common.h"
 #include "vm.h"
+
 
 // TODO: how to make tests for a language. Write it in the language its self, but how to automatically run the tests and validate them?
 
