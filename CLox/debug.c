@@ -151,6 +151,16 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return simpleInstruction("OP_DIVIDE", offset);
         case OP_MOD:
             return simpleInstruction("OP_MOD", offset);
+        case OP_SHIFT_RIGHT:
+            return simpleInstruction("OP_SHIFT_RIGHT", offset);
+        case OP_SHIFT_LEFT:
+            return simpleInstruction("OP_SHIFT_LEFT", offset);
+        case OP_BIT_AND:
+            return simpleInstruction("OP_BIT_AND", offset);
+        case OP_BIT_OR:
+            return simpleInstruction("OP_BIT_OR", offset);
+        case OP_BIT_XOR:
+            return simpleInstruction("OP_BIT_XOR", offset);
         case OP_NOT:
             return simpleInstruction("OP_NOT", offset);
         case OP_NEGATE:
@@ -167,6 +177,8 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return jumpInstruction("OP_LOOP", -1, chunk, offset);
         case OP_LOOP_IF_FALSE:
             return jumpInstruction("OP_LOOP_IF_FALSE", -1, chunk, offset);
+        case OP_JOIN_STR:
+            return indexInstructionU8("OP_CALL", chunk, offset); 
         case OP_PRINT:
             return simpleInstruction("OP_PRINT", offset);
         case OP_CALL:
