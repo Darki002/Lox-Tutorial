@@ -1,0 +1,10 @@
+while(true) {
+    var input = read("> ");
+
+    print switch (input) {
+        case "1": "one",
+        case "2": "two",
+        case "3": "three",
+        default: "unknown"
+    };
+}

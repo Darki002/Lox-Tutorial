@@ -44,7 +44,8 @@ typedef enum
 {
     FLOW_LOOP,
     FLOW_IF,
-    FLOW_SWITCH
+    FLOW_SWITCH,
+    FLOW_SWITCH_EXPRESSION
 } FlowKind;
 
 typedef void (*ParseFn)(bool canAssign);
@@ -413,6 +414,36 @@ static void endScope()
     }
 }
 
+static ControlFlowContext* enterControlFlow(const FlowKind kind)
+{
+    if (current->controlFlowTop + 1 == MAX_LOOP_DEPTH)
+    {
+        error("Too many nested Loops.");
+        return NULL;
+    }
+
+    ControlFlowContext *ctx = &current->controlFlowStack[++current->controlFlowTop];
+    ctx->kind = kind;
+    ctx->innermostLoopStart = currentChunk()->count;
+    ctx->innermostScopeDepth = current->scopeDepth;
+    ctx->breakPatchHead = NULL;
+    return ctx;
+}
+
+static void exitControlFlow()
+{
+    const ControlFlowContext *ctx = &current->controlFlowStack[current->controlFlowTop--];
+
+    JumpPatch *patch = ctx->breakPatchHead;
+    while (patch != NULL)
+    {
+        patchJump(patch->jumpOffset);
+        JumpPatch *old = patch;
+        patch = patch->next;
+        free(old);
+    }
+}
+
 static void expression();
 static void statement();
 static void declaration();
@@ -692,6 +723,62 @@ static void anonymousFunction(bool _)
     const int line = parser.previous.line;
     ObjString *debugName = makeAnonymousName(++current->anonymousFunctionCount, line);
     function(TYPE_ANONYMOUS_FUNCTION, debugName);
+}
+
+static void switchExpression(bool _)
+{
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'switch'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+    consume(TOKEN_LEFT_BRACE, "Expect '{' for switch body.");
+
+    ControlFlowContext *ctx = enterControlFlow(FLOW_SWITCH_EXPRESSION);
+
+    int caseExit = -1;
+    while (match(TOKEN_CASE))
+    {
+        if (caseExit != -1)
+        {
+            patchJump(caseExit);
+            emitByte(OP_POP);
+        }
+        
+        expression();
+        consume(TOKEN_COLON, "Expect ':' after condition.");
+
+        caseExit = emitJump(OP_JUMP_IF_NOT_EQUAL);
+        emitPopN(2);
+        expression();
+        consume(TOKEN_COMMA, "Expect ',' after case expression.");
+
+        const int offset = emitJump(OP_JUMP);
+        JumpPatch *patch = malloc(sizeof(JumpPatch));
+        patch->jumpOffset = offset;
+        patch->next = ctx->breakPatchHead;
+        ctx->breakPatchHead = patch;
+    }
+
+    if (match(TOKEN_EOF))
+    {
+        error("Expect closing '}' after switch body.");
+        return;
+    }
+
+    if (caseExit != -1)
+    {
+        patchJump(caseExit);
+        emitPopN(2);
+    }
+
+    if (match(TOKEN_DEFAULT))
+    {
+        consume(TOKEN_COLON, "Expect ':' after 'default'.");
+        expression();
+        match(TOKEN_COMMA);
+    }
+
+    consume(TOKEN_RIGHT_BRACE, "Expect closing '}' after switch body.");
+    exitControlFlow();
 }
 
 static void call(bool _)
@@ -988,6 +1075,7 @@ ParseRule rules[] = {
     [TOKEN_TRUE]             = {literal,              NULL,    PREC_NONE     },
     [TOKEN_VAR]              = {NULL,                 NULL,    PREC_NONE     },
     [TOKEN_WHILE]            = {NULL,                 NULL,    PREC_NONE     },
+    [TOKEN_SWITCH]           = {switchExpression,     NULL,    PREC_NONE     },
     [TOKEN_ERROR]            = {NULL,                 NULL,    PREC_NONE     },
     [TOKEN_EOF]              = {NULL,                 NULL,    PREC_NONE     },
 }; 
@@ -1148,35 +1236,6 @@ static void expressionStatement()
     emitByte(OP_POP);
 }
 
-static void enterControlFlow(const FlowKind kind)
-{
-    if (current->controlFlowTop + 1 == MAX_LOOP_DEPTH)
-    {
-        error("Too many nested Loops.");
-        return;
-    }
-
-    ControlFlowContext *ctx = &current->controlFlowStack[++current->controlFlowTop];
-    ctx->kind = kind;
-    ctx->innermostLoopStart = currentChunk()->count;
-    ctx->innermostScopeDepth = current->scopeDepth;
-    ctx->breakPatchHead = NULL;
-}
-
-static void exitControlFlow()
-{
-    const ControlFlowContext *ctx = &current->controlFlowStack[current->controlFlowTop--];
-
-    JumpPatch *patch = ctx->breakPatchHead;
-    while (patch != NULL)
-    {
-        patchJump(patch->jumpOffset);
-        JumpPatch *old = patch;
-        patch = patch->next;
-        free(old);
-    }
-}
-
 static void forStatement()
 {
     beginScope();
@@ -1200,8 +1259,7 @@ static void forStatement()
         expressionStatement();
     }
 
-    enterControlFlow(FLOW_LOOP);
-    ControlFlowContext *ctx = currentControlFlow();
+    ControlFlowContext *ctx =  enterControlFlow(FLOW_LOOP);
 
     int exitJump = -1;
     if (!match(TOKEN_SEMICOLON))
@@ -1267,8 +1325,7 @@ static void printStatement()
 
 static void ifStatement()
 {
-    enterControlFlow(FLOW_IF);
-    ControlFlowContext *ctx = currentControlFlow();
+    ControlFlowContext *ctx = enterControlFlow(FLOW_IF);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
     expression();

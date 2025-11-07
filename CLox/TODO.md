@@ -1,8 +1,4 @@
-﻿# Controle Flow
-
-- pattern matching
-
-# Arrays and Maps
+﻿# Arrays and Maps
 
 - hash table for Obj Types other than Strings
 - Make Hash Table available with native classes (syntax like { 1, 2, 3 }, like arrays but as hash maps).
