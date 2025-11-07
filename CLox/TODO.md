@@ -1,6 +1,5 @@
 ﻿# Controle Flow
 
-- Ternary `? :`
 - pattern matching
 
 # Arrays and Maps

@@ -16,7 +16,10 @@
 			"object.h": "c",
 			"xutility": "c",
 			"type_traits": "c",
-			"xtr1common": "c"
+			"xtr1common": "c",
+			"compare": "c",
+			"cstddef": "c",
+			"limits": "c"
 		}
 	}
 }
