@@ -1,11 +1,17 @@
-﻿- hash table for Obj Types other than Strings
+﻿# Controle Flow
+
+- Ternary `? :`
+- pattern matching
+
+# Arrays and Maps
+
+- hash table for Obj Types other than Strings
 - Make Hash Table available with native classes (syntax like { 1, 2, 3 }, like arrays but as hash maps).
 - Arrays
     - contains method
-- Ternary `? :`
 - foreach with arrays and maps
-- bitwise operations
-- Enums (integers but with metadata)
+
+# Other
+
 - named arguments
-- OP_JOIN_STR insead of calling the method as a native
-- pattern matching
+- Enums (integers but with metadata)
