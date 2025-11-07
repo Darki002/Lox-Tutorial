@@ -901,8 +901,6 @@ static void preIncrementVariable(const bool _)
 
 static void interpolation(bool _) // TODO: test
 {
-    emitIndex(OP_GET_GLOBAL, 8, parser.current.line); // TODO: Find index dynamic
-
     int args = 0;
     do
     {
@@ -920,7 +918,7 @@ static void interpolation(bool _) // TODO: test
         error("Too many expressions in string interpolation");
     }
 
-    emitBytes(OP_CALL, args);
+    emitBytes(OP_JOIN_STR, args);
 }
 
 static void unary(bool _)

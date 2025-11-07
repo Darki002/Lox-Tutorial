@@ -42,6 +42,7 @@ typedef enum
     OP_BIT_XOR,
     OP_NOT,
     OP_NEGATE,
+    OP_JOIN_STR,
     OP_PRINT,
     OP_JUMP,
     OP_JUMP_IF_TRUE,

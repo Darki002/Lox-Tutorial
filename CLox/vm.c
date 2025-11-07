@@ -13,6 +13,7 @@
 #include "object.h"
 #include "stdlib/cast.h"
 #include "stdlib/joinStr.h"
+#include "utils/stringUtils.h"
 #include "stdlib/time.h"
 #include "stdlib/nativeIo.h"
 #include "stdlib/nativeErr.h"
@@ -524,6 +525,14 @@ static InterpretResult run()
             }
 
             replace(NUMBER_VAL(-AS_NUMBER(peek(0))));
+            break;
+        }
+        case OP_JOIN_STR:
+        {
+            const uint8_t argCount = READ_U8();
+            Value result = joinString(argCount, vm.stackTop - argCount);
+            popn(argCount);
+            push(result);
             break;
         }
         case OP_PRINT:

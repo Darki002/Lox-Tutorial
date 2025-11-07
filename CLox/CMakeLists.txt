@@ -35,6 +35,8 @@ add_executable(CLox clox.c
         utils/io.h
         utils/coerce.c
         utils/coerce.h
+        utils/stringUtils.c
+        utils/stringUtils.h
         stdlib/time.c
         stdlib/time.h
         stdlib/nativeIo.c
