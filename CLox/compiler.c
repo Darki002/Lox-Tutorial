@@ -1023,7 +1023,7 @@ static ParseRule *getRule(const TokenType type)
     return &rules[type];
 }
 
-static void turnery() 
+static void turneryExpression() 
 {
     const int offset = emitJump(OP_JUMP_IF_FALSE);
 
@@ -1046,7 +1046,7 @@ static void expression()
 
     if(match(TOKEN_QUESTIONMARK))
     {
-        turnery();
+        turneryExpression();
     }
 }
 
