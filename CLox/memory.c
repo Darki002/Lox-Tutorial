@@ -5,6 +5,7 @@
 #include "value.h"
 #include "vm.h"
 #include "compiler.h"
+#include "table.h"
 
 #ifdef DEBUG_LOG_GC
 #include "debug.h"
@@ -152,10 +153,34 @@ static void markRoots() {
   markCompilerRoots();
 }
 
-static void markReferences() {
+static void traceReferences() {
     while (vm.grayCount > 0) {
         Obj* object = vm.grayStack[--vm.grayCount];
         blackenobject(object);
+    }
+}
+
+static void sweep() {
+    Obj* previous = NULL;
+    Obj* current = vm.objects;
+
+    while (current != NULL) {
+        if(current->isMarked){
+            current->isMarked = false;
+            previous = current;
+            current = current->next;
+        } else {
+            Obj* unreachable = current;
+            current = current->next;
+
+            if(previous != NULL){
+                previous->next = current;
+            } else {
+                vm.objects = current;
+            }
+
+            freeObject(unreachable);
+        }
     }
 }
 
@@ -165,7 +190,9 @@ void collectGarbage() {
 #endif // DEBUG_LOG_GC
 
   markRoots();
-  markReferences();
+  traceReferences();
+  tableRemoveWhie(&vm.strings);
+  sweep();
 
 #ifdef DEBUG_LOG_GC
   printf("-- gc end\n");

@@ -24,5 +24,6 @@ bool tableSet(Table* table, Value key, Value value);
 bool tableDelete(const Table* table, Value key);
 void tableAddAll(const Table* from, Table* to);
 ObjString* tableFindString(const Table* table, const char* chars, int length, uint32_t hash);
+void tableRemoveWhie(Table* table);
 
 #endif //clox_table_h

@@ -1,5 +1,4 @@
-﻿#include <stdlib.h>
-#include <string.h>
+﻿#include <string.h>
 
 #include "memory.h"
 #include "object.h"
@@ -139,5 +138,14 @@ ObjString* tableFindString(const Table* table, const char* chars, const int leng
         }
 
         index = (index + 1) % table->capacity;
+    }
+}
+
+void tableRemoveWhie(Table* table) {
+    for (int i = 0; i < table->capacity; i++) {
+        Entry* entry = &table->entries[i];
+        if(entry->key.type != VAL_EMPTY && IS_OBJ(entry->key) && !AS_OBJ(entry->key)->isMarked){
+            tableDelete(table, entry->key);
+        }
     }
 }
