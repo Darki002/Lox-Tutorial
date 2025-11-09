@@ -1,4 +1,5 @@
-﻿#include <stdio.h>
+﻿#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "memory.h"
@@ -11,10 +12,7 @@
 
 static Obj* allocateObject(const size_t size, const ObjType type) {
     Obj* obj = reallocate(NULL, 0, size);
-    obj->type = type;
-    obj->isMarked = false;
-
-    obj->next = vm.objects;
+    obj->header = (uint64_t)vm.objects | (uint64_t)type << 56;
     vm.objects = obj;
 
 #ifdef DEBUG_LOG_GC

@@ -25,6 +25,6 @@ bool tableDelete(const Table* table, Value key);
 void tableAddAll(const Table* from, Table* to);
 ObjString* tableFindString(const Table* table, const char* chars, int length, uint32_t hash);
 void markTable(Table* table);
-void tableRemoveWhie(Table* table);
+void tableRemoveWhiet(Table* table);
 
 #endif //clox_table_h

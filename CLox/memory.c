@@ -46,8 +46,8 @@ void* reallocate(void *pointer, size_t oldSize, const size_t newSize) {
 
 void markObject(Obj *object) {
   if (object == NULL) return;
-  if(object->isMarked) return;
-  object->isMarked = true;
+  if(isMarked(object)) return;
+  setIsMarked(object, true);
 
   if(vm.grayCapacity < vm.grayCount + 1) {
     vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
@@ -83,7 +83,7 @@ static void blackenobject(Obj* object) {
     printf("\n");
 #endif // DEBUG_LOG_GC
 
-    switch (object->type) {
+    switch (objType(object)) {
         case OBJ_CLOSURE:
             ObjClosure* closure = (ObjClosure*)object;
             markObject((Obj*)closure->function);
@@ -107,10 +107,10 @@ static void blackenobject(Obj* object) {
 
 static void freeObject(Obj *object) {
 #ifdef DEBUG_LOG_GC
-  printf("%p free type %d\n", (void *)object, object->type);
+  printf("%p free type %d\n", (void *)object, objType(object));
 #endif // DEBUG_LOG_GC
 
-  switch (object->type) {
+  switch (objType(object)) {
     case OBJ_CLOSURE: {
         const ObjClosure *closure = (ObjClosure *)object;
         FREE_ARRAY(ObjClosure *, closure->upvalues, closure->upvalueCount);
@@ -172,16 +172,16 @@ static void sweep() {
     Obj* current = vm.objects;
 
     while (current != NULL) {
-        if(current->isMarked){
-            current->isMarked = false;
+        if(isMarked(current)){
+            setIsMarked(current, false);
             previous = current;
-            current = current->next;
+            current = nextObj(current);
         } else {
             Obj* unreachable = current;
-            current = current->next;
+            current = nextObj(current);
 
             if(previous != NULL){
-                previous->next = current;
+                setNextObj(previous, current);
             } else {
                 vm.objects = current;
             }
@@ -199,7 +199,7 @@ void collectGarbage() {
 
   markRoots();
   traceReferences();
-  tableRemoveWhie(&vm.strings);
+  tableRemoveWhiet(&vm.strings);
   sweep();
 
   vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
@@ -214,7 +214,7 @@ void collectGarbage() {
 void freeObjects() {
   Obj *object = vm.objects;
   while (object != NULL) {
-    Obj *next = object->next;
+    Obj *next = nextObj(object);
     freeObject(object);
     object = next;
   }

@@ -17,6 +17,7 @@
 #include "stdlib/time.h"
 #include "stdlib/nativeIo.h"
 #include "stdlib/nativeErr.h"
+#include "value.h"
 
 VM vm;
 

@@ -5,7 +5,7 @@
 #include "value.h"
 #include "chunk.h"
 
-#define OBJ_TYPE(value) (AS_OBJ(value)->type)
+#define OBJ_TYPE(value) (objType(AS_OBJ(value)))
 
 #define IS_CLOSURE(value) isObjType(value, OBJ_CLOSURE)
 #define IS_FUNCTION(value) isObjType(value, OBJ_FUNCTION)
@@ -27,9 +27,7 @@ typedef enum {
 } ObjType;
 
 struct Obj {
-    ObjType type;
-    bool isMarked;
-    Obj* next;
+    uint64_t header;
 };
 
 struct ObjString {
@@ -79,9 +77,28 @@ ObjString* concatenateStrings(const char* aChars, int aLength, const char* bChar
 ObjUpvalue* newUpvalue(Value* slot);
 void printObject(Value value);
 
-static inline bool isObjType(const Value value, const ObjType type)
-{
-    return IS_OBJ(value) && AS_OBJ(value)->type == type;
+static inline ObjType objType(Obj* object) {
+    return (ObjType)((object->header >> 56) & 0xff);
+}
+
+static inline bool isMarked(Obj* object) {
+    return (bool)((object->header >> 48) & 0x01);
+}
+
+static inline Obj* nextObj(Obj* object) {
+    return (Obj*)(object->header & 0x0000ffffffffffff);
+}
+
+static inline void setIsMarked(Obj* object, bool isMarked) {
+    object->header = (object->header & 0xff00ffffffffffff) | ((uint64_t)isMarked << 48);
+}
+
+static inline void setNextObj(Obj* object, Obj* next) {
+    object->header = (object->header & 0xffff000000000000) | (uint64_t)next;
+}
+
+static inline bool isObjType(const Value value, const ObjType type) {
+    return IS_OBJ(value) && objType(AS_OBJ(value)) == type;
 }
 
 #endif // clox_object_h
