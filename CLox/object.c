@@ -79,8 +79,7 @@ ObjString* copyString(const char* chars, const int length)
     const uint32_t hash = hashString(chars, length);
     ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
 
-    if (interned != NULL)
-        return interned;
+    if (interned != NULL) return interned;
 
     ObjString* string = allocateString(length);
     memcpy(string->chars, chars, length);

@@ -141,6 +141,14 @@ ObjString* tableFindString(const Table* table, const char* chars, const int leng
     }
 }
 
+void markTable(Table* table) {
+    for (int i = 0; i < table->capacity; i++) {
+        Entry* entry = &table->entries[i];
+        markValue(entry->key);
+        markValue(entry->value);
+    }
+}
+
 void tableRemoveWhie(Table* table) {
     for (int i = 0; i < table->capacity; i++) {
         Entry* entry = &table->entries[i];

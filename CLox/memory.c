@@ -9,7 +9,6 @@
 #include "table.h"
 
 #ifdef DEBUG_LOG_GC
-#include "debug.h"
 #include <stdio.h>
 #endif // DEBUG_LOG_GC
 
@@ -28,10 +27,10 @@ void* reallocate(void *pointer, size_t oldSize, const size_t newSize) {
 #ifdef DEBUG_STRESS_GC
     collectGarbage();
 #endif // DEBUG_STRESS_GC
-  }
 
-  if(vm.bytesAllocated > vm.nextGC){
-    collectGarbage();
+    if(vm.bytesAllocated > vm.nextGC){
+      collectGarbage();
+    }
   }
 
   if (newSize == 0) {
@@ -143,6 +142,7 @@ static void markRoots() {
     markValue(*slot);
   }
 
+  markTable(&vm.globals.globalNames);
   for (int i = 0; i < vm.globals.count; i++) {
     markValue(vm.globals.values[i].value);
   }
