@@ -59,9 +59,7 @@ static void runtimeError(const char *format, ...)
 static void defineNative(const char *name, const NativeFn function)
 {
     push(OBJ_VAL(copyString(name, (int)strlen(name))));
-    printf("-------------------------------- before function\n");
     push(OBJ_VAL(newNative(function)));
-    printf("-------------------------------- after function\n");
     defineGlobal(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1], true);
     popn(2);
 }
