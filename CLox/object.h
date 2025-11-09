@@ -18,8 +18,7 @@
 #define AS_STRING(value) ((ObjString *)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString *)AS_OBJ(value))->chars)
 
-typedef enum
-{
+typedef enum {
     OBJ_CLOSURE,
     OBJ_FUNCTION,
     OBJ_NATIVE,
@@ -27,31 +26,27 @@ typedef enum
     OBJ_UPVALUE
 } ObjType;
 
-struct Obj
-{
+struct Obj {
     ObjType type;
     bool isMarked;
     Obj* next;
 };
 
-struct ObjString
-{
+struct ObjString {
     Obj obj;
     int length;
     uint32_t hash;
     char chars[];
 };
 
-typedef struct ObjUpvalue
-{
+typedef struct ObjUpvalue {
     Obj obj;
     Value* location;
     Value closed;
     struct ObjUpvalue* next;
 } ObjUpvalue;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     int arity;
     int upvalueCount;
@@ -59,8 +54,7 @@ typedef struct
     ObjString* name;
 } ObjFunction;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     ObjFunction* function;
     ObjUpvalue** upvalues;
@@ -69,8 +63,7 @@ typedef struct
 
 typedef bool (*NativeFn)(int argCount, Value* args);
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     NativeFn function;
 } ObjNative;
