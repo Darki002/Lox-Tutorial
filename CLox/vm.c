@@ -59,7 +59,9 @@ static void runtimeError(const char *format, ...)
 static void defineNative(const char *name, const NativeFn function)
 {
     push(OBJ_VAL(copyString(name, (int)strlen(name))));
+    printf("-------------------------------- before function\n");
     push(OBJ_VAL(newNative(function)));
+    printf("-------------------------------- after function\n");
     defineGlobal(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1], true);
     popn(2);
 }
@@ -101,8 +103,7 @@ void push(const Value value)
     vm.stackTop++;
 }
 
-Value pop()
-{
+Value pop() {
     vm.stackTop--;
     return *vm.stackTop;
 }
@@ -224,15 +225,15 @@ bool isTruthy(const Value v)
     return true;
 }
 
-static void concatenate()
-{
-    const ObjString *b = AS_STRING(pop());
-    const ObjString *a = AS_STRING(peek(0));
+static void concatenate() {
+    const ObjString *b = AS_STRING(peek(0));
+    const ObjString *a = AS_STRING(peek(1));
 
     const ObjString *result = concatenateStrings(a->chars, a->length, b->chars, b->length);
 
     const Value resultVal = OBJ_VAL(result);
     tableSet(&vm.strings, resultVal, NIL_VAL);
+    pop();
     replace(resultVal);
 }
 

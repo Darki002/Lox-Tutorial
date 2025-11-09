@@ -85,7 +85,9 @@ ObjString* copyString(const char* chars, const int length)
     memcpy(string->chars, chars, length);
     string->chars[length] = '\0';
     string->hash = hash;
+    push(OBJ_VAL(string));
     tableSet(&vm.strings, OBJ_VAL(string), NIL_VAL);
+    pop();
     return string;
 }
 
@@ -110,7 +112,11 @@ ObjString* concatenateStrings(const char* aChars, const int aLength, const char*
     memcpy(result->chars + aLength, bChars, bLength);
     result->chars[length] = '\0';
     result->hash = hashString(result->chars, length);
-    return internString(result);
+
+    push(OBJ_VAL(result));
+    result = internString(result);
+    pop();
+    return result;
 }
 
 ObjUpvalue* newUpvalue(Value* slot)
