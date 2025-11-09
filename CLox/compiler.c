@@ -1696,7 +1696,6 @@ void markCompilerRoots() {
     Compiler* compiler = current;
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);
-        compiler->locals
         compiler = compiler->enclosing;
     }
 }
