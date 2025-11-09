@@ -25,14 +25,18 @@ typedef struct {
     Globals globals;
     Table strings;
     ObjUpvalue* openUpvalues;
+
     Obj* objects;
+    int grayCount;
+    int grayCapacity;
+    Obj** grayStack;
 } VM;
 
 typedef enum {
     INTERPRET_OK,
     INTERPRET_COMPILE_ERROR,
     INTERPRET_RUNTIME_ERROR
-  } InterpretResult;
+} InterpretResult;
 
 extern VM vm;
 
