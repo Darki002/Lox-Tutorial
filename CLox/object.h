@@ -30,7 +30,8 @@ typedef enum
 struct Obj
 {
     ObjType type;
-    Obj *next;
+    bool isMarked;
+    Obj* next;
 };
 
 struct ObjString
@@ -44,9 +45,9 @@ struct ObjString
 typedef struct ObjUpvalue
 {
     Obj obj;
-    Value *location;
+    Value* location;
     Value closed;
-    struct ObjUpvalue *next;
+    struct ObjUpvalue* next;
 } ObjUpvalue;
 
 typedef struct
@@ -55,18 +56,18 @@ typedef struct
     int arity;
     int upvalueCount;
     Chunk chunk;
-    ObjString *name;
+    ObjString* name;
 } ObjFunction;
 
 typedef struct
 {
     Obj obj;
-    ObjFunction *function;
-    ObjUpvalue **upvalues;
+    ObjFunction* function;
+    ObjUpvalue** upvalues;
     int upvalueCount;
 } ObjClosure;
 
-typedef bool (*NativeFn)(int argCount, Value *args);
+typedef bool (*NativeFn)(int argCount, Value* args);
 
 typedef struct
 {
@@ -74,15 +75,15 @@ typedef struct
     NativeFn function;
 } ObjNative;
 
-ObjClosure *newClosure(ObjFunction *function);
-ObjFunction *newFunction();
-ObjNative *newNative(NativeFn function);
-ObjString *allocateString(int length);
-uint32_t hashString(const char *key, int length);
-ObjString *internString(ObjString *string);
-ObjString *copyString(const char *chars, int length);
-ObjString *concatenateStrings(const char *aChars, int aLength, const char *bChars, int bLength);
-ObjUpvalue *newUpvalue(Value *slot);
+ObjClosure* newClosure(ObjFunction* function);
+ObjFunction* newFunction();
+ObjNative* newNative(NativeFn function);
+ObjString* allocateString(int length);
+uint32_t hashString(const char* key, int length);
+ObjString* internString(ObjString* string);
+ObjString* copyString(const char* chars, int length);
+ObjString* concatenateStrings(const char* aChars, int aLength, const char* bChars, int bLength);
+ObjUpvalue* newUpvalue(Value* slot);
 void printObject(Value value);
 
 static inline bool isObjType(const Value value, const ObjType type)

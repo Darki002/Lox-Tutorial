@@ -19,7 +19,10 @@
 			"xtr1common": "c",
 			"compare": "c",
 			"cstddef": "c",
-			"limits": "c"
+			"limits": "c",
+			"utility": "c",
+			"chunk.h": "c",
+			"initializer_list": "c"
 		}
 	}
 }
