@@ -1,4 +1,5 @@
 #include "memory.h"
+#include <stddef.h>
 #include <stdlib.h>
 
 #include "object.h"
@@ -10,8 +11,9 @@
 #ifdef DEBUG_LOG_GC
 #include "debug.h"
 #include <stdio.h>
-
 #endif // DEBUG_LOG_GC
+
+#define GC_HEAP_GROW_FACTOR 2
 
 /*
  oldSize | newSize | Operation
@@ -20,11 +22,16 @@
  Non-Zero | Smaller than oldSize | Shrink existing allocation
  Non-zero | Larger than oldSize | Grow existing allocation.
  */
-void *reallocate(void *pointer, size_t oldSize, const size_t newSize) {
+void* reallocate(void *pointer, size_t oldSize, const size_t newSize) {
+  vm.bytesAllocated += newSize - oldSize;
   if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
     collectGarbage();
 #endif // DEBUG_STRESS_GC
+  }
+
+  if(vm.bytesAllocated > vm.nextGC){
+    collectGarbage();
   }
 
   if (newSize == 0) {
@@ -187,6 +194,7 @@ static void sweep() {
 void collectGarbage() {
 #ifdef DEBUG_LOG_GC
   printf("-- gc begin\n");
+  size_t before = vm.bytesAllocated;
 #endif // DEBUG_LOG_GC
 
   markRoots();
@@ -194,8 +202,12 @@ void collectGarbage() {
   tableRemoveWhie(&vm.strings);
   sweep();
 
+  vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
+
 #ifdef DEBUG_LOG_GC
   printf("-- gc end\n");
+  printf("   collected %zu bytes (fromn %zu to %zu) next at %zu\n", 
+      before - vm.bytesAllocated, before, vm.bytesAllocated, vm.nextGC);
 #endif // DEBUG_LOG_GC
 }
 

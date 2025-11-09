@@ -67,6 +67,8 @@ static void defineNative(const char *name, const NativeFn function)
 void initVM()
 {
     resetStack();
+    vm.bytesAllocated = 0;
+    vm.nextGC = 1024 * 1024;
     vm.objects = NULL;
     vm.grayCount = 0;
     vm.grayCapacity = 0;
