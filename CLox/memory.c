@@ -76,7 +76,7 @@ static void markArray(ValueArray* array) {
     }
 }
 
-static void blackenobject(Obj* object) {
+static void blackenObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
     printf("%p blacken ", (void*)object);
     printValue(OBJ_VAL(object));
@@ -163,7 +163,7 @@ static void markRoots() {
 static void traceReferences() {
     while (vm.grayCount > 0) {
         Obj* object = vm.grayStack[--vm.grayCount];
-        blackenobject(object);
+        blackenObject(object);
     }
 }
 
