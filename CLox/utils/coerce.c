@@ -1,10 +1,8 @@
 ﻿#include <stdio.h>
 #include <string.h>
-
-#include "coerce.h"
-
 #include <stdlib.h>
 
+#include "coerce.h"
 #include "../object.h"
 
 static ObjString *functionToString(const ObjFunction *function)
@@ -55,7 +53,7 @@ Value toString(const Value value)
         return OBJ_VAL(string);
     }
     case VAL_NIL:
-        copyString("nil", 3);
+        return OBJ_VAL(copyString("nil", 3));
     case VAL_NUMBER:
     {
         char buffer[64];
@@ -105,7 +103,6 @@ bool toNumber(const Value value, Value *out)
 
     while (*end == ' ' || *end == '\r' || *end == '\t' || *end == '\n')
         end++;
-
     if (*end != '\0')
         return false;
     if (errno == ERANGE)
