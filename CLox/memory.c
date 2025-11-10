@@ -46,8 +46,8 @@ void* reallocate(void *pointer, size_t oldSize, const size_t newSize) {
 
 void markObject(Obj *object) {
   if (object == NULL) return;
-  if(isMarked(object)) return;
-  setIsMarked(object, true);
+  if(getMarkValue(object) == vm.markValue) return;
+  setIsMarked(object, vm.markValue);
 
   if(vm.grayCapacity < vm.grayCount + 1) {
     vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
@@ -172,8 +172,7 @@ static void sweep() {
     Obj* current = vm.objects;
 
     while (current != NULL) {
-        if(isMarked(current)){
-            setIsMarked(current, false);
+        if(getMarkValue(current) == vm.markValue){
             previous = current;
             current = nextObj(current);
         } else {
@@ -202,6 +201,7 @@ void collectGarbage() {
   tableRemoveWhiet(&vm.strings);
   sweep();
 
+  vm.markValue = !vm.markValue;
   vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
 
 #ifdef DEBUG_LOG_GC

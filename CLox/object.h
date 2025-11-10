@@ -81,7 +81,7 @@ static inline ObjType objType(Obj* object) {
     return (ObjType)((object->header >> 56) & 0xff);
 }
 
-static inline bool isMarked(Obj* object) {
+static inline bool getMarkValue(Obj* object) {
     return (bool)((object->header >> 48) & 0x01);
 }
 

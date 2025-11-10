@@ -8,11 +8,11 @@
 #include "vm.h"
 
 #define ALLOCATE_OBJ(type, objectType) \
-    (type *)allocateObject(sizeof(type), objectType)
+    (type*)allocateObject(sizeof(type), objectType)
 
 static Obj* allocateObject(const size_t size, const ObjType type) {
     Obj* obj = reallocate(NULL, 0, size);
-    obj->header = (uint64_t)vm.objects | (uint64_t)type << 56;
+    obj->header = (uint64_t)vm.objects | (uint64_t)vm.markValue << 48 | (uint64_t)type << 56;
     vm.objects = obj;
 
 #ifdef DEBUG_LOG_GC

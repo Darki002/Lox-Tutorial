@@ -4,6 +4,7 @@
 #include "object.h"
 #include "table.h"
 #include "value.h"
+#include "vm.h"
 
 
 void initTable(Table* table) {
@@ -152,7 +153,7 @@ void markTable(Table* table) {
 void tableRemoveWhiet(Table* table) {
     for (int i = 0; i < table->capacity; i++) {
         Entry* entry = &table->entries[i];
-        if(entry->key.type != VAL_EMPTY && IS_OBJ(entry->key) && !isMarked(AS_OBJ(entry->key))){
+        if(entry->key.type != VAL_EMPTY && IS_OBJ(entry->key) && getMarkValue(AS_OBJ(entry->key)) != vm.markValue) {
             tableDelete(table, entry->key);
         }
     }
