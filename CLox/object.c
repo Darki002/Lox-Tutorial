@@ -12,6 +12,7 @@
 
 static Obj* allocateObject(const size_t size, const ObjType type) {
     Obj* obj = reallocate(NULL, 0, size);
+    obj->referenceCount = 0;
     obj->header = (uint64_t)vm.objects | (uint64_t)vm.markValue << 48 | (uint64_t)type << 56;
     vm.objects = obj;
 

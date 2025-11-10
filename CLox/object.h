@@ -27,6 +27,7 @@ typedef enum {
 } ObjType;
 
 struct Obj {
+    uint32_t referenceCount;
     uint64_t header;
 };
 
