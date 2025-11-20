@@ -13,7 +13,7 @@
 static Obj* allocateObject(const size_t size, const ObjType type) {
     Obj* obj = reallocate(NULL, 0, size);
     obj->referenceCount = 0;
-    obj->header = (uint64_t)vm.objects | (uint64_t)vm.markValue << 48 | (uint64_t)type << 56;
+    obj->header = (uint64_t)vm.objects | (uint64_t)type << 56;
     vm.objects = obj;
 
 #ifdef DEBUG_LOG_GC
@@ -35,6 +35,9 @@ ObjClosure* newClosure(ObjFunction* function)
     closure->function = function;
     closure->upvalues = upvalues;
     closure->upvalueCount = function->upvalueCount;
+    
+    addReference((Obj*)function);
+
     return closure;
 }
 
@@ -84,9 +87,7 @@ ObjString* copyString(const char* chars, const int length)
     memcpy(string->chars, chars, length);
     string->chars[length] = '\0';
     string->hash = hash;
-    push(OBJ_VAL(string));
     tableSet(&vm.strings, OBJ_VAL(string), NIL_VAL);
-    pop();
     return string;
 }
 

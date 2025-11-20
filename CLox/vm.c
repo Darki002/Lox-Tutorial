@@ -59,22 +59,15 @@ static void runtimeError(const char *format, ...)
 
 static void defineNative(const char *name, const NativeFn function)
 {
-    push(OBJ_VAL(copyString(name, (int)strlen(name))));
-    push(OBJ_VAL(newNative(function)));
-    defineGlobal(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1], true);
-    popn(2);
+    ObjString* nameObj = copyString(name, (int)strlen(name));
+    Value native = OBJ_VAL(newNative(function));
+    defineGlobal(&vm.globals, nameObj, native, true);
 }
 
 void initVM()
 {
     resetStack();
-    vm.markValue = true;
-    vm.bytesAllocated = 0;
-    vm.nextGC = 1024 * 1024;
     vm.objects = NULL;
-    vm.grayCount = 0;
-    vm.grayCapacity = 0;
-    vm.grayStack = NULL;
 
     initGlobals(&vm.globals);
     initTable(&vm.strings);
@@ -97,20 +90,24 @@ void freeVM()
     freeTable(&vm.strings);
 }
 
-void push(const Value value)
+void push(Value value)
 {
+    addValueReference(&value);
     *vm.stackTop = value;
     vm.stackTop++;
 }
 
 Value pop() {
     vm.stackTop--;
+    removeValueReference(vm.stackTop);
     return *vm.stackTop;
 }
 
 Value popn(const int n)
 {
-    vm.stackTop -= n;
+    for (int i = 0; i < n; i++) {
+        pop();
+    }
     return *vm.stackTop;
 }
 
@@ -121,6 +118,7 @@ Value peek(const int distance)
 
 void replace(const Value value)
 {
+    removeValueReference(vm.stackTop - 1);
     *(vm.stackTop - 1) = value;
 }
 
@@ -142,6 +140,10 @@ static bool call(ObjClosure *closure, const uint8_t argCount)
     frame->closure = closure;
     frame->ip = closure->function->chunk.code;
     frame->slots = vm.stackTop - argCount - 1;
+
+    addReference((Obj*)frame);
+    addReference((Obj*)closure);
+
     return true;
 }
 
@@ -151,21 +153,21 @@ static bool callValue(const Value callee, const uint8_t argCount)
     {
         switch (OBJ_TYPE(callee))
         {
-        case OBJ_CLOSURE:
-            return call(AS_CLOSURE(callee), argCount);
-        case OBJ_NATIVE:
-        {
-            const NativeFn native = AS_NATIVE(callee);
-            if (native(argCount, vm.stackTop - argCount))
+            case OBJ_CLOSURE:
+                return call(AS_CLOSURE(callee), argCount);
+            case OBJ_NATIVE:
             {
-                vm.stackTop -= argCount;
-                return true;
+                const NativeFn native = AS_NATIVE(callee);
+                if (native(argCount, vm.stackTop - argCount))
+                {
+                    vm.stackTop -= argCount;
+                    return true;
+                }
+                runtimeError(AS_STRING(vm.stackTop[-argCount - 1])->chars);
+                return false;
             }
-            runtimeError(AS_STRING(vm.stackTop[-argCount - 1])->chars);
-            return false;
-        }
-        default:
-            break;
+            default:
+                break;
         }
     }
     runtimeError("Can only call functions and classes.");
@@ -189,6 +191,8 @@ static ObjUpvalue *captureUpvalue(Value *local)
 
     ObjUpvalue *createdUpvalue = newUpvalue(local);
     createdUpvalue->next = upvalue;
+    addReference((Obj*)upvalue);
+
     if (prevUpvalue == NULL)
     {
         vm.openUpvalues = createdUpvalue;
@@ -207,7 +211,9 @@ static void closeUpvalues(const Value *last)
         ObjUpvalue *upvalue = vm.openUpvalues;
         upvalue->closed = *upvalue->location;
         upvalue->location = &upvalue->closed;
+        addValueReference(&upvalue->closed);
         vm.openUpvalues = upvalue->next;
+        removeReference((Obj*)upvalue);
     }
 }
 
@@ -421,18 +427,23 @@ static InterpretResult run()
         case OP_DEFINE_GLOBAL:
         {
             const int index = READ_INDEX();
+            Value value = peek(0);
+            addValueReference(&value);
             SET_GLOBAL(index, pop());
             break;
         }
         case OP_SET_GLOBAL:
         {
             const int index = READ_INDEX();
-            if (!setGlobal(vm.globals, index, peek(0)))
+            removeValueReference(&GET_GLOBAL(index));
+            Value value = peek(0);
+            if (!setGlobal(vm.globals, index, value))
             {
                 frame->ip = ip;
                 runtimeError("Undefined variable.");
                 return INTERPRET_RUNTIME_ERROR;
             }
+            addValueReference(&value);
             break;
         }
         case OP_GET_UPVALUE:
@@ -616,6 +627,7 @@ static InterpretResult run()
                 {
                     closure->upvalues[i] = frame->closure->upvalues[index];
                 }
+                addReference((Obj*)closure->upvalues[i]);
             }
             break;
         }
@@ -629,6 +641,7 @@ static InterpretResult run()
         {
             const Value result = pop();
             closeUpvalues(frame->slots);
+            removeReference((Obj*) &vm.frames[vm.frameCount - 1]);
             vm.frameCount--;
             if (vm.frameCount == 0)
             {
@@ -658,12 +671,8 @@ static InterpretResult run()
 InterpretResult interpret(const char *source)
 {
     ObjFunction *function = compile(source);
-    if (function == NULL)
-        return INTERPRET_COMPILE_ERROR;
-
-    push(OBJ_VAL(function));
+    if (function == NULL) return INTERPRET_COMPILE_ERROR;
     ObjClosure *closure = newClosure(function);
-    pop();
     push(OBJ_VAL(closure));
     call(closure, 0);
 

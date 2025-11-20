@@ -27,7 +27,7 @@ typedef enum {
 } ObjType;
 
 struct Obj {
-    uint32_t referenceCount;
+    uint16_t referenceCount;
     uint64_t header;
 };
 
@@ -82,16 +82,8 @@ static inline ObjType objType(Obj* object) {
     return (ObjType)((object->header >> 56) & 0xff);
 }
 
-static inline bool getMarkValue(Obj* object) {
-    return (bool)((object->header >> 48) & 0x01);
-}
-
 static inline Obj* nextObj(Obj* object) {
     return (Obj*)(object->header & 0x0000ffffffffffff);
-}
-
-static inline void setIsMarked(Obj* object, bool isMarked) {
-    object->header = (object->header & 0xff00ffffffffffff) | ((uint64_t)isMarked << 48);
 }
 
 static inline void setNextObj(Obj* object, Obj* next) {

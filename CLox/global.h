@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "table.h"
 
+#define GET_GLOBAL(index) (vm.globals.values[index].value)
 #define SET_GLOBAL(index, v) (vm.globals.values[index].value = v)
 
 #define IS_IMMUTABLE_GLOBAL(index)  (vm.globals.values[index].immutable)

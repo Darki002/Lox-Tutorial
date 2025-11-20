@@ -351,6 +351,7 @@ static void initCompiler(Compiler *compiler, const FunctionType type, ObjString 
     compiler->function = newFunction();
     current = compiler;
     current->function->name = name;
+    addReference((Obj*)name);
 
     Local *local = &current->locals[current->localCount++];
     local->depth = 0;
@@ -1690,12 +1691,4 @@ ObjFunction *compile(const char *source)
 
     ObjFunction *function = endCompiler();
     return parser.hadError ? NULL : function;
-}
-
-void markCompilerRoots() {
-    Compiler* compiler = current;
-    while (compiler != NULL) {
-        markObject((Obj*)compiler->function);
-        compiler = compiler->enclosing;
-    }
 }
