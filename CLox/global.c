@@ -1,4 +1,5 @@
 ﻿#include "global.h"
+#include "memory.h"
 
 void initGlobals(Globals* globals) {
     initTable(&globals->globalNames);
@@ -32,9 +33,11 @@ int declareGlobal(Globals* globals, const ObjString* name, const bool immutable)
     return newIndex;
 }
 
-void defineGlobal(Globals* globals, const ObjString* name, const Value value, const bool immutable) {
+void defineGlobal(Globals* globals, const ObjString* name, Value value, const bool immutable) {
     const int index = declareGlobal(globals, name, immutable);
-   globals->values[index].value = value;
+    globals->values[index].value = value;
+    addReference((Obj*)name);
+    addValueReference(&value);
 }
 
 bool lookUpGlobal(const Globals* globals, const ObjString* name, int* out) {

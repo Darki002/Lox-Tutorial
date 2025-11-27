@@ -9,6 +9,7 @@
 
 #include "debug.h"
 #include "compiler.h"
+#include "global.h"
 #include "memory.h"
 #include "object.h"
 #include "stdlib/cast.h"
@@ -85,6 +86,7 @@ void initVM()
 
 void freeVM()
 {
+    printf("Free VM\n");
     freeObjects();
     freeGlobals(&vm.globals);
     freeTable(&vm.strings);
@@ -99,6 +101,7 @@ void push(Value value)
 
 Value pop() {
     vm.stackTop--;
+    printValue(*vm.stackTop);
     removeValueReference(vm.stackTop);
     return *vm.stackTop;
 }
@@ -141,7 +144,6 @@ static bool call(ObjClosure *closure, const uint8_t argCount)
     frame->ip = closure->function->chunk.code;
     frame->slots = vm.stackTop - argCount - 1;
 
-    addReference((Obj*)frame);
     addReference((Obj*)closure);
 
     return true;
@@ -639,18 +641,23 @@ static InterpretResult run()
         }
         case OP_RETURN:
         {
-            const Value result = pop();
+            Value result = peek(0);
+            addValueReference(&result);
+            pop();
+
             closeUpvalues(frame->slots);
-            removeReference((Obj*) &vm.frames[vm.frameCount - 1]);
+            removeReference((Obj*) vm.frames[vm.frameCount - 1].closure);
             vm.frameCount--;
             if (vm.frameCount == 0)
             {
-                pop();
+                Value ka = pop();
+                printValue(ka);
                 return INTERPRET_OK;
             }
 
             vm.stackTop = frame->slots;
             push(result);
+            removeValueReference(&result);
             frame = &vm.frames[vm.frameCount - 1];
             ip = frame->ip;
             break;
@@ -675,6 +682,5 @@ InterpretResult interpret(const char *source)
     ObjClosure *closure = newClosure(function);
     push(OBJ_VAL(closure));
     call(closure, 0);
-
     return run();
 }

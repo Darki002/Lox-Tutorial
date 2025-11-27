@@ -53,7 +53,9 @@ static void freeObject(Obj *object) {
     }
     case OBJ_FUNCTION: {
         ObjFunction *function = (ObjFunction *)object;
-        removeReference((Obj*)function->name);
+        if (function->name != NULL) {
+          removeReference((Obj*)function->name);
+        }
         freeChunk(&function->chunk);
         FREE(ObjFunction, function);
         break;
@@ -100,6 +102,7 @@ void removeReference(Obj* obj) {
 #ifdef DEBUG_LOG_GC
   printf("referenc from %d is zero. Freeing object. \n", objType(obj));
 #endif
+    // TODO: remove from the linked list somehow.
     freeObject(obj);
   }
 }

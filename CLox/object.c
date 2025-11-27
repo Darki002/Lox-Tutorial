@@ -15,11 +15,6 @@ static Obj* allocateObject(const size_t size, const ObjType type) {
     obj->referenceCount = 0;
     obj->header = (uint64_t)vm.objects | (uint64_t)type << 56;
     vm.objects = obj;
-
-#ifdef DEBUG_LOG_GC
-    printf("%p allocate %zu for %d\n", (void*)obj, size, type);
-#endif // DEBUG_LOG_GC
-
     return obj;
 }
 
