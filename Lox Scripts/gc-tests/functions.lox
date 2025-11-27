@@ -1,0 +1,10 @@
+fun ka(str) {
+    retunr fun() { print str; }
+}
+
+var f = ka("hoi");
+f();
+
+f = nil;
+
+// Expected: "hoi" is freed by GC after f is newly assigned.

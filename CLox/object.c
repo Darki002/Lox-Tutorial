@@ -113,9 +113,7 @@ ObjString* concatenateStrings(const char* aChars, const int aLength, const char*
     result->chars[length] = '\0';
     result->hash = hashString(result->chars, length);
 
-    push(OBJ_VAL(result));
     result = internString(result);
-    pop();
     return result;
 }
 

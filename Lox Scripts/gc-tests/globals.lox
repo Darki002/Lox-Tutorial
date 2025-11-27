@@ -1,0 +1,5 @@
+var ka = "hoi";
+
+ka = "alskidjf";
+
+// Expected: "hoi" is freed by GC.

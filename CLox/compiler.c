@@ -351,7 +351,9 @@ static void initCompiler(Compiler *compiler, const FunctionType type, ObjString 
     compiler->function = newFunction();
     current = compiler;
     current->function->name = name;
-    addReference((Obj*)name);
+    if(name != NULL){
+        addReference((Obj*)name);
+    }
 
     Local *local = &current->locals[current->localCount++];
     local->depth = 0;
