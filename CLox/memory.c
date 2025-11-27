@@ -6,7 +6,6 @@
 #include "value.h"
 #include "table.h"
 #include "vm.h"
-#include "compiler.h"
 #include "table.h"
 
 #ifdef DEBUG_LOG_GC
