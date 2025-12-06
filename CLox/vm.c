@@ -101,7 +101,6 @@ void push(Value value)
 
 Value pop() {
     vm.stackTop--;
-    printValue(*vm.stackTop);
     removeValueReference(vm.stackTop);
     return *vm.stackTop;
 }
@@ -651,7 +650,6 @@ static InterpretResult run()
             if (vm.frameCount == 0)
             {
                 Value ka = pop();
-                printValue(ka);
                 return INTERPRET_OK;
             }
 

@@ -81,7 +81,7 @@ static void freeObject(Obj *object) {
 
 void addReference(Obj *obj) {
 #ifdef DEBUG_LOG_GC
-  printf("add referenc to %d\n", objType(obj));
+  printf("%p add referenc to %d\n", obj, objType(obj));
 #endif // D
   obj->referenceCount++;
 }
@@ -94,7 +94,7 @@ void addValueReference(Value *value){
 
 void removeReference(Obj* obj) {
 #ifdef DEBUG_LOG_GC
-  printf("remove referenc from %d new ref count %i\n", objType(obj), obj->referenceCount - 1);
+  printf("%p remove referenc from %d new ref count %i\n", obj, objType(obj), obj->referenceCount - 1);
 #endif
   obj->referenceCount--;
 
@@ -102,7 +102,20 @@ void removeReference(Obj* obj) {
 #ifdef DEBUG_LOG_GC
   printf("referenc from %d is zero. Freeing object. \n", objType(obj));
 #endif
-    // TODO: remove from the linked list somehow.
+
+    Obj* prevObject = NULL;
+    Obj *object = vm.objects;
+    while (object != NULL && object != obj) {
+      prevObject = object;
+      object = nextObj(object);
+    }
+
+    if(prevObject != NULL) {
+      setNextObj(prevObject, nextObj(obj));
+    } else {
+      vm.objects = nextObj(obj);
+    }
+
     freeObject(obj);
   }
 }

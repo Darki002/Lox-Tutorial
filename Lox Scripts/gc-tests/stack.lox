@@ -3,5 +3,6 @@
 }
 
 print "ka";
+print "ka";
 
 // Expected: "hoi" is freed by GC after leaving the stack. 
