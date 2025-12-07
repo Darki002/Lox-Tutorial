@@ -1,8 +1,11 @@
 #include "compiler.h"
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "chunk.h"
 #include "memory.h"
 #include "scanner.h"
 #include "object.h"
@@ -451,9 +454,8 @@ static void function(FunctionType type, ObjString *name);
 static ParseRule *getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-static int identifierConstant(const Token *name, const bool isAssignment, const bool immutable)
-{
-    const ObjString *nameStr = copyString(name->start, name->length);
+static int identifierConstant(const Token *name, const bool isAssignment, const bool immutable) {
+    const ObjString* nameStr = copyString(name->start, name->length);
 
     int index;
     if (lookUpGlobal(&vm.globals, nameStr, &index))
@@ -469,10 +471,8 @@ static int identifierConstant(const Token *name, const bool isAssignment, const 
     return declareGlobal(&vm.globals, nameStr, immutable);
 }
 
-static bool identifiersEqual(const Token *a, const Token *b)
-{
-    if (a->length != b->length)
-        return false;
+static bool identifiersEqual(const Token* a, const Token* b) {
+    if (a->length != b->length) return false;
     return memcmp(a->start, b->start, a->length) == 0;
 }
 
@@ -555,8 +555,7 @@ static void addLocal(const Token name, const bool immutable)
 
 static void declareVariable(const bool immutable)
 {
-    if (current->scopeDepth == 0)
-        return;
+    if (current->scopeDepth == 0) return;
 
     const Token *name = &parser.previous;
 
@@ -582,9 +581,7 @@ static int parseVariable(const char *errorMessage, const bool immutable)
     consume(TOKEN_IDENTIFIER, errorMessage);
 
     declareVariable(immutable);
-    if (current->scopeDepth > 0)
-        return 0;
-
+    if (current->scopeDepth > 0) return 0;
     return identifierConstant(&parser.previous, true, immutable);
 }
 
@@ -1183,6 +1180,20 @@ static void function(const FunctionType type, ObjString *name)
     }
 }
 
+static void classDeclaration() {
+    consume(TOKEN_IDENTIFIER, "Expect class name.");
+
+    const ObjString* nameStr = copyString(parser.previous.start, parser.previous.length);
+    int nameConst = addConstant(currentChunk(), OBJ_VAL(nameStr));
+    declareVariable(false); // TODO: it can be a global or local
+
+    emitBytes(OP_CLASS, nameConst);
+    makeInitialized();
+
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
+}
+
 static void funDeclaration()
 {
     const int index = parseVariable("Expect function name.", true);
@@ -1651,7 +1662,11 @@ static void statement()
 
 static void declaration()
 {
-    if (match(TOKEN_FUN))
+    if(match(TOKEN_CLASS))
+    {
+        classDeclaration();
+    }
+    else if (match(TOKEN_FUN))
     {
         funDeclaration();
     }
