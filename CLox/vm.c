@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "chunk.h"
 #include "common.h"
 #include "vm.h"
 
@@ -642,6 +643,9 @@ static InterpretResult run()
             ip = frame->ip;
             break;
         }
+        case OP_CLASS: 
+            push(OBJ_VAL(newClass(AS_STRING(READ_CONSTANT()))));
+            break;
         default:
             break; // Unreachable
         }
