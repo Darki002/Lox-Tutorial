@@ -587,8 +587,7 @@ static int parseVariable(const char *errorMessage, const bool immutable)
 
 static void makeInitialized()
 {
-    if (current->scopeDepth == 0)
-        return;
+    if (current->scopeDepth == 0) return;
     current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
@@ -1181,14 +1180,16 @@ static void function(const FunctionType type, ObjString *name)
 }
 
 static void classDeclaration() {
-    consume(TOKEN_IDENTIFIER, "Expect class name.");
+    const int index = parseVariable("Expect class name.", true);
 
-    const ObjString* nameStr = copyString(parser.previous.start, parser.previous.length);
+    const Token* name = &parser.previous;
+    const ObjString* nameStr = copyString(name->start, name->length);
     int nameConst = addConstant(currentChunk(), OBJ_VAL(nameStr));
-    declareVariable(false); // TODO: it can be a global or local
+
+    makeInitialized();
 
     emitBytes(OP_CLASS, nameConst);
-    makeInitialized();
+    defineVariable(index, name->line);
 
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
