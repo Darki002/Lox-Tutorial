@@ -84,6 +84,10 @@ static void blackenObject(Obj* object) {
 #endif // DEBUG_LOG_GC
 
     switch (objType(object)) {
+        case OBJ_CLASS:
+          ObjClass* klass = (ObjClass*)object;
+          markObject((Obj*)klass->name);
+          break;
         case OBJ_CLOSURE:
             ObjClosure* closure = (ObjClosure*)object;
             markObject((Obj*)closure->function);
@@ -111,6 +115,9 @@ static void freeObject(Obj *object) {
 #endif // DEBUG_LOG_GC
 
   switch (objType(object)) {
+    case OBJ_CLASS:
+      FREE(ObjClass, object);
+      break;
     case OBJ_CLOSURE: {
         const ObjClosure *closure = (ObjClosure *)object;
         FREE_ARRAY(ObjClosure *, closure->upvalues, closure->upvalueCount);

@@ -22,9 +22,10 @@ static Obj* allocateObject(const size_t size, const ObjType type) {
     return obj;
 }
 
-
 ObjClass* newClass(ObjString* name) {
-    
+    ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
+    klass->name = name;
+    return klass;
 }
 
 ObjClosure* newClosure(ObjFunction* function)
@@ -146,20 +147,23 @@ void printObject(const Value value)
 {
     switch (OBJ_TYPE(value))
     {
-    case OBJ_CLOSURE:
-        printFunction(AS_CLOSURE(value)->function);
-        break;
-    case OBJ_FUNCTION:
-        printFunction(AS_FUNCTION(value));
-        break;
-    case OBJ_NATIVE:
-        printf("<native fn>");
-        break;
-    case OBJ_STRING:
-        printf("%s", AS_CSTRING(value));
-        break;
-    case OBJ_UPVALUE:
-        printf("upvalue");
-        break;
+        case OBJ_CLASS:
+            printf("%s", AS_CLASS(value)->name->chars);
+            break;
+        case OBJ_CLOSURE:
+            printFunction(AS_CLOSURE(value)->function);
+            break;
+        case OBJ_FUNCTION:
+            printFunction(AS_FUNCTION(value));
+            break;
+        case OBJ_NATIVE:
+            printf("<native fn>");
+            break;
+        case OBJ_STRING:
+            printf("%s", AS_CSTRING(value));
+            break;
+        case OBJ_UPVALUE:
+            printf("upvalue");
+            break;
     }
 }
