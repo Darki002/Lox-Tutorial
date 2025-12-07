@@ -100,6 +100,11 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)function->name);
             markArray(&function->chunk.constants);
             break;
+        case OBJ_INSTANCE:
+            ObjInstance* instance = (ObjInstance*)object;
+            markObject((Obj*)instance->klass);
+            markTable(&instance->fields);
+            break;
         case OBJ_UPVALUE:
             markValue(((ObjUpvalue*)object)->closed);
             break;
@@ -119,22 +124,28 @@ static void freeObject(Obj *object) {
       FREE(ObjClass, object);
       break;
     case OBJ_CLOSURE: {
-        const ObjClosure *closure = (ObjClosure *)object;
+        const ObjClosure* closure = (ObjClosure*)object;
         FREE_ARRAY(ObjClosure *, closure->upvalues, closure->upvalueCount);
         FREE(ObjClosure, object);
         break;
     }
     case OBJ_FUNCTION: {
-        ObjFunction *function = (ObjFunction *)object;
+        ObjFunction* function = (ObjFunction*)object;
         freeChunk(&function->chunk);
         FREE(ObjFunction, function);
         break;
+    }
+    case OBJ_INSTANCE: {
+      ObjInstance* instance = (ObjInstance*)object;
+      freeTable(&instance->fields);
+      FREE(ObjInstance, object);
+      break;
     }
     case OBJ_NATIVE:
         FREE(ObjNative, object);
         break;
     case OBJ_STRING: {
-        const ObjString *string = (ObjString *)object;
+        const ObjString* string = (ObjString*)object;
         reallocate(object, sizeof(ObjString) + string->length + 1, 0);
         break;
     }
