@@ -152,21 +152,25 @@ static bool callValue(const Value callee, const uint8_t argCount)
     {
         switch (OBJ_TYPE(callee))
         {
-        case OBJ_CLOSURE:
-            return call(AS_CLOSURE(callee), argCount);
-        case OBJ_NATIVE:
-        {
-            const NativeFn native = AS_NATIVE(callee);
-            if (native(argCount, vm.stackTop - argCount))
-            {
-                vm.stackTop -= argCount;
+            case OBJ_CLASS: {
+                ObjClass* klass = AS_CLASS(callee);
+                vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
                 return true;
             }
-            runtimeError(AS_STRING(vm.stackTop[-argCount - 1])->chars);
-            return false;
-        }
-        default:
-            break;
+            case OBJ_CLOSURE:
+                return call(AS_CLOSURE(callee), argCount);
+            case OBJ_NATIVE: {
+                const NativeFn native = AS_NATIVE(callee);
+                if (native(argCount, vm.stackTop - argCount))
+                {
+                    vm.stackTop -= argCount;
+                    return true;
+                }
+                runtimeError(AS_STRING(vm.stackTop[-argCount - 1])->chars);
+                return false;
+            }
+            default:
+                break;
         }
     }
     runtimeError("Can only call functions and classes.");
