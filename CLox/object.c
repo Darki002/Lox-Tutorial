@@ -22,6 +22,11 @@ static Obj* allocateObject(const size_t size, const ObjType type) {
     return obj;
 }
 
+
+ObjClass* newClass(ObjString* name) {
+    
+}
+
 ObjClosure* newClosure(ObjFunction* function)
 {
     ObjUpvalue** upvalues = ALLOCATE(ObjUpvalue*, function->upvalueCount);
