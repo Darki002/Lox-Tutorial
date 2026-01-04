@@ -780,6 +780,7 @@ static void dot(bool canAssign) {
     const int name = makeIdentifier(&parser.previous);
 
     if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
         emitBytes(OP_SET_PROPERTY, name);
     } else {
         emitBytes(OP_GET_PROPERTY, name);

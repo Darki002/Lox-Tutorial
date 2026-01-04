@@ -14,6 +14,7 @@
 #include "object.h"
 #include "stdlib/cast.h"
 #include "stdlib/joinStr.h"
+#include "table.h"
 #include "utils/stringUtils.h"
 #include "stdlib/time.h"
 #include "stdlib/nativeIo.h"
@@ -450,6 +451,36 @@ static InterpretResult run()
         {
             uint8_t slot = READ_U8();
             *frame->closure->upvalues[slot]->location = peek(0);
+            break;
+        }
+        case OP_GET_PROPERTY: {
+            if(!IS_INSTANCE(peek(0))){
+                runtimeError("Only instances have properties.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+
+            ObjInstance* instance = AS_INSTANCE(peek(0));
+            Value name = READ_CONSTANT();
+
+            Value value;
+            if(tableGet(&instance->fields, name, &value)) {
+                replace(value);
+                break;
+            }
+
+            runtimeError("Undefined property '%s'.", AS_CSTRING(name));
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        case OP_SET_PROPERTY: {
+            if(!IS_INSTANCE(peek(1))){
+                runtimeError("Only instances have properties.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+
+            ObjInstance* instance = AS_INSTANCE(peek(1));
+            tableSet(&instance->fields, READ_CONSTANT(), peek(0));
+            Value value = pop();
+            replace(value);
             break;
         }
         case OP_EQUAL:
