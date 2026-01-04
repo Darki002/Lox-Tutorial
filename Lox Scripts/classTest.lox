@@ -1,0 +1,8 @@
+class Test {}
+
+var t = Test();
+
+t.abc = "hoi";
+
+print hasProperty(t, "abc"); // ture
+print hasProperty(t, "xyz"); // false
