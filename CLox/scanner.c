@@ -1,4 +1,5 @@
 #include "scanner.h"
+#include <stdio.h>
 #include <string.h>
 
 #include "common.h"
@@ -92,34 +93,32 @@ static void skipWhitespace()
         const char c = peek();
         switch (c)
         {
-        case ' ':
-        case '\r':
-        case '\t':
-            advance();
-            break;
-        case '\n':
-            scanner.line++;
-            advance();
-            break;
-        case '/':
-            const char next = peekNext();
-            if (next == '/')
-            {
-                while (peek() != '\n' && !isAtEnd())
-                    advance();
-            }
-            else if (next == '*')
-            {
-                while (peek() != '*' && peekNext() != '/' && !isAtEnd())
-                    advance();
-            }
-            else
-            {
+            case ' ':
+            case '\r':
+            case '\t':
+                advance();
+                break;
+            case '\n':
+                scanner.line++;
+                advance();
+                break;
+            case '/':
+                const char next = peekNext();
+                if (next == '/') {
+                    while (peek() != '\n' && !isAtEnd()) advance();
+                    break;
+                }
+                else if (next == '*') {
+                    while (peek() != '*' && peekNext() != '/' && !isAtEnd()) advance();
+                    break;
+                }
+                else {
+                    return;
+                }
+            default:
                 return;
-            }
-        default:
-            return;
         }
+        printf("Next char %i\n", (int)peek());
     }
 }
 
@@ -392,5 +391,6 @@ Token scanToken()
         return string();
     }
 
+    printf("%i", (int)c);
     return errorToken("Unexpected character.");
 }
