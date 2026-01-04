@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "chunk.h"
+#include "common.h"
 #include "memory.h"
 #include "scanner.h"
 #include "object.h"
@@ -301,27 +302,34 @@ static void emitPopTo(const int targetDepth)
     emitPop(popCount);
 }
 
-static void emitConstant(const Value value)
-{
-    const bool result = writeConstant(currentChunk(), value, parser.previous.line);
-    if (!result)
+static int makeConstant(const Value value) {
+    const int index = addConstant(currentChunk(), value);
+    if (index > UINT24_MAX) {
         error("Too many constants in one chunk.");
-}
-
-static void emitClosure(const ObjFunction *closure)
-{
-    const bool result = writeConstantCode(OP_CLOSURE, currentChunk(), OBJ_VAL(closure), parser.previous.line);
-    if (!result)
-        error("Too many constants in one chunk.");
-}
-
-static void emitIndex(const OpCode code, const int index, const int line)
-{
-    const bool result = writeIndex(code, currentChunk(), index, line);
-    if (!result)
-    {
-        error("Too many identifier in one chunk.");
+        return 0;
     }
+
+    return index;
+}
+
+static int makeIdentifier(const Token* name) {
+    return makeConstant(OBJ_VAL(copyString(name->start,
+                                         name->length)));
+}
+
+static void emitConstant(const Value value) {
+    const bool result = writeConstant(currentChunk(), value, parser.previous.line);
+    if (!result) error("Too many constants in one chunk.");
+}
+
+static void emitClosure(const ObjFunction *closure) {
+    const bool result = writeConstantCode(OP_CLOSURE, currentChunk(), OBJ_VAL(closure), parser.previous.line);
+    if (!result) error("Too many constants in one chunk.");
+}
+
+static void emitIndex(const OpCode code, const int index, const int line) {
+    const bool result = writeIndex(code, currentChunk(), index, line);
+    if (!result) error("Too many identifier in one chunk.");
 }
 
 static void patchJump(const int offset)
@@ -476,8 +484,7 @@ static bool identifiersEqual(const Token* a, const Token* b) {
     return memcmp(a->start, b->start, a->length) == 0;
 }
 
-static int resolveLocal(const Compiler *compiler, const Token *name)
-{
+static int resolveLocal(const Compiler *compiler, const Token *name) {
     for (int i = compiler->localCount - 1; i >= 0; i--)
     {
         const Local *local = &compiler->locals[i];
@@ -493,8 +500,7 @@ static int resolveLocal(const Compiler *compiler, const Token *name)
     return -1;
 }
 
-static uint8_t addUpvalue(Compiler *compiler, const int index, const bool isLocal)
-{
+static uint8_t addUpvalue(Compiler *compiler, const int index, const bool isLocal) {
     const int upvalueCount = compiler->function->upvalueCount;
 
     for (int i = 0; i < upvalueCount; ++i)
@@ -517,8 +523,7 @@ static uint8_t addUpvalue(Compiler *compiler, const int index, const bool isLoca
     return compiler->function->upvalueCount++;
 }
 
-static int resolveUpvalue(Compiler *compiler, const Token *name)
-{
+static int resolveUpvalue(Compiler *compiler, const Token *name) {
     if (compiler->enclosing == NULL)
         return -1;
 
@@ -538,8 +543,7 @@ static int resolveUpvalue(Compiler *compiler, const Token *name)
     return -1;
 }
 
-static void addLocal(const Token name, const bool immutable)
-{
+static void addLocal(const Token name, const bool immutable) {
     if (current->localCount + 1 > UINT8_COUNT)
     {
         error("Too many local variables in function");
@@ -553,8 +557,7 @@ static void addLocal(const Token name, const bool immutable)
     local->isCaptured = false;
 }
 
-static void declareVariable(const bool immutable)
-{
+static void declareVariable(const bool immutable) {
     if (current->scopeDepth == 0) return;
 
     const Token *name = &parser.previous;
@@ -576,8 +579,7 @@ static void declareVariable(const bool immutable)
     addLocal(*name, immutable);
 }
 
-static int parseVariable(const char *errorMessage, const bool immutable)
-{
+static int parseVariable(const char *errorMessage, const bool immutable) {
     consume(TOKEN_IDENTIFIER, errorMessage);
 
     declareVariable(immutable);
@@ -585,14 +587,12 @@ static int parseVariable(const char *errorMessage, const bool immutable)
     return identifierConstant(&parser.previous, true, immutable);
 }
 
-static void makeInitialized()
-{
+static void makeInitialized() {
     if (current->scopeDepth == 0) return;
     current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
-static void defineVariable(const int index, const int line)
-{
+static void defineVariable(const int index, const int line) {
     if (current->scopeDepth > 0)
     {
         makeInitialized();
@@ -601,8 +601,7 @@ static void defineVariable(const int index, const int line)
     emitIndex(OP_DEFINE_GLOBAL, index, line);
 }
 
-static uint8_t argumentList()
-{
+static uint8_t argumentList() {
     uint8_t argCount = 0;
 
     if (!check(TOKEN_RIGHT_PAREN))
@@ -622,8 +621,7 @@ static uint8_t argumentList()
     return argCount;
 }
 
-static void and_(bool _)
-{
+static void and_(bool _) {
     const int endJump = emitJump(OP_JUMP_IF_FALSE);
 
     emitByte(OP_POP);
@@ -632,8 +630,7 @@ static void and_(bool _)
     patchJump(endJump);
 }
 
-static void or_(bool _)
-{
+static void or_(bool _) {
     const int endJump = emitJump(OP_JUMP_IF_TRUE);
 
     emitByte(OP_POP);
@@ -642,8 +639,7 @@ static void or_(bool _)
     patchJump(endJump);
 }
 
-static void binary(bool _)
-{
+static void binary(bool _) {
     const TokenType operatorType = parser.previous.type;
     const ParseRule *rule = getRule(operatorType);
     parsePrecedence((Precedence)(rule->precedence + 1));
@@ -703,8 +699,7 @@ static void binary(bool _)
     }
 }
 
-static ObjString *makeAnonymousName(const int id, const int line)
-{
+static ObjString *makeAnonymousName(const int id, const int line) {
     char buf[64];
     int n = snprintf(buf, sizeof(buf), "anonymous#%d@%d", id, line);
     if (n < 0)
@@ -714,15 +709,13 @@ static ObjString *makeAnonymousName(const int id, const int line)
     return copyString(buf, n);
 }
 
-static void anonymousFunction(bool _)
-{
+static void anonymousFunction(bool _) {
     const int line = parser.previous.line;
     ObjString *debugName = makeAnonymousName(++current->anonymousFunctionCount, line);
     function(TYPE_ANONYMOUS_FUNCTION, debugName);
 }
 
-static void switchExpression(bool _)
-{
+static void switchExpression(bool _) {
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'switch'.");
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
@@ -777,14 +770,23 @@ static void switchExpression(bool _)
     exitControlFlow();
 }
 
-static void call(bool _)
-{
+static void call(bool _) {
     const uint8_t argCount = argumentList();
     emitBytes(OP_CALL, argCount);
 }
 
-static void literal(bool _)
-{
+static void dot(bool canAssign) {
+    consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
+    const int name = makeIdentifier(&parser.previous);
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        emitBytes(OP_SET_PROPERTY, name);
+    } else {
+        emitBytes(OP_GET_PROPERTY, name);
+    }
+}
+
+static void literal(bool _) {
     switch (parser.previous.type)
     {
     case TOKEN_FALSE:
@@ -1029,7 +1031,7 @@ ParseRule rules[] = {
     [TOKEN_LEFT_BRACE]       = {NULL,                 NULL,    PREC_NONE     },
     [TOKEN_RIGHT_BRACE]      = {NULL,                 NULL,    PREC_NONE     },
     [TOKEN_COMMA]            = {NULL,                 NULL,    PREC_NONE     },
-    [TOKEN_DOT]              = {NULL,                 NULL,    PREC_NONE     },
+    [TOKEN_DOT]              = {NULL,                 dot,     PREC_CALL     },
     [TOKEN_MINUS]            = {unary,                binary,  PREC_TERM     },
     [TOKEN_MINUS_MINUS]      = {preIncrementVariable, NULL,    PREC_UNARY    },
     [TOKEN_PLUS]             = {NULL,                 binary,  PREC_TERM     },
@@ -1183,8 +1185,7 @@ static void classDeclaration() {
     const int index = parseVariable("Expect class name.", true);
 
     const Token* name = &parser.previous;
-    const ObjString* nameStr = copyString(name->start, name->length);
-    int nameConst = addConstant(currentChunk(), OBJ_VAL(nameStr));
+    const int nameConst = makeIdentifier(name);
 
     makeInitialized();
 
@@ -1195,8 +1196,7 @@ static void classDeclaration() {
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
 }
 
-static void funDeclaration()
-{
+static void funDeclaration() {
     const int index = parseVariable("Expect function name.", true);
     const Token *name = &parser.previous;
     makeInitialized();
@@ -1205,8 +1205,7 @@ static void funDeclaration()
     defineVariable(index, name->line);
 }
 
-static void varDeclaration()
-{
+static void varDeclaration() {
     const int index = parseVariable("Expect variable name.", false);
     const int line = parser.previous.line;
 
@@ -1222,8 +1221,7 @@ static void varDeclaration()
     defineVariable(index, line);
 }
 
-static void constDeclaration()
-{
+static void constDeclaration() {
     const int index = parseVariable("Expect variable name.", true);
     const int line = parser.previous.line;
 
@@ -1241,15 +1239,13 @@ static void constDeclaration()
     defineVariable(index, line);
 }
 
-static void expressionStatement()
-{
+static void expressionStatement() {
     expression();
     consume(TOKEN_SEMICOLON, "Expected ';' after expression.");
     emitByte(OP_POP);
 }
 
-static void forStatement()
-{
+static void forStatement() {
     beginScope();
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
 
@@ -1663,24 +1659,19 @@ static void statement()
 
 static void declaration()
 {
-    if(match(TOKEN_CLASS))
-    {
+    if(match(TOKEN_CLASS)) {
         classDeclaration();
     }
-    else if (match(TOKEN_FUN))
-    {
+    else if (match(TOKEN_FUN)) {
         funDeclaration();
     }
-    else if (match(TOKEN_VAR))
-    {
+    else if (match(TOKEN_VAR)) {
         varDeclaration();
     }
-    else if (match(TOKEN_CONST))
-    {
+    else if (match(TOKEN_CONST)) {
         constDeclaration();
     }
-    else
-    {
+    else {
         statement();
     }
 

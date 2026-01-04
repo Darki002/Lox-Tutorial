@@ -135,6 +135,10 @@ int disassembleInstruction(const Chunk* chunk, int offset) {
             return indexInstructionU8("OP_GET_UPVALUE", chunk, offset);
         case OP_SET_UPVALUE:
             return indexInstructionU8("OP_SET_UPVALUE", chunk, offset);
+        case OP_GET_PROPERTY:
+            return indexInstruction("OP_GET_PROPERTY", "OP_GET_PROPERTY.W", chunk, offset);
+        case OP_SET_PROPERTY:
+            return indexInstruction("OP_SET_PROPERTY", "OP_SET_PROPERTY.W", chunk, offset);
         case OP_EQUAL:
             return simpleInstruction("OP_EQUAL", offset);
         case OP_GREATER:
