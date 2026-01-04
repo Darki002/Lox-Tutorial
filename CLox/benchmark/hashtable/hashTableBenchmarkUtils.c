@@ -28,7 +28,7 @@ ObjString* makeRandomStringObj() {
     randomString(strObj->chars, len);
     strObj->hash = hashString(strObj->chars, len);
     strObj->length = len;
-    strObj->obj.type = OBJ_STRING;
+    //strObj->obj.type = OBJ_STRING;
 
     return strObj;
 }
@@ -43,7 +43,7 @@ ObjString* makeCollisionStringObj() {
     randomString(strObj->chars, len);
     strObj->hash = 10;
     strObj->length = len;
-    strObj->obj.type = OBJ_STRING;
+    //strObj->obj.type = OBJ_STRING;
 
     return strObj;
 }

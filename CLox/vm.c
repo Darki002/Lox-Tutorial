@@ -19,6 +19,7 @@
 #include "stdlib/time.h"
 #include "stdlib/nativeIo.h"
 #include "stdlib/nativeErr.h"
+#include "stdlib/classUtils.h"
 #include "value.h"
 
 VM vm;
@@ -90,6 +91,7 @@ void initVM()
     defineNative("bool", boolNative);
     defineNative("sleep", sleepNative);
     defineNative("joinStr", joinStrNative);
+    defineNative("hasProperty", hasPropertyNative);
 }
 
 void freeVM()

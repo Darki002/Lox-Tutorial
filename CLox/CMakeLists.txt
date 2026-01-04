@@ -47,6 +47,8 @@ add_executable(CLox clox.c
         stdlib/cast.h
         stdlib/joinStr.c
         stdlib/joinStr.h
+        stdlib/classUtils.c
+        stdlib/classUtils.h
 )
 add_executable(Benchmark benchmark/benchmark.c
         common.h
