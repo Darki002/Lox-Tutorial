@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "coerce.h"
+#include <errno.h>
 #include "../object.h"
 
 static ObjString *functionToString(const ObjFunction *function)
