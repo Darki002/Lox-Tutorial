@@ -44,37 +44,44 @@ add_executable(CLox clox.c
         stdlib/classUtils.c
         stdlib/classUtils.h
 )
-add_executable(Benchmark benchmark/benchmark.c
-        common.h
-        chunk.h
-        chunk.c
-        memory.h
-        memory.c
-        debug.h
-        debug.c
-        value.h
-        value.c
-        vm.c
-        vm.h
-        compiler.c
-        compiler.h
-        scanner.c
-        scanner.h
-        object.h
-        object.c
-        table.c
-        table.h
-        benchmark/hashtable/insertHighCollision.c
-        benchmark/hashtable/insertHighCollision.h
-        benchmark/benchmark_config.h
-        benchmark/hashtable/insert.c
-        benchmark/hashtable/insert.h
-        benchmark/hashtable/hashTableBenchmarkUtils.c
-        benchmark/hashtable/hashTableBenchmarkUtils.h
-        benchmark/hashtable/find.c
-        benchmark/hashtable/find.h
-        benchmark/hashtable/delete.c
-        benchmark/hashtable/delete.h
-        stdlib/cast.c
-        stdlib/cast.h
-)
+
+if(CMAKE_SYSTEM MATCHES Linux)
+        target_link_libraries(CLox m)
+endif()
+
+if(CMAKE_SYSTEM MATCHES Windows)
+        add_executable(Benchmark benchmark/benchmark.c
+                common.h
+                chunk.h
+                chunk.c
+                memory.h
+                memory.c
+                debug.h
+                debug.c
+                value.h
+                value.c
+                vm.c
+                vm.h
+                compiler.c
+                compiler.h
+                scanner.c
+                scanner.h
+                object.h
+                object.c
+                table.c
+                table.h
+                benchmark/hashtable/insertHighCollision.c
+                benchmark/hashtable/insertHighCollision.h
+                benchmark/benchmark_config.h
+                benchmark/hashtable/insert.c
+                benchmark/hashtable/insert.h
+                benchmark/hashtable/hashTableBenchmarkUtils.c
+                benchmark/hashtable/hashTableBenchmarkUtils.h
+                benchmark/hashtable/find.c
+                benchmark/hashtable/find.h
+                benchmark/hashtable/delete.c
+                benchmark/hashtable/delete.h
+                stdlib/cast.c
+                stdlib/cast.h
+        )
+endif()
