@@ -92,6 +92,7 @@ void initVM()
     defineNative("sleep", sleepNative);
     defineNative("joinStr", joinStrNative);
     defineNative("hasProperty", hasPropertyNative);
+    defineNative("delProperty", delPropertyNative);
 }
 
 void freeVM()

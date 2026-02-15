@@ -5,5 +5,6 @@
 #include "../value.h"
 
 bool hasPropertyNative(int argCount, Value *args);
+bool delPropertyNative(int argCount, Value *args);
 
 #endif // CLOX_CLASSUTILS_H

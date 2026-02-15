@@ -6,3 +6,8 @@ t.abc = "hoi";
 
 print hasProperty(t, "abc"); // ture
 print hasProperty(t, "xyz"); // false
+
+print delProperty(t, "xyz"); // false
+
+print delProperty(t, "abc"); // true
+print hasProperty(t, "abc"); // false
