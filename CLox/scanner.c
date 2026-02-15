@@ -102,7 +102,7 @@ static void skipWhitespace()
                 scanner.line++;
                 advance();
                 break;
-            case '/':
+            case '/': {
                 const char next = peekNext();
                 if (next == '/') {
                     while (peek() != '\n' && !isAtEnd()) advance();
@@ -115,6 +115,7 @@ static void skipWhitespace()
                 else {
                     return;
                 }
+            }
             default:
                 return;
         }
